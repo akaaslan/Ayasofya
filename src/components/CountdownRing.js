@@ -1,17 +1,22 @@
 import { Platform, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 import { colors } from '../theme/colors';
 
 /* ── Ring dimensions ────────────────────────────── */
-const CONTAINER    = 300;          // overall canvas
-const OUTER_SUBTLE = 282;          // faint outer ring (ticks sit on this)
-const GOLD_RING    = 262;          // main golden border
-const INNER_RING   = 228;          // subtle inner border
-const TICK_COUNT   = 60;
-const TICK_R       = OUTER_SUBTLE / 2;   // 141
-const C            = CONTAINER / 2;      // center = 150
+const CONTAINER    = 280;
+const SVG_SIZE     = 270;                    // SVG canvas
+const STROKE_W     = 5;                      // progress arc width (thicker)
+const RADIUS       = (SVG_SIZE - STROKE_W * 2) / 2;  // 132
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const GOLD_RING    = 242;
+const INNER_RING   = 210;
 
-/* Pre-compute tick-dot positions (calculated once, never re-renders) */
+/* Tick dots on outermost edge */
+const TICK_COUNT   = 60;
+const TICK_R       = SVG_SIZE / 2;
+const C            = CONTAINER / 2;
+
 const TICKS = Array.from({ length: TICK_COUNT }, (_, i) => {
   const a = (i * 2 * Math.PI) / TICK_COUNT - Math.PI / 2;
   return {
@@ -21,13 +26,17 @@ const TICKS = Array.from({ length: TICK_COUNT }, (_, i) => {
 });
 
 /**
- * Countdown ring matching the Ayasofya design:
- * - decorative tick dots on a faint outer ring
- * - golden main ring
- * - 4-pointed star ornament
- * - current prayer name (serif), golden countdown, dynamic caption
+ * Countdown ring with SVG progress arc.
+ * Props:
+ *   label        – e.g. "VAKİT İÇİNDE"
+ *   prayerName   – current prayer name
+ *   countdown    – HH:MM:SS string
+ *   caption      – e.g. "İKİNDİYE KALAN"
+ *   progress     – 0‒1 fraction (fills clockwise)
  */
-export function CountdownRing({ label, prayerName, countdown, caption }) {
+export function CountdownRing({ label, prayerName, countdown, caption, progress = 0 }) {
+  const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+
   return (
     <View style={styles.center}>
       <View style={styles.container}>
@@ -36,18 +45,66 @@ export function CountdownRing({ label, prayerName, countdown, caption }) {
           <View key={i} style={[styles.tick, { left: pos.left, top: pos.top }]} />
         ))}
 
-        {/* Three concentric rings */}
-        <View style={styles.outerSubtle}>
-          <View style={styles.goldRing}>
-            <View style={styles.innerRing}>
-              <Text style={styles.star}>✦</Text>
-              <Text style={styles.label}>{label}</Text>
-              <Text style={styles.prayer} numberOfLines={1} adjustsFontSizeToFit>
-                {prayerName}
-              </Text>
-              <Text style={styles.countdown}>{countdown}</Text>
-              <Text style={styles.caption}>{caption}</Text>
-            </View>
+        {/* SVG progress arc (behind the rings) */}
+        <View style={styles.svgWrap}>
+          <Svg width={SVG_SIZE} height={SVG_SIZE}>
+            <Defs>
+              <SvgGradient id="arcGrad" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor={colors.accent} stopOpacity="1" />
+                <Stop offset="1" stopColor={colors.accentGlow} stopOpacity="0.7" />
+              </SvgGradient>
+            </Defs>
+            {/* Track */}
+            <Circle
+              cx={SVG_SIZE / 2}
+              cy={SVG_SIZE / 2}
+              r={RADIUS}
+              stroke="rgba(200, 161, 90, 0.15)"
+              strokeWidth={STROKE_W}
+              fill="none"
+            />
+            {/* Glow layer (wider, translucent) */}
+            <Circle
+              cx={SVG_SIZE / 2}
+              cy={SVG_SIZE / 2}
+              r={RADIUS}
+              stroke={colors.accentGlow}
+              strokeWidth={STROKE_W + 6}
+              fill="none"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              rotation="-90"
+              origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
+              opacity={0.15}
+            />
+            {/* Progress */}
+            <Circle
+              cx={SVG_SIZE / 2}
+              cy={SVG_SIZE / 2}
+              r={RADIUS}
+              stroke="url(#arcGrad)"
+              strokeWidth={STROKE_W}
+              fill="none"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              rotation="-90"
+              origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
+            />
+          </Svg>
+        </View>
+
+        {/* Concentric rings + content */}
+        <View style={styles.goldRing}>
+          <View style={styles.innerRing}>
+            <Text style={styles.star}>✦</Text>
+            <Text style={styles.label}>{label}</Text>
+            <Text style={styles.prayer} numberOfLines={1} adjustsFontSizeToFit>
+              {prayerName}
+            </Text>
+            <Text style={styles.countdown}>{countdown}</Text>
+            <Text style={styles.caption}>{caption}</Text>
           </View>
         </View>
       </View>
@@ -58,14 +115,21 @@ export function CountdownRing({ label, prayerName, countdown, caption }) {
 const styles = StyleSheet.create({
   center: {
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 16,
+    marginTop: 14,
+    marginBottom: 10,
   },
   container: {
     width: CONTAINER,
     height: CONTAINER,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  /* SVG sits absolutely behind the rings */
+  svgWrap: {
+    position: 'absolute',
+    left: (CONTAINER - SVG_SIZE) / 2,
+    top: (CONTAINER - SVG_SIZE) / 2,
   },
 
   /* Tick dots */
@@ -75,18 +139,7 @@ const styles = StyleSheet.create({
     height: 2.5,
     borderRadius: 1.25,
     backgroundColor: colors.accent,
-    opacity: 0.4,
-  },
-
-  /* Outermost faint ring – ticks sit on its circumference */
-  outerSubtle: {
-    width: OUTER_SUBTLE,
-    height: OUTER_SUBTLE,
-    borderRadius: OUTER_SUBTLE / 2,
-    borderWidth: 0.5,
-    borderColor: 'rgba(200, 161, 90, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    opacity: 0.35,
   },
 
   /* Main golden ring */
@@ -133,7 +186,7 @@ const styles = StyleSheet.create({
   /* Prayer name — serif font */
   prayer: {
     color: colors.textPrimary,
-    fontSize: 42,
+    fontSize: 38,
     fontWeight: '300',
     fontFamily: Platform.select({ ios: 'Georgia', android: 'serif' }),
     marginBottom: 2,
@@ -142,7 +195,7 @@ const styles = StyleSheet.create({
   /* Countdown timer — golden */
   countdown: {
     color: colors.accent,
-    fontSize: 28,
+    fontSize: 26,
     letterSpacing: 2,
     fontWeight: '300',
     marginBottom: 6,

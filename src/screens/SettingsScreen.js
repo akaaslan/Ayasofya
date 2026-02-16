@@ -16,7 +16,7 @@ import { colors } from '../theme/colors';
 
 const CITIES = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Konya'];
 
-export function SettingsScreen() {
+export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [selectedCity, setSelectedCity] = useState('İstanbul');
@@ -89,6 +89,21 @@ export function SettingsScreen() {
               onValueChange={setSoundEnabled}
               trackColor={{ false: '#333', true: colors.accentSoft }}
               thumbColor={soundEnabled ? colors.accent : '#888'}
+            />
+          </View>
+
+          {/* Holiday Banner */}
+          <Text style={styles.sectionTitle}>DİNİ BAYRAM SAYACI</Text>
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Ionicons name="star-outline" size={20} color={colors.accent} />
+              <Text style={styles.rowLabel}>Bayram Geri Sayımı</Text>
+            </View>
+            <Switch
+              value={holidayBannerEnabled}
+              onValueChange={onToggleHolidayBanner}
+              trackColor={{ false: '#333', true: colors.accentSoft }}
+              thumbColor={holidayBannerEnabled ? colors.accent : '#888'}
             />
           </View>
 

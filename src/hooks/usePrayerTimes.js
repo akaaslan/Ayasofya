@@ -15,6 +15,7 @@ export function usePrayerTimes(lat, lng, timezone) {
   const [nextPrayer, setNextPrayer] = useState(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [countdown, setCountdown] = useState('00:00:00');
+  const [progress, setProgress] = useState(0);        // 0→1 progress toward next prayer
   const [currentTime, setCurrentTime] = useState(new Date());
   const intervalRef = useRef(null);
 
@@ -49,10 +50,28 @@ export function usePrayerTimes(lat, lng, timezone) {
         setNextPrayer(next.prayer);
         setActiveIndex(next.index);
         setCountdown(formatCountdown(next.remainingMs));
+
+        // Calculate progress: how far through the interval we are
+        // prevPrayerDate → nextPrayerDate, we are at `now`
+        const prevIdx = next.index - 1;
+        let prevTime;
+        if (prevIdx >= 0) {
+          prevTime = todayPrayers[prevIdx].date.getTime();
+        } else {
+          // Before first prayer — use midnight as start
+          const midnight = new Date(now);
+          midnight.setHours(0, 0, 0, 0);
+          prevTime = midnight.getTime();
+        }
+        const nextTime = next.prayer.date.getTime();
+        const total = nextTime - prevTime;
+        const elapsed = now.getTime() - prevTime;
+        setProgress(total > 0 ? Math.min(Math.max(elapsed / total, 0), 1) : 0);
       } else {
         setCountdown('00:00:00');
         setNextPrayer(null);
         setActiveIndex(-1);
+        setProgress(0);
       }
     }
 
@@ -64,5 +83,5 @@ export function usePrayerTimes(lat, lng, timezone) {
     };
   }, [computeForDate]);
 
-  return { prayers, nextPrayer, activeIndex, countdown, currentTime };
+  return { prayers, nextPrayer, activeIndex, countdown, progress, currentTime };
 }
