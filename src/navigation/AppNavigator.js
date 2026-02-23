@@ -6,9 +6,9 @@ import { StyleSheet, View } from 'react-native';
 import { HolidayBanner } from '../components/HolidayBanner';
 import { colors } from '../theme/colors';
 import { DualarScreen } from '../screens/DualarScreen';
-import { HomeScreen } from '../screens/HomeScreen';
 import { QiblaScreen } from '../screens/QiblaScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { HomeStack } from './HomeStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -52,7 +52,7 @@ export function AppNavigator() {
       >
         <Tab.Screen
           name="Home"
-          component={HomeScreen}
+          component={HomeStack}
           options={{ tabBarLabel: 'Ana Sayfa' }}
         />
         <Tab.Screen

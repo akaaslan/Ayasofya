@@ -6,16 +6,17 @@ import {
   Easing,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   Vibration,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
 import { colors } from '../theme/colors';
+import { getGrandTotal, saveDhikrCount } from '../utils/dhikrStorage';
 
 /* ── Preset dhikr list ─────────────────────────── */
 const DHIKRS = [
@@ -48,6 +49,11 @@ export function DualarScreen() {
   const [count, setCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  /* ── Load persisted grand total on mount ── */
+  useEffect(() => {
+    getGrandTotal().then((t) => setTotalCount(t));
+  }, []);
 
   /* ── Entrance animations ── */
   const fadeHeader   = useRef(new Animated.Value(0)).current;
@@ -101,13 +107,14 @@ export function DualarScreen() {
     setCount((c) => {
       const next = c + 1;
       if (next === current.target) {
-        // Completed a round — gentle double vibration
+        // Completed a round — gentle double vibration + save to storage
         setTimeout(() => Vibration.vibrate([0, 40, 60, 40]), 100);
+        saveDhikrCount(current.id, current.target).catch(() => {});
       }
       return next;
     });
     setTotalCount((t) => t + 1);
-  }, [current.target, triggerPulse]);
+  }, [current.target, current.id, triggerPulse]);
 
   /* ── Reset ── */
   const handleReset = useCallback(() => {
@@ -125,7 +132,7 @@ export function DualarScreen() {
   const handleResetAll = useCallback(() => {
     Alert.alert(
       'Tümünü Sıfırla',
-      'Sayacı ve toplam sayıyı sıfırlamak istediğinize emin misiniz?',
+      'Sayacı sıfırlamak istediğinize emin misiniz?\n(Geçmiş veriler kayıtlı kalır)',
       [
         { text: 'İptal', style: 'cancel' },
         {

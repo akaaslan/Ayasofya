@@ -13,6 +13,7 @@ import {
 
 import { colors } from '../theme/colors';
 import { gregorianToHijri } from '../utils/hijriDate';
+import { getPrayerTimes } from '../utils/prayerApi';
 import { calculatePrayerTimes } from '../utils/prayerCalculation';
 
 /* ── Turkish day / month names ── */
@@ -96,10 +97,25 @@ export function CalendarModal({ visible, onClose, lat, lng, tz }) {
 
   /* ── Selected day data ── */
   const selectedHijri = useMemo(() => gregorianToHijri(selectedDate), [selectedDate]);
-  const selectedPrayers = useMemo(
-    () => calculatePrayerTimes(selectedDate, lat, lng, tz),
-    [selectedDate, lat, lng, tz],
+  const [selectedPrayers, setSelectedPrayers] = useState(() =>
+    calculatePrayerTimes(selectedDate, lat, lng, tz),
   );
+  const [prayerLoading, setPrayerLoading] = useState(false);
+
+  // Fetch API prayer times when selected date changes
+  useEffect(() => {
+    let cancelled = false;
+    setPrayerLoading(true);
+    // Instant: show local calculation while API loads
+    setSelectedPrayers(calculatePrayerTimes(selectedDate, lat, lng, tz));
+    getPrayerTimes(selectedDate, lat, lng, tz).then(({ prayers }) => {
+      if (!cancelled) {
+        setSelectedPrayers(prayers);
+        setPrayerLoading(false);
+      }
+    }).catch(() => { if (!cancelled) setPrayerLoading(false); });
+    return () => { cancelled = true; };
+  }, [selectedDate, lat, lng, tz]);
 
   /* ── Build calendar grid ── */
   const calendarGrid = useMemo(() => {
@@ -234,7 +250,7 @@ export function CalendarModal({ visible, onClose, lat, lng, tz }) {
                 contentContainerStyle={styles.prayerChips}
               >
                 {selectedPrayers.map((p) => (
-                  <View key={p.key} style={styles.prayerChip}>
+                  <View key={p.key} style={[styles.prayerChip, prayerLoading && { opacity: 0.6 }]}>
                     <Text style={styles.prayerChipLabel}>{p.label}</Text>
                     <Text style={styles.prayerChipTime}>{p.time}</Text>
                   </View>

@@ -7,11 +7,11 @@ import {
   Dimensions,
   Easing,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
 import { colors } from '../theme/colors';

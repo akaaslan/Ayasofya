@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -6,27 +7,25 @@ import {
   Easing,
   Linking,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CalendarModal } from '../components/CalendarModal';
 import { CountdownRing } from '../components/CountdownRing';
 import { CustomDialog } from '../components/CustomDialog';
 import { HeaderSection } from '../components/HeaderSection';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useLocationContext } from '../context/LocationContext';
+import { useRamadan } from '../context/RamadanContext';
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import { usePrayerTimes } from '../hooks/usePrayerTimes';
 import { getHijriDisplayString } from '../utils/hijriDate';
+import { getRamadanInfo } from '../utils/ramadanMode';
 import { colors } from '../theme/colors';
-
-// Istanbul defaults
-const LAT = 41.0082;
-const LNG = 28.9784;
-const TZ = 3;
 
 /** Turkish dative-case forms */
 const DATIVE = {
@@ -59,30 +58,22 @@ const DAILY_VERSES = [
   { verse: '"Biz insanı en güzel biçimde yarattık."', source: 'Tîn, 95:4' },
 ];
 
-/* ── Günlük Dua ── */
-const DAILY_DUAS = [
-  { dua: 'Allah\'ım! Beni bağışla, bana merhamet et, bana doğru yolu göster.', source: 'Müslim' },
-  { dua: 'Allah\'ım! Senden hayırlı işler yapmayı, kötülükleri terk etmeyi istiyorum.', source: 'Tirmizî' },
-  { dua: 'Allah\'ım! Kalbimi nurlandır, gözümü nurlandır, kulağımı nurlandır.', source: 'Buhârî' },
-  { dua: 'Hasbunallahu ve ni\'mel vekîl — Allah bize yeter, O ne güzel vekildir.', source: 'Âl-i İmrân' },
-  { dua: 'Allah\'ım! Acizlikten, tembellikten, korkaklıktan sana sığınırım.', source: 'Buhârî' },
-  { dua: 'Allah\'ım! Faydasız ilimden, korkmayan kalpten, doymayan nefisten sana sığınırım.', source: 'Müslim' },
-  { dua: 'Allah\'ım! Bana öğrettiklerinle beni faydalandır, bana faydalı olanı öğret.', source: 'Nesâî' },
-];
-
 function getDayIndex(count) {
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
   return dayOfYear % count;
 }
 
 export function HomeScreen() {
+  const navigation = useNavigation();
+  const { lat, lng, tz, city, district } = useLocationContext();
   const clock = useCurrentTime();
-  const prayerData = usePrayerTimes(LAT, LNG, TZ);
+  const prayerData = usePrayerTimes(lat, lng, tz);
   const prayers = prayerData?.prayers ?? [];
   const nextPrayer = prayerData?.nextPrayer ?? null;
   const activeIndex = prayerData?.activeIndex ?? -1;
   const countdown = prayerData?.countdown ?? '00:00:00';
   const progress = prayerData?.progress ?? 0;
+  const prayerSource = prayerData?.prayerSource ?? 'local';
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownAnim = useRef(new Animated.Value(0)).current;
@@ -98,6 +89,19 @@ export function HomeScreen() {
   const [calendarVisible, setCalendarVisible] = useState(false);
 
   const hijriDay = useMemo(() => getHijriDisplayString(new Date()), []);
+
+  /* ── Ramadan detection (from context) ── */
+  const { ramadan } = useRamadan();
+  const ramadanInfo = useMemo(() => {
+    if (!ramadan.isRamadan || prayers.length === 0) return null;
+    return getRamadanInfo(prayers, new Date());
+  }, [ramadan.isRamadan, prayers]);
+
+  /* ── Location display name ── */
+  const locationDisplay = useMemo(() => {
+    if (district) return `${district}, ${city}`;
+    return city;
+  }, [city, district]);
 
   const nextPrayerName = nextPrayer?.label ?? '—';
   const nextPrayerTime = nextPrayer?.time ?? '';
@@ -118,14 +122,12 @@ export function HomeScreen() {
   }, [dropdownOpen, dropdownAnim]);
 
   const handleDua = useCallback(() => {
-    const idx = getDayIndex(7);
-    const d = DAILY_DUAS[idx];
-    showDialog('hand-left', 'Günlük Dua', `${d.dua}\n\n— ${d.source}`, [{ text: 'Âmin' }]);
-  }, [showDialog]);
+    navigation.navigate('DuaCollection');
+  }, [navigation]);
 
   const handleEsma = useCallback(() => {
-    showDialog('sparkles', 'Esma-ül Hüsna', 'Allah\'\u0131n 99 güzel ismi \u2014 Bu özellik yakında eklenecek.', [{ text: 'Tamam' }]);
-  }, [showDialog]);
+    navigation.navigate('Esma');
+  }, [navigation]);
 
   const handleVerse = useCallback(() => {
     const idx = getDayIndex(7);
@@ -134,13 +136,11 @@ export function HomeScreen() {
   }, [showDialog]);
 
   const handleMosque = useCallback(() => {
-    const url = `https://www.google.com/maps/search/cami+mosque/@${LAT},${LNG},14z`;
+    const url = `https://www.google.com/maps/search/cami+mosque/@${lat},${lng},14z`;
     Linking.openURL(url).catch(() => {
       showDialog('business', 'Hata', 'Harita uygulaması açılamadı.', [{ text: 'Tamam' }]);
     });
-  }, [showDialog]);
-
-  const todayVerse = DAILY_VERSES[getDayIndex(7)];
+  }, [lat, lng, showDialog]);
 
   /* ── Entrance animations ── */
   const fadeRing  = useRef(new Animated.Value(0)).current;
@@ -273,58 +273,131 @@ export function HomeScreen() {
                 ═══════════════════════════════════════════ */}
             <Animated.View style={{ opacity: fadeGrid, transform: [{ translateY: slideGrid }] }}>
 
-            {/* Row 1: Two image cards side-by-side */}
+            {/* ── Ramadan Banner (conditional) ── */}
+            {ramadan.isRamadan && ramadanInfo && (
+              <View style={styles.ramadanBanner}>
+                <View style={styles.ramadanHeader}>
+                  <Text style={styles.ramadanIcon}>☪</Text>
+                  <Text style={styles.ramadanTitle}>Ramazan-ı Şerif</Text>
+                  <Text style={styles.ramadanDay}>{ramadan.dayOfRamadan}. gün</Text>
+                </View>
+                <View style={styles.ramadanCounters}>
+                  {ramadanInfo.isBeforeIftar && (
+                    <View style={styles.ramadanCounter}>
+                      <Text style={styles.ramadanCounterLabel}>İftara Kalan</Text>
+                      <Text style={styles.ramadanCounterValue}>{ramadanInfo.iftarCountdown}</Text>
+                      <Text style={styles.ramadanCounterTime}>{ramadanInfo.iftarTime}</Text>
+                    </View>
+                  )}
+                  {ramadanInfo.isBeforeSahur && (
+                    <View style={styles.ramadanCounter}>
+                      <Text style={styles.ramadanCounterLabel}>Sahura Kalan</Text>
+                      <Text style={styles.ramadanCounterValue}>{ramadanInfo.sahurCountdown}</Text>
+                      <Text style={styles.ramadanCounterTime}>{ramadanInfo.sahurTime}</Text>
+                    </View>
+                  )}
+                  {!ramadanInfo.isBeforeIftar && !ramadanInfo.isBeforeSahur && (
+                    <View style={styles.ramadanCounter}>
+                      <Text style={styles.ramadanCounterLabel}>İftar Yapıldı</Text>
+                      <Text style={styles.ramadanCounterValue}>🤲</Text>
+                      <Text style={styles.ramadanCounterTime}>Hayırlı iftarlar</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* ── Location display ── */}
+            <View style={styles.locationRow}>
+              <Ionicons name="location" size={14} color={colors.accent} />
+              <Text style={styles.locationText}>{locationDisplay}</Text>
+              {prayerSource !== 'local' && (
+                <View style={styles.apiBadge}>
+                  <Text style={styles.apiBadgeText}>API</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Row 1: Namaz Takip & Kur'an — primary action cards */}
             <View style={styles.cardRow}>
-              {/* Günlük Dua card */}
+              {/* Namaz Takip card */}
               <Pressable
                 style={({ pressed }) => [styles.imageCard, pressed && styles.imageCardPressed]}
-                onPress={handleDua}
+                onPress={() => navigation.navigate('NamazTakip')}
               >
                 <View style={[styles.imageCardInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
                   <View style={styles.cardIconWrap}>
-                    <Ionicons name="hand-left" size={36} color={colors.accent} />
+                    <Ionicons name="checkmark-circle" size={36} color={colors.accent} />
                   </View>
-                  <Text style={styles.imageCardLabel}>Günlük Dua</Text>
+                  <Text style={styles.imageCardLabel}>Namaz{"\n"}Takip</Text>
+                </View>
+              </Pressable>
+
+              {/* Kur'an Oku card */}
+              <Pressable
+                style={({ pressed }) => [styles.imageCard, pressed && styles.imageCardPressed]}
+                onPress={() => navigation.navigate('Quran')}
+              >
+                <View style={[styles.imageCardInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
+                  <View style={styles.cardIconWrap}>
+                    <Ionicons name="book" size={36} color={colors.accent} />
+                  </View>
+                  <Text style={styles.imageCardLabel}>Kur'an{"\n"}Oku</Text>
+                </View>
+              </Pressable>
+            </View>
+
+            {/* Row 2: Dua Koleksiyonu & Esma-ül Hüsna & Kaza Namazı */}
+            <View style={styles.cardRow}>
+              {/* Dua Koleksiyonu card */}
+              <Pressable
+                style={({ pressed }) => [styles.imageCardSmall, pressed && styles.imageCardPressed]}
+                onPress={handleDua}
+              >
+                <View style={[styles.imageCardSmallInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
+                  <Ionicons name="hand-left" size={24} color={colors.accent} />
+                  <Text style={styles.imageCardSmallLabel}>Dualar</Text>
                 </View>
               </Pressable>
 
               {/* Esma-ül Hüsna card */}
               <Pressable
-                style={({ pressed }) => [styles.imageCard, pressed && styles.imageCardPressed]}
+                style={({ pressed }) => [styles.imageCardSmall, pressed && styles.imageCardPressed]}
                 onPress={handleEsma}
               >
-                <View style={[styles.imageCardInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
-                  <View style={styles.cardIconWrap}>
-                    <Ionicons name="sparkles" size={36} color={colors.accent} />
-                  </View>
-                  <Text style={styles.imageCardLabel}>Esma-ül{'\n'}Hüsna</Text>
+                <View style={[styles.imageCardSmallInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
+                  <Ionicons name="sparkles" size={24} color={colors.accent} />
+                  <Text style={styles.imageCardSmallLabel}>Esma-ül{'\n'}Hüsna</Text>
+                </View>
+              </Pressable>
+
+              {/* Kaza Namazı card */}
+              <Pressable
+                style={({ pressed }) => [styles.imageCardSmall, pressed && styles.imageCardPressed]}
+                onPress={() => navigation.navigate('KazaNamaz')}
+              >
+                <View style={[styles.imageCardSmallInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
+                  <Ionicons name="time" size={24} color={colors.accent} />
+                  <Text style={styles.imageCardSmallLabel}>Kaza{'\n'}Namazı</Text>
                 </View>
               </Pressable>
             </View>
 
-            {/* Row 2: Bugünün Ayeti — full-width card */}
+            {/* Row 3: Günün Ayeti & Yakındaki Camiler */}
             <Pressable
-              style={({ pressed }) => [styles.verseCard, pressed && styles.verseCardPressed]}
+              style={({ pressed }) => [styles.mosqueRow, pressed && styles.mosqueRowPressed]}
               onPress={handleVerse}
             >
-              <View style={styles.verseHeader}>
-                <Ionicons name="book" size={20} color={colors.accent} />
-                <Text style={styles.verseTitle}>Bugünün Ayeti</Text>
+              <View style={styles.mosqueIcon}>
+                <Ionicons name="bookmarks" size={22} color={colors.accent} />
               </View>
-              <Text style={styles.verseText}>
-                {todayVerse.verse} ({todayVerse.source})
-              </Text>
-              <View style={styles.verseBtn}>
-                <Text style={styles.verseBtnText}>Oku</Text>
-                <Ionicons name="arrow-forward" size={14} color={colors.textPrimary} />
+              <View style={styles.mosqueText}>
+                <Text style={styles.mosqueTitle}>Günün Ayeti</Text>
+                <Text style={styles.mosqueSubtitle}>Her gün yeni bir ayet, yeni bir ilham.</Text>
               </View>
-              {/* Decorative Quran icon area */}
-              <View style={styles.verseDecor}>
-                <Ionicons name="book-outline" size={64} color="rgba(200, 161, 90, 0.12)" />
-              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </Pressable>
 
-            {/* Row 3: Yakındaki Camiler — full-width row */}
             <Pressable
               style={({ pressed }) => [styles.mosqueRow, pressed && styles.mosqueRowPressed]}
               onPress={handleMosque}
@@ -360,9 +433,9 @@ export function HomeScreen() {
         <CalendarModal
           visible={calendarVisible}
           onClose={() => setCalendarVisible(false)}
-          lat={LAT}
-          lng={LNG}
-          tz={TZ}
+          lat={lat}
+          lng={lng}
+          tz={tz}
         />
       </SafeAreaView>
     </ScreenBackground>
@@ -460,8 +533,98 @@ const styles = StyleSheet.create({
   cardRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 20,
+    marginTop: 12,
     marginBottom: 12,
+  },
+
+  /* ── Ramadan Banner ── */
+  ramadanBanner: {
+    backgroundColor: 'rgba(200, 161, 90, 0.10)',
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(200, 161, 90, 0.30)',
+    padding: 16,
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  ramadanHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  ramadanIcon: {
+    fontSize: 18,
+    color: colors.accent,
+  },
+  ramadanTitle: {
+    color: colors.accent,
+    fontSize: 15,
+    fontWeight: '700',
+    flex: 1,
+  },
+  ramadanDay: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  ramadanCounters: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  ramadanCounter: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 46, 40, 0.60)',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+  },
+  ramadanCounterLabel: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  ramadanCounterValue: {
+    color: colors.accent,
+    fontSize: 20,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  ramadanCounterTime: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    marginTop: 2,
+  },
+
+  /* ── Location Row ── */
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  locationText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  apiBadge: {
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.4)',
+  },
+  apiBadgeText: {
+    color: '#4CAF50',
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   imageCard: {
     flex: 1,
@@ -493,55 +656,28 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  /* ── Verse Card ── */
-  verseCard: {
-    backgroundColor: 'rgba(10, 46, 40, 0.95)',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(200, 161, 90, 0.12)',
-    padding: 18,
-    marginBottom: 12,
+  /* ── Small Cards Row ── */
+  imageCardSmall: {
+    flex: 1,
+    borderRadius: 14,
     overflow: 'hidden',
   },
-  verseCardPressed: { opacity: 0.8 },
-  verseHeader: {
-    flexDirection: 'row',
+  imageCardSmallInner: {
+    height: 80,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(200, 161, 90, 0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 12,
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  verseTitle: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  verseText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 22,
-    fontStyle: 'italic',
-    marginBottom: 14,
-  },
-  verseBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(200, 161, 90, 0.12)',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    justifyContent: 'center',
     gap: 6,
-    alignSelf: 'flex-start',
   },
-  verseBtnText: {
+  imageCardSmallLabel: {
     color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '600',
-  },
-  verseDecor: {
-    position: 'absolute',
-    right: 10,
-    bottom: 10,
-    opacity: 0.6,
+    textAlign: 'center',
   },
 
   /* ── Mosque Row ── */
