@@ -282,7 +282,7 @@ export function HomeScreen() {
                   <Text style={styles.ramadanDay}>{ramadan.dayOfRamadan}. gün</Text>
                 </View>
                 <View style={styles.ramadanCounters}>
-                  {ramadanInfo.isBeforeIftar && (
+                  {ramadanInfo.isBeforeIftar && !ramadanInfo.isBeforeSahur && (
                     <View style={styles.ramadanCounter}>
                       <Text style={styles.ramadanCounterLabel}>İftara Kalan</Text>
                       <Text style={styles.ramadanCounterValue}>{ramadanInfo.iftarCountdown}</Text>

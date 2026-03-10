@@ -113,8 +113,13 @@ export function usePrayerTimes(lat, lng, timezone) {
         const prevIdx = next.index - 1;
         let prevTime;
         if (prevIdx >= 0) {
-          prevTime = todayPrayers[prevIdx].date.getTime();
+          prevTime = next.prayer === tomorrowPrayersRef.current[0] 
+            ? todayPrayers[todayPrayers.length - 1].date.getTime() // Last prayer of today (Isha)
+            : todayPrayers[prevIdx].date.getTime();
         } else {
+          // If we are at index 0 of today's prayers (looking forward to Today's Imsak), 
+          // the previous prayer was Yesterday's Isha.
+          // Since we don't have yesterday's Isha, we can just use midnight as a fallback
           const midnight = new Date(now);
           midnight.setHours(0, 0, 0, 0);
           prevTime = midnight.getTime();

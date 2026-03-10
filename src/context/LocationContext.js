@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 
 /**
  * LocationContext — shares GPS location state across all screens.
- * Value shape: { lat, lng, tz, city, district, loading, error, refresh, setManualCity }
+ * Value shape: { lat, lng, tz, city, district, country, loading, error, refresh, setManualCity }
  */
 export const LocationContext = createContext({
   lat: 41.0082,
@@ -10,6 +10,7 @@ export const LocationContext = createContext({
   tz: 3,
   city: 'İstanbul',
   district: '',
+  country: 'Türkiye',
   loading: false,
   error: null,
   refresh: () => {},

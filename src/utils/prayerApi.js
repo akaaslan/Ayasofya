@@ -34,24 +34,27 @@ function cacheKey(date, lat, lng) {
 }
 
 /** Parse "HH:MM" (or "HH:MM (TZ)") into a Date object */
-function timeToDate(timeStr, baseDate) {
+function timeToDate(timeStr, baseDate, tz) {
   const clean = timeStr.trim().substring(0, 5); // strip any " (EET)" suffix
   const [h, m] = clean.split(':').map(Number);
   const d = new Date(baseDate);
-  d.setHours(h, m, 0, 0);
+  const deviceTz = -d.getTimezoneOffset() / 60;
+  
+  // Adjust for difference between local device timezone and target city timezone
+  d.setHours(h + (deviceTz - tz), m, 0, 0);
   return d;
 }
 
 /** Map Aladhan API response → our standard prayer array format */
-function parseApiTimings(timings, baseDate) {
+function parseApiTimings(timings, baseDate, tz) {
   const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
   return [
-    { key: 'imsak', label: 'İmsak', time: timings.Fajr.substring(0, 5), date: timeToDate(timings.Fajr, base) },
-    { key: 'gunes', label: 'Güneş', time: timings.Sunrise.substring(0, 5), date: timeToDate(timings.Sunrise, base) },
-    { key: 'ogle',  label: 'Öğle',  time: timings.Dhuhr.substring(0, 5), date: timeToDate(timings.Dhuhr, base) },
-    { key: 'ikindi', label: 'İkindi', time: timings.Asr.substring(0, 5), date: timeToDate(timings.Asr, base) },
-    { key: 'aksam', label: 'Akşam', time: timings.Maghrib.substring(0, 5), date: timeToDate(timings.Maghrib, base) },
-    { key: 'yatsi', label: 'Yatsı', time: timings.Isha.substring(0, 5), date: timeToDate(timings.Isha, base) },
+    { key: 'imsak', label: 'İmsak', time: timings.Fajr.substring(0, 5), date: timeToDate(timings.Fajr, base, tz) },
+    { key: 'gunes', label: 'Güneş', time: timings.Sunrise.substring(0, 5), date: timeToDate(timings.Sunrise, base, tz) },
+    { key: 'ogle',  label: 'Öğle',  time: timings.Dhuhr.substring(0, 5), date: timeToDate(timings.Dhuhr, base, tz) },
+    { key: 'ikindi', label: 'İkindi', time: timings.Asr.substring(0, 5), date: timeToDate(timings.Asr, base, tz) },
+    { key: 'aksam', label: 'Akşam', time: timings.Maghrib.substring(0, 5), date: timeToDate(timings.Maghrib, base, tz) },
+    { key: 'yatsi', label: 'Yatsı', time: timings.Isha.substring(0, 5), date: timeToDate(timings.Isha, base, tz) },
   ];
 }
 
@@ -102,7 +105,7 @@ export async function getPrayerTimes(date, lat, lng, tz) {
     if (cached) {
       const timings = JSON.parse(cached);
       const base = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      return { prayers: parseApiTimings(timings, base), source: 'cache' };
+      return { prayers: parseApiTimings(timings, base, tz), source: 'cache' };
     }
   } catch { /* ignore cache miss */ }
 
@@ -114,7 +117,7 @@ export async function getPrayerTimes(date, lat, lng, tz) {
     // Clean old cache entries (keep last 7 days)
     cleanOldCache().catch(() => {});
     const base = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    return { prayers: parseApiTimings(timings, base), source: 'api' };
+    return { prayers: parseApiTimings(timings, base, tz), source: 'api' };
   } catch { /* API failed – fall through */ }
 
   // 3️⃣  Local fallback (offline)

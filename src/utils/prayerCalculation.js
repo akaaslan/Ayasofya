@@ -66,14 +66,15 @@ function minutesToHHMM(totalMinutes) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-function minutesToDate(totalMinutes, baseDate) {
+function minutesToDate(totalMinutes, baseDate, tz) {
   let mins = Math.round(totalMinutes);
   if (mins < 0) mins += 1440;
   mins = mins % 1440;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   const d = new Date(baseDate);
-  d.setHours(h, m, 0, 0);
+  const deviceTz = -d.getTimezoneOffset() / 60;
+  d.setHours(h + (deviceTz - tz), m, 0, 0);
   return d;
 }
 
@@ -117,12 +118,12 @@ export function calculatePrayerTimes(
   const baseDate = new Date(year, month - 1, day);
 
   return [
-    { key: 'imsak', label: 'İmsak', time: minutesToHHMM(fajr), date: minutesToDate(fajr, baseDate) },
-    { key: 'gunes', label: 'Güneş', time: minutesToHHMM(sunrise), date: minutesToDate(sunrise, baseDate) },
-    { key: 'ogle', label: 'Öğle', time: minutesToHHMM(dhuhr), date: minutesToDate(dhuhr, baseDate) },
-    { key: 'ikindi', label: 'İkindi', time: minutesToHHMM(asr), date: minutesToDate(asr, baseDate) },
-    { key: 'aksam', label: 'Akşam', time: minutesToHHMM(sunset), date: minutesToDate(sunset, baseDate) },
-    { key: 'yatsi', label: 'Yatsı', time: minutesToHHMM(isha), date: minutesToDate(isha, baseDate) },
+    { key: 'imsak', label: 'İmsak', time: minutesToHHMM(fajr), date: minutesToDate(fajr, baseDate, timezone) },
+    { key: 'gunes', label: 'Güneş', time: minutesToHHMM(sunrise), date: minutesToDate(sunrise, baseDate, timezone) },
+    { key: 'ogle', label: 'Öğle', time: minutesToHHMM(dhuhr), date: minutesToDate(dhuhr, baseDate, timezone) },
+    { key: 'ikindi', label: 'İkindi', time: minutesToHHMM(asr), date: minutesToDate(asr, baseDate, timezone) },
+    { key: 'aksam', label: 'Akşam', time: minutesToHHMM(sunset), date: minutesToDate(sunset, baseDate, timezone) },
+    { key: 'yatsi', label: 'Yatsı', time: minutesToHHMM(isha), date: minutesToDate(isha, baseDate, timezone) },
   ];
 }
 

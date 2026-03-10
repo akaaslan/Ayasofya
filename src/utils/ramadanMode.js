@@ -6,33 +6,20 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { gregorianToHijri } from './hijriDate';
+
 const RAMADAN_OVERRIDE_KEY = '@ramadan_override';
 
-/* ── Ramadan date ranges (Gregorian approximations) ── */
-const RAMADAN_RANGES = [
-  { year: 2026, start: new Date(2026, 1, 18), end: new Date(2026, 2, 19) }, // Feb 18 - Mar 19
-  { year: 2027, start: new Date(2027, 1, 8),  end: new Date(2027, 2, 9) },  // Feb 8 - Mar 9
-  { year: 2028, start: new Date(2028, 0, 28), end: new Date(2028, 1, 26) }, // Jan 28 - Feb 26
-];
-
-/**
- * Check if a given date falls within Ramadan (calendar-based only).
- * Returns { isRamadan, dayOfRamadan, totalDays, range } or { isRamadan: false }
- */
 export function checkRamadan(date = new Date()) {
-  const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const h = gregorianToHijri(date);
 
-  for (const range of RAMADAN_RANGES) {
-    if (today >= range.start && today <= range.end) {
-      const dayOfRamadan = Math.floor((today - range.start) / 86400000) + 1;
-      const totalDays = Math.floor((range.end - range.start) / 86400000) + 1;
-      return {
-        isRamadan: true,
-        dayOfRamadan,
-        totalDays,
-        range,
-      };
-    }
+  if (h.month === 9) {
+    return {
+      isRamadan: true,
+      dayOfRamadan: h.day,
+      totalDays: 30, // Hijri months are 29 or 30 days, we'll assume 30 for the UI
+      range: null,
+    };
   }
 
   return { isRamadan: false, dayOfRamadan: 0, totalDays: 0, range: null };
@@ -141,17 +128,20 @@ function formatMs(ms) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-/**
- * Get the next Ramadan start date if not currently in Ramadan.
- */
 export function getNextRamadanStart(now = new Date()) {
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  for (const range of RAMADAN_RANGES) {
-    if (range.start > today) {
-      const diffMs = range.start.getTime() - today.getTime();
-      const daysLeft = Math.ceil(diffMs / 86400000);
-      return { date: range.start, daysLeft };
+  let date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let daysLeft = 0;
+
+  // Scan forward day by day to find the next Ramadan 1st
+  // The loop runs at most ~355 times, which is instantaneous in JS
+  while (true) {
+    daysLeft++;
+    date.setDate(date.getDate() + 1);
+    const h = gregorianToHijri(date);
+    
+    // Found the first day of Ramadan (month 9, day 1)
+    if (h.month === 9 && h.day === 1) {
+      return { date: new Date(date), daysLeft };
     }
   }
-  return null;
 }

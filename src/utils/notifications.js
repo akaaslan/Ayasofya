@@ -83,7 +83,9 @@ export async function schedulePrayerNotifications(lat, lng, tz, enabledPrayers =
 
       // For day offset 1 (tomorrow), adjust the date
       if (dayOffset === 1) {
-        triggerDate.setDate(triggerDate.getDate());
+        // Since we already fetched tomorrow's prayers (targetDate.setDate(now + 1)),
+        // the prayer.date returned from getPrayerTimes is ALREADY correctly tomorrow.
+        // There is no need to add another day here.
       }
 
       const secondsUntil = Math.floor((triggerDate.getTime() - now.getTime()) / 1000);

@@ -2,7 +2,7 @@ import * as Location from 'expo-location';
 import { useCallback, useEffect, useState } from 'react';
 
 // Istanbul defaults
-const DEFAULT = { lat: 41.0082, lng: 28.9784, tz: 3, city: 'İstanbul' };
+const DEFAULT = { lat: 41.0082, lng: 28.9784, tz: 3, city: 'İstanbul', country: 'Türkiye' };
 
 /* ── Turkish city database (major cities + coords + timezone) ── */
 const CITIES = [
@@ -64,46 +64,56 @@ function findNearestCity(lat, lng) {
  * Returns { lat, lng, tz, city, district, loading, error, refresh, setManualCity }
  */
 export function useLocation() {
-  const [location, setLocation] = useState({ ...DEFAULT, district: '', loading: true, error: null });
+  const [location, setLocation] = useState({ ...DEFAULT, district: '', country: DEFAULT.country, loading: true, error: null });
 
   const fetchLocation = useCallback(async () => {
     setLocation((prev) => ({ ...prev, loading: true, error: null }));
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setLocation({ ...DEFAULT, district: '', loading: false, error: 'permission_denied' });
+        setLocation({ ...DEFAULT, district: '', country: DEFAULT.country, loading: false, error: 'permission_denied' });
         return;
       }
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
       const { latitude, longitude } = loc.coords;
-      const nearest = findNearestCity(latitude, longitude);
 
-      // Reverse geocode for district/neighborhood name
+      // Reverse geocode for exact city, county, and district
+      let cityName = '';
       let districtName = '';
+      let countryName = '';
+
       try {
         const [geo] = await Location.reverseGeocodeAsync({ latitude, longitude });
         if (geo) {
-          districtName = geo.subregion || geo.district || geo.city || '';
+          cityName = geo.subregion || geo.city || geo.region || '';
+          districtName = geo.district || '';
+          countryName = geo.country || '';
+
           // Don't duplicate city name
-          if (districtName === nearest.name) districtName = '';
+          if (districtName === cityName) districtName = '';
         }
       } catch {
         // Reverse geocoding might fail — not critical
       }
 
+      // Calculate the local device timezone offset in hours
+      const offsetMinutes = new Date().getTimezoneOffset();
+      const timezoneHours = -offsetMinutes / 60;
+
       setLocation({
         lat: latitude,
         lng: longitude,
-        tz: nearest.tz,
-        city: nearest.name,
+        tz: timezoneHours, // Dynamic timezone offset worldwide
+        city: cityName || DEFAULT.city,
         district: districtName,
+        country: countryName || DEFAULT.country,
         loading: false,
         error: null,
       });
     } catch (e) {
-      setLocation({ ...DEFAULT, district: '', loading: false, error: 'location_error' });
+      setLocation({ ...DEFAULT, district: '', country: DEFAULT.country, loading: false, error: 'location_error' });
     }
   }, []);
 
@@ -116,6 +126,7 @@ export function useLocation() {
         tz: city.tz,
         city: city.name,
         district: '',
+        country: 'Türkiye',
         loading: false,
         error: null,
       });
@@ -132,6 +143,7 @@ export function useLocation() {
     tz: location.tz,
     city: location.city,
     district: location.district,
+    country: location.country,
     loading: location.loading,
     error: location.error,
     refresh: fetchLocation,
