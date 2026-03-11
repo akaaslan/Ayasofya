@@ -144,5 +144,5 @@ export function usePrayerTimes(lat, lng, timezone) {
     };
   }, [loadPrayers]);
 
-  return { prayers, nextPrayer, activeIndex, countdown, progress, currentTime, prayerSource };
+  return { prayers, tomorrowPrayers: tomorrowPrayersRef.current, nextPrayer, activeIndex, countdown, progress, currentTime, prayerSource };
 }

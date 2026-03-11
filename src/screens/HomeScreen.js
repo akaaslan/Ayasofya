@@ -73,6 +73,7 @@ export function HomeScreen() {
   const activeIndex = prayerData?.activeIndex ?? -1;
   const countdown = prayerData?.countdown ?? '00:00:00';
   const progress = prayerData?.progress ?? 0;
+  const currentTime = prayerData?.currentTime ?? new Date();
   const prayerSource = prayerData?.prayerSource ?? 'local';
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -92,10 +93,11 @@ export function HomeScreen() {
 
   /* ── Ramadan detection (from context) ── */
   const { ramadan } = useRamadan();
+  const tomorrowPrayers = prayerData?.tomorrowPrayers ?? [];
   const ramadanInfo = useMemo(() => {
     if (!ramadan.isRamadan || prayers.length === 0) return null;
-    return getRamadanInfo(prayers, new Date());
-  }, [ramadan.isRamadan, prayers]);
+    return getRamadanInfo(prayers, tomorrowPrayers, currentTime);
+  }, [ramadan.isRamadan, prayers, tomorrowPrayers, currentTime]);
 
   /* ── Location display name ── */
   const locationDisplay = useMemo(() => {
