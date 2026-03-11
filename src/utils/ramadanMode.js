@@ -76,25 +76,40 @@ export function resolveRamadan(override = 'auto') {
  * @param {Date} now - Current time
  * @returns {{ iftarTime, sahurTime, iftarCountdown, sahurCountdown, isBeforeIftar }}
  */
-export function getRamadanInfo(prayers, now = new Date()) {
+export function getRamadanInfo(prayers, tomorrowPrayers = [], now = new Date()) {
   if (!prayers || prayers.length === 0) return null;
 
-  const imsak = prayers.find((p) => p.key === 'imsak');
+  let imsak = prayers.find((p) => p.key === 'imsak');
   const aksam = prayers.find((p) => p.key === 'aksam');
 
   if (!imsak || !aksam) return null;
 
-  const imsakMs = imsak.date.getTime();
+  let imsakMs = imsak.date.getTime();
   const aksamMs = aksam.date.getTime();
   const nowMs = now.getTime();
 
-  const isBeforeIftar = nowMs < aksamMs;
-  const isBeforeSahur = nowMs < imsakMs;
+  let isBeforeIftar = nowMs < aksamMs;
+  let isBeforeSahur = nowMs < imsakMs;
+
+  if (!isBeforeIftar && !isBeforeSahur) {
+    if (tomorrowPrayers && tomorrowPrayers.length > 0) {
+      const imsakTmrw = tomorrowPrayers.find((p) => p.key === 'imsak');
+      if (imsakTmrw) {
+        imsak = imsakTmrw;
+        imsakMs = imsak.date.getTime();
+        isBeforeSahur = true;
+      }
+    } else {
+      imsakMs += 86400000;
+      imsak = { ...imsak, date: new Date(imsakMs), time: imsak.time };
+      isBeforeSahur = true;
+    }
+  }
 
   // Iftar countdown
   let iftarCountdown = '';
   let iftarRemaining = 0;
-  if (isBeforeIftar) {
+  if (isBeforeIftar && !isBeforeSahur) {
     iftarRemaining = aksamMs - nowMs;
     iftarCountdown = formatMs(iftarRemaining);
   }
