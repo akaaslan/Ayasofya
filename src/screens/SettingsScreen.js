@@ -27,6 +27,7 @@ import {
   saveNotificationPrefs,
 } from '../utils/notificationPrefs';
 import { useRamadan } from '../context/RamadanContext';
+import { getDhikrStyle, saveDhikrStyle } from '../utils/dhikrStylePref';
 
 export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) {
   const { lat, lng, tz, city, district, loading: locLoading, refresh, setManualCity } = useLocationContext();
@@ -44,6 +45,10 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
 
   /* ── Ramadan from context ── */
   const { ramadan, override, setOverride } = useRamadan();
+
+  /* ── Dhikr style preference ── */
+  const [dhikrStyle, setDhikrStyle] = useState('tasbih');
+  useEffect(() => { getDhikrStyle().then(setDhikrStyle); }, []);
 
   /* ── Load notification prefs ── */
   useEffect(() => {
@@ -156,6 +161,34 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
                 <Text style={[
                   styles.ramadanToggleDesc,
                   override === opt.key && styles.ramadanToggleDescActive,
+                ]}>{opt.desc}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Dhikr Style */}
+          <Text style={styles.sectionTitle}>ZİKİRMATİK GÖRÜNÜMÜ</Text>
+          <View style={styles.ramadanToggleGroup}>
+            {[
+              { key: 'classic', label: 'Klasik', desc: 'Halka tasarım' },
+              { key: 'tasbih', label: 'Tesbih', desc: 'Boncuk halka' },
+              { key: 'digital', label: 'Dijital', desc: 'Modern sayaç' },
+            ].map((opt) => (
+              <Pressable
+                key={opt.key}
+                style={[
+                  styles.ramadanToggleBtn,
+                  dhikrStyle === opt.key && styles.ramadanToggleBtnActive,
+                ]}
+                onPress={() => { setDhikrStyle(opt.key); saveDhikrStyle(opt.key); }}
+              >
+                <Text style={[
+                  styles.ramadanToggleLabel,
+                  dhikrStyle === opt.key && styles.ramadanToggleLabelActive,
+                ]}>{opt.label}</Text>
+                <Text style={[
+                  styles.ramadanToggleDesc,
+                  dhikrStyle === opt.key && styles.ramadanToggleDescActive,
                 ]}>{opt.desc}</Text>
               </Pressable>
             ))}
