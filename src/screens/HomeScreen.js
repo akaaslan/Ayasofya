@@ -75,6 +75,7 @@ export function HomeScreen() {
   const progress = prayerData?.progress ?? 0;
   const currentTime = prayerData?.currentTime ?? new Date();
   const prayerSource = prayerData?.prayerSource ?? 'local';
+  const apiHicri = prayerData?.hicri;
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownAnim = useRef(new Animated.Value(0)).current;
@@ -89,7 +90,7 @@ export function HomeScreen() {
   /* ── Calendar state ── */
   const [calendarVisible, setCalendarVisible] = useState(false);
 
-  const hijriDay = useMemo(() => getHijriDisplayString(new Date()), []);
+  const hijriDay = useMemo(() => apiHicri || getHijriDisplayString(new Date()), [apiHicri]);
 
   /* ── Ramadan detection (from context) ── */
   const { ramadan } = useRamadan();

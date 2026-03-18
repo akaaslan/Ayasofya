@@ -1,42 +1,34 @@
 /**
- * Prayer Times API Service — Aladhan API with Diyanet method.
+ * Prayer Times API Service — Ayasofya API (Santral Software).
  *
- * Strategy (hybrid):
- *   1. Check AsyncStorage cache for today's data
- *   2. Fetch from Aladhan API (method=13 → Diyanet/Turkey)
- *   3. Fallback to local astronomical calculation if offline
+ * Strategy:
+ *   1. Check SQLite DB for today's data by date
+ *   2. If not found, fetch 60-day prayer times from API and save to SQLite
+ *   3. Fallback to local astronomical calculation if offline & not in DB
  *
- * API: https://aladhan.com/prayer-times-api
- * Free, no API key required.
+ * API: https://ayasofya.santralsoftware.com/api/v1/prayer-times
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculatePrayerTimes } from './prayerCalculation';
+import { getDB } from './db';
 
-const API_BASE = 'https://api.aladhan.com/v1/timings';
-const CACHE_PREFIX = '@prayer_api_';
-const FETCH_TIMEOUT = 8000; // 8 seconds
+const API_BASE = 'https://ayasofya.santralsoftware.com/api/v1/prayer-times';
+const API_KEY = 'BEqnMI9HJ2IXwNVxljJOuNyvU0s28oEE';
+const FETCH_TIMEOUT = 10000; // 10 seconds
 
 /* ── Helpers ── */
 
-function dateToApiFormat(date) {
-  const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
+function dateToDbFormat(date) {
   const yyyy = date.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-function cacheKey(date, lat, lng) {
-  const d = dateToApiFormat(date);
-  const la = lat.toFixed(2);
-  const lo = lng.toFixed(2);
-  return `${CACHE_PREFIX}${d}_${la}_${lo}`;
-}
-
-/** Parse "HH:MM" (or "HH:MM (TZ)") into a Date object */
+/** Parse "HH:MM" into a Date object */
 function timeToDate(timeStr, baseDate, tz) {
-  const clean = timeStr.trim().substring(0, 5); // strip any " (EET)" suffix
-  const [h, m] = clean.split(':').map(Number);
+  if (!timeStr) return new Date(); // Fallback to avoid crash
+  const [h, m] = timeStr.trim().split(':').map(Number);
   const d = new Date(baseDate);
   const deviceTz = -d.getTimezoneOffset() / 60;
   
@@ -45,50 +37,86 @@ function timeToDate(timeStr, baseDate, tz) {
   return d;
 }
 
-/** Map Aladhan API response → our standard prayer array format */
-function parseApiTimings(timings, baseDate, tz) {
+/** Map SQLite row → our standard prayer array format */
+function parseDbRow(row, baseDate, tz) {
   const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
   return [
-    { key: 'imsak', label: 'İmsak', time: timings.Fajr.substring(0, 5), date: timeToDate(timings.Fajr, base, tz) },
-    { key: 'gunes', label: 'Güneş', time: timings.Sunrise.substring(0, 5), date: timeToDate(timings.Sunrise, base, tz) },
-    { key: 'ogle',  label: 'Öğle',  time: timings.Dhuhr.substring(0, 5), date: timeToDate(timings.Dhuhr, base, tz) },
-    { key: 'ikindi', label: 'İkindi', time: timings.Asr.substring(0, 5), date: timeToDate(timings.Asr, base, tz) },
-    { key: 'aksam', label: 'Akşam', time: timings.Maghrib.substring(0, 5), date: timeToDate(timings.Maghrib, base, tz) },
-    { key: 'yatsi', label: 'Yatsı', time: timings.Isha.substring(0, 5), date: timeToDate(timings.Isha, base, tz) },
+    { key: 'imsak',  label: 'İmsak',  time: row.imsak,  date: timeToDate(row.imsak, base, tz) },
+    { key: 'gunes',  label: 'Güneş',  time: row.gunes,  date: timeToDate(row.gunes, base, tz) },
+    { key: 'ogle',   label: 'Öğle',   time: row.ogle,   date: timeToDate(row.ogle, base, tz) },
+    { key: 'ikindi', label: 'İkindi', time: row.ikindi, date: timeToDate(row.ikindi, base, tz) },
+    { key: 'aksam',  label: 'Akşam',  time: row.aksam,  date: timeToDate(row.aksam, base, tz) },
+    { key: 'yatsi',  label: 'Yatsı',  time: row.yatsi,  date: timeToDate(row.yatsi, base, tz) },
   ];
 }
 
-/* ── API Fetch ── */
+/* ── API Fetch & Storage ── */
 
-async function fetchFromApi(date, lat, lng) {
-  const dateStr = dateToApiFormat(date);
-  const url = `${API_BASE}/${dateStr}?latitude=${lat}&longitude=${lng}&method=13`;
+let activeFetchPromise = null;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+async function fetchAndSaveToDb(lat, lng) {
+  if (activeFetchPromise) return activeFetchPromise;
+
+  activeFetchPromise = (async () => {
+    const url = `${API_BASE}?lat=${lat.toFixed(2)}&lon=${lng.toFixed(2)}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+    try {
+      const res = await fetch(url, {
+        signal: controller.signal,
+        method: "GET",
+        headers: {
+          "X-API-Key": API_KEY,
+          "Content-Type": "application/json"
+        }
+      });
+      clearTimeout(timeout);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const json = await res.json();
+      if (!json.prayer_times || typeof json.prayer_times !== 'object') {
+        console.error("API response missing prayer_times. json:", JSON.stringify(json));
+        console.error("Request lat:", lat, "lng:", lng);
+        throw new Error('Invalid API response structure');
+      }
+
+      const db = await getDB();
+      
+      const dayEntries = Object.entries(json.prayer_times);
+      for (const [dateStr, day] of dayEntries) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO prayer_times (date, hicri, imsak, gunes, ogle, ikindi, aksam, yatsi) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [dateStr, day.hicri, day.imsak, day.gunes, day.ogle, day.ikindi, day.aksam, day.yatsi]
+        );
+      }
+      
+      // Cleanup old dates from cache
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const oldDateStr = dateToDbFormat(weekAgo);
+      await db.runAsync(`DELETE FROM prayer_times WHERE date < ?`, [oldDateStr]);
+
+    } catch (err) {
+      clearTimeout(timeout);
+      throw err;
+    }
+  })();
 
   try {
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const json = await res.json();
-    if (json.code !== 200 || !json.data?.timings) {
-      throw new Error('Invalid API response');
-    }
-    return json.data.timings;
-  } catch (err) {
-    clearTimeout(timeout);
-    throw err;
+    await activeFetchPromise;
+  } finally {
+    activeFetchPromise = null;
   }
 }
 
-/* ── Public: Hybrid getPrayerTimes ── */
+/* ── Public: getPrayerTimes ── */
 
 /**
  * Get prayer times for a given date and location.
- * Tries cache → API → local calculation.
+ * Tries DB Cache → API Fetch → Local calculation.
  *
  * @param {Date}   date
  * @param {number} lat
@@ -97,30 +125,40 @@ async function fetchFromApi(date, lat, lng) {
  * @returns {Promise<{ prayers: Array, source: 'cache'|'api'|'local' }>}
  */
 export async function getPrayerTimes(date, lat, lng, tz) {
-  const key = cacheKey(date, lat, lng);
-
-  // 1️⃣  Cache check
+  const dateStr = dateToDbFormat(date);
+  let db;
   try {
-    const cached = await AsyncStorage.getItem(key);
-    if (cached) {
-      const timings = JSON.parse(cached);
+    db = await getDB();
+  } catch(e) {
+    return { prayers: calculatePrayerTimes(date, lat, lng, tz), source: 'local' };
+  }
+
+  // 1️⃣ Cache check (SQLite)
+  try {
+    const row = await db.getFirstAsync(`SELECT * FROM prayer_times WHERE date = ?`, [dateStr]);
+    if (row) {
       const base = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      return { prayers: parseApiTimings(timings, base, tz), source: 'cache' };
+      return { prayers: parseDbRow(row, base, tz), hicri: row.hicri, source: 'cache' };
     }
-  } catch { /* ignore cache miss */ }
+  } catch (err) {
+    console.warn("Prayer db read error:", err);
+  }
 
-  // 2️⃣  API fetch
+  // 2️⃣ API fetch
   try {
-    const timings = await fetchFromApi(date, lat, lng);
-    // Save to cache (fire-and-forget)
-    AsyncStorage.setItem(key, JSON.stringify(timings)).catch(() => {});
-    // Clean old cache entries (keep last 7 days)
-    cleanOldCache().catch(() => {});
-    const base = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    return { prayers: parseApiTimings(timings, base, tz), source: 'api' };
-  } catch { /* API failed – fall through */ }
+    await fetchAndSaveToDb(lat, lng);
+    
+    // Search DB again after fetch
+    const row = await db.getFirstAsync(`SELECT * FROM prayer_times WHERE date = ?`, [dateStr]);
+    if (row) {
+      const base = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      return { prayers: parseDbRow(row, base, tz), hicri: row.hicri, source: 'api' };
+    }
+  } catch (err) {
+    console.warn("Prayer API fetch error:", err);
+  }
 
-  // 3️⃣  Local fallback (offline)
+  // 3️⃣ Local fallback (offline)
   return { prayers: calculatePrayerTimes(date, lat, lng, tz), source: 'local' };
 }
 
@@ -130,21 +168,6 @@ export async function getPrayerTimes(date, lat, lng, tz) {
  */
 export function getPrayerTimesSync(date, lat, lng, tz) {
   return calculatePrayerTimes(date, lat, lng, tz);
-}
-
-/* ── Cache maintenance ── */
-
-async function cleanOldCache() {
-  try {
-    const keys = await AsyncStorage.getAllKeys();
-    const prayerKeys = keys.filter((k) => k.startsWith(CACHE_PREFIX));
-    if (prayerKeys.length <= 14) return; // keep up to 14 days
-
-    // Sort and remove oldest
-    prayerKeys.sort();
-    const toRemove = prayerKeys.slice(0, prayerKeys.length - 14);
-    await AsyncStorage.multiRemove(toRemove);
-  } catch { /* silent */ }
 }
 
 /**

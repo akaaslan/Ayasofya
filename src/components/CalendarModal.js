@@ -100,6 +100,7 @@ export function CalendarModal({ visible, onClose, lat, lng, tz }) {
   const [selectedPrayers, setSelectedPrayers] = useState(() =>
     calculatePrayerTimes(selectedDate, lat, lng, tz),
   );
+  const [apiHicri, setApiHicri] = useState(null);
   const [prayerLoading, setPrayerLoading] = useState(false);
 
   // Fetch API prayer times when selected date changes
@@ -108,9 +109,11 @@ export function CalendarModal({ visible, onClose, lat, lng, tz }) {
     setPrayerLoading(true);
     // Instant: show local calculation while API loads
     setSelectedPrayers(calculatePrayerTimes(selectedDate, lat, lng, tz));
-    getPrayerTimes(selectedDate, lat, lng, tz).then(({ prayers }) => {
+    setApiHicri(null);
+    getPrayerTimes(selectedDate, lat, lng, tz).then(({ prayers, hicri }) => {
       if (!cancelled) {
         setSelectedPrayers(prayers);
+        if (hicri) setApiHicri(hicri);
         setPrayerLoading(false);
       }
     }).catch(() => { if (!cancelled) setPrayerLoading(false); });
@@ -240,7 +243,7 @@ export function CalendarModal({ visible, onClose, lat, lng, tz }) {
                   {selectedDate.getDate()} {MONTH_NAMES[selectedDate.getMonth()]}
                 </Text>
                 <Text style={styles.detailHijri}>
-                  {selectedHijri.day} {selectedHijri.monthName} {selectedHijri.year}
+                  {apiHicri || `${selectedHijri.day} ${selectedHijri.monthName} ${selectedHijri.year}`}
                 </Text>
               </View>
 

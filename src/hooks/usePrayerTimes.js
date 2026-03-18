@@ -23,6 +23,7 @@ export function usePrayerTimes(lat, lng, timezone) {
   const [nextPrayer, setNextPrayer] = useState(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [countdown, setCountdown] = useState('00:00:00');
+  const [hicri, setHicri] = useState(null);
   const [progress, setProgress] = useState(0);        // 0→1 progress toward next prayer
   const [currentTime, setCurrentTime] = useState(new Date());
   const [prayerSource, setPrayerSource] = useState('local');
@@ -51,6 +52,7 @@ export function usePrayerTimes(lat, lng, timezone) {
       prayersRef.current = todayResult.prayers;
       tomorrowPrayersRef.current = tomorrowResult.prayers;
       setPrayers(todayResult.prayers);
+      setHicri(todayResult.hicri);
       setPrayerSource(todayResult.source);
     } catch {
       // Should not happen (getPrayerTimes always falls back), but be safe
@@ -144,5 +146,5 @@ export function usePrayerTimes(lat, lng, timezone) {
     };
   }, [loadPrayers]);
 
-  return { prayers, tomorrowPrayers: tomorrowPrayersRef.current, nextPrayer, activeIndex, countdown, progress, currentTime, prayerSource };
+  return { prayers, tomorrowPrayers: tomorrowPrayersRef.current, nextPrayer, activeIndex, countdown, progress, currentTime, prayerSource, hicri };
 }

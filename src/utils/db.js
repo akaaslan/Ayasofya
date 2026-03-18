@@ -62,6 +62,27 @@ export async function getDB() {
         );
       `);
 
+      // Initialize API Prayer Times Cache
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS prayer_times (
+          date TEXT PRIMARY KEY,
+          hicri TEXT,
+          imsak TEXT,
+          gunes TEXT,
+          ogle TEXT,
+          ikindi TEXT,
+          aksam TEXT,
+          yatsi TEXT
+        );
+      `);
+
+      // Try adding hicri column for existing databases
+      try {
+        await db.execAsync(`ALTER TABLE prayer_times ADD COLUMN hicri TEXT;`);
+      } catch (e) {
+        // Column probably exists
+      }
+
       return db;
     })();
   }
