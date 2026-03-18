@@ -1,12 +1,6 @@
-/**
- * Kaza namazı takibi — AsyncStorage ile kalıcı saklama.
- * Her namaz türü için kaza borcu sayısı tutulur.
- */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getDB } from './db';
 
-const STORAGE_KEY = 'kaza_namaz_tracking';
-
-const PRAYER_TYPES = ['sabah', 'ogle', 'ikindi', 'aksam', 'yatsi', 'vitir'];
+const PRAYER_TYPES = ['sabah', 'ogle', 'ikindi', 'aksam', 'yatsi', 'vitir', 'oruc'];
 
 const DEFAULT_DATA = {
   sabah: 0,
@@ -15,25 +9,20 @@ const DEFAULT_DATA = {
   aksam: 0,
   yatsi: 0,
   vitir: 0,
+  oruc: 0,
 };
 
-/** Load kaza data from storage */
+/** Load kaza data from SQLite storage */
 async function loadKazaData() {
-  try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    return raw ? { ...DEFAULT_DATA, ...JSON.parse(raw) } : { ...DEFAULT_DATA };
-  } catch {
-    return { ...DEFAULT_DATA };
+  const db = await getDB();
+  const rows = await db.getAllAsync('SELECT * FROM kaza;');
+  const data = { ...DEFAULT_DATA };
+  for (const row of rows) {
+    if (PRAYER_TYPES.includes(row.prayerKey)) {
+      data[row.prayerKey] = row.count;
+    }
   }
-}
-
-/** Save kaza data */
-async function saveKazaData(data) {
-  try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch {
-    // silent
-  }
+  return data;
 }
 
 /**
@@ -48,45 +37,57 @@ export async function getKazaCounts() {
  * Increment kaza count for a prayer type.
  */
 export async function incrementKaza(prayerKey, amount = 1) {
-  const data = await loadKazaData();
-  data[prayerKey] = Math.max(0, (data[prayerKey] || 0) + amount);
-  await saveKazaData(data);
-  return data;
+  const db = await getDB();
+  await db.runAsync(
+    `INSERT INTO kaza (prayerKey, count) VALUES (?, ?) 
+     ON CONFLICT(prayerKey) DO UPDATE SET count = MAX(0, count + excluded.count)`,
+    [prayerKey, amount]
+  );
+  // Re-read data
+  return loadKazaData();
 }
 
 /**
  * Decrement kaza count for a prayer type (i.e., prayer was made up).
  */
 export async function decrementKaza(prayerKey, amount = 1) {
-  const data = await loadKazaData();
-  data[prayerKey] = Math.max(0, (data[prayerKey] || 0) - amount);
-  await saveKazaData(data);
-  return data;
+  const db = await getDB();
+  await db.runAsync(
+    `INSERT INTO kaza (prayerKey, count) VALUES (?, 0) 
+     ON CONFLICT(prayerKey) DO UPDATE SET count = MAX(0, count - ?)`,
+    [prayerKey, amount]
+  );
+  return loadKazaData();
 }
 
 /**
  * Set kaza count directly for a prayer type.
  */
 export async function setKazaCount(prayerKey, count) {
-  const data = await loadKazaData();
-  data[prayerKey] = Math.max(0, count);
-  await saveKazaData(data);
-  return data;
+  const db = await getDB();
+  await db.runAsync(
+    `INSERT INTO kaza (prayerKey, count) VALUES (?, ?) 
+     ON CONFLICT(prayerKey) DO UPDATE SET count = excluded.count`,
+    [prayerKey, Math.max(0, count)]
+  );
+  return loadKazaData();
 }
 
 /**
  * Get total kaza remaining across all prayer types.
  */
 export async function getTotalKaza() {
-  const data = await loadKazaData();
-  return Object.values(data).reduce((sum, v) => sum + v, 0);
+  const db = await getDB();
+  const result = await db.getFirstAsync('SELECT SUM(count) as total FROM kaza;');
+  return result?.total || 0;
 }
 
 /**
  * Reset all kaza counts to zero.
  */
 export async function resetAllKaza() {
-  await saveKazaData({ ...DEFAULT_DATA });
+  const db = await getDB();
+  await db.runAsync('DELETE FROM kaza;');
   return { ...DEFAULT_DATA };
 }
 

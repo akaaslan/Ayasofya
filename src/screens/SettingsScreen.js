@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   FlatList,
   Modal,
@@ -48,7 +49,12 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
 
   /* ── Dhikr style preference ── */
   const [dhikrStyle, setDhikrStyle] = useState('tasbih');
-  useEffect(() => { getDhikrStyle().then(setDhikrStyle); }, []);
+  
+  useFocusEffect(
+    useCallback(() => {
+      getDhikrStyle().then(setDhikrStyle);
+    }, [])
+  );
 
   /* ── Load notification prefs ── */
   useEffect(() => {
@@ -172,7 +178,6 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
             {[
               { key: 'classic', label: 'Klasik', desc: 'Halka tasarım' },
               { key: 'tasbih', label: 'Tesbih', desc: 'Boncuk halka' },
-              { key: 'digital', label: 'Dijital', desc: 'Modern sayaç' },
             ].map((opt) => (
               <Pressable
                 key={opt.key}

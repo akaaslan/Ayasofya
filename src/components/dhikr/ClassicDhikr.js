@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -14,15 +15,16 @@ import {
 } from 'react-native';
 
 import { colors } from '../../theme/colors';
-import { getGrandTotal, saveDhikrCount } from '../../utils/dhikrStorage';
+import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount } from '../../utils/dhikrStorage';
+import { CustomDialog } from '../CustomDialog';
 
 const DHIKRS = [
-  { id: 'subhanallah', label: 'Sübhanallah', arabic: 'سُبْحَانَ اللّٰهِ', target: 33 },
-  { id: 'elhamdulillah', label: 'Elhamdülillah', arabic: 'اَلْحَمْدُ لِلّٰهِ', target: 33 },
-  { id: 'allahuekber', label: 'Allahu Ekber', arabic: 'اَللّٰهُ أَكْبَرُ', target: 33 },
-  { id: 'lailaheillallah', label: 'Lâ İlâhe İllallah', arabic: 'لَا إِلٰهَ إِلَّا اللّٰهُ', target: 99 },
-  { id: 'estagfirullah', label: 'Estağfirullah', arabic: 'أَسْتَغْفِرُ اللّٰهَ', target: 99 },
-  { id: 'salavat', label: 'Salavat', arabic: 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ', target: 99 },
+  { id: 'subhanallah', label: 'Sübhanallah', arabic: 'سُبْحَانَ اللّٰهِ', target: 100 },
+  { id: 'elhamdulillah', label: 'Elhamdülillah', arabic: 'اَلْحَمْدُ لِلّٰهِ', target: 100 },
+  { id: 'allahuekber', label: 'Allahu Ekber', arabic: 'اَللّٰهُ أَكْبَرُ', target: 100 },
+  { id: 'lailaheillallah', label: 'Lâ İlâhe İllallah', arabic: 'لَا إِلٰهَ إِلَّا اللّٰهُ', target: 100 },
+  { id: 'estagfirullah', label: 'Estağfirullah', arabic: 'أَسْتَغْفِرُ اللّٰهَ', target: 100 },
+  { id: 'salavat', label: 'Salavat', arabic: 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ', target: 100 },
 ];
 
 const RING_SIZE = 260;
@@ -43,11 +45,18 @@ export function ClassicDhikr() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [count, setCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [allTotals, setAllTotals] = useState({});
+  const [completionVisible, setCompletionVisible] = useState(false);
+  const current = DHIKRS[selectedIdx];
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
+  // Load dhikr totals
   useEffect(() => {
-    getGrandTotal().then((t) => setTotalCount(t));
-  }, []);
+    getDhikrTotal(current.id).then(t => setTotalCount(t));
+    getDhikrData().then(data => setAllTotals(data.totals));
+  }, [current.id]);
+
+
 
   const fadeRing = useRef(new Animated.Value(0)).current;
   const scaleRing = useRef(new Animated.Value(0.85)).current;
@@ -73,7 +82,7 @@ export function ClassicDhikr() {
     ]).start();
   }, []);
 
-  const current = DHIKRS[selectedIdx];
+
   const progress = Math.min(count / current.target, 1);
   const filledTicks = Math.round(progress * TICK_COUNT);
 
@@ -86,17 +95,26 @@ export function ClassicDhikr() {
 
   const handleTap = useCallback(() => {
     triggerPulse();
-    Vibration.vibrate(Platform.OS === 'ios' ? 3 : 15);
+    Haptics.selectionAsync();
     setCount((c) => {
       const next = c + 1;
       if (next === current.target) {
         setTimeout(() => Vibration.vibrate([0, 40, 60, 40]), 100);
-        saveDhikrCount(current.id, current.target).catch(() => {});
+        saveDhikrSession(current.id, current.target).catch(() => {});
+        // Show prayer popup
+        setTimeout(() => setCompletionVisible(true), 400);
       }
       return next;
     });
+    
+    // Save +1 to database immediately for persistence
+    incrementDhikrCount(current.id).catch(() => {});
+
     setTotalCount((t) => t + 1);
+    setAllTotals((prev) => ({ ...prev, [current.id]: (prev[current.id] || 0) + 1 }));
   }, [current.target, current.id, triggerPulse]);
+
+
 
   const handleReset = useCallback(() => {
     Alert.alert('Sıfırla', 'Sayacı sıfırlamak istediğinize emin misiniz?', [
@@ -132,8 +150,7 @@ export function ClassicDhikr() {
               <View style={s.goldRing}>
                 <View style={s.innerRing}>
                   <Text style={s.arabicText}>{current.arabic}</Text>
-                  <Text style={s.countText}>{count}</Text>
-                  <Text style={s.targetText}>/ {current.target}</Text>
+                  <Text style={s.countText}>{totalCount}</Text>
                   <Text style={s.tapHint}>DOKUN VE ZİKRET</Text>
                 </View>
               </View>
@@ -147,8 +164,8 @@ export function ClassicDhikr() {
             <Text style={s.actionLabel}>Sıfırla</Text>
           </Pressable>
           <View style={s.totalBadge}>
-            <Text style={s.totalLabel}>TOPLAM</Text>
-            <Text style={s.totalValue}>{totalCount}</Text>
+            <Text style={s.totalLabel}>İLERLEME</Text>
+            <Text style={s.totalValue}>{count} / {current.target}</Text>
           </View>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
             <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
@@ -156,6 +173,15 @@ export function ClassicDhikr() {
           </Pressable>
         </Animated.View>
       </Animated.View>
+
+      <CustomDialog
+        visible={completionVisible}
+        icon="heart"
+        title="Zikir Tamamlandı"
+        message={`اللهم تقبل منا\n(Allahümme tekabbel minnâ)\n\nYa Rabbi, eksiklerimle beraber bu zikrimi katında kabul eyle, kalbime inşirah (ferahlık) ver.`}
+        buttons={[{ text: 'Allah Kabul Etsin' }]}
+        onClose={() => setCompletionVisible(false)}
+      />
 
       <Animated.View style={[s.selectorSection, { opacity: fadeSelector, transform: [{ translateY: slideSelector }] }]}>
         <Text style={s.selectorTitle}>✦  ZİKİR SEÇ  ✦</Text>
@@ -165,7 +191,7 @@ export function ClassicDhikr() {
             return (
               <Pressable key={d.id} style={[s.chip, active && s.chipActive]} onPress={() => selectDhikr(idx)}>
                 <Text style={[s.chipText, active && s.chipTextActive]}>{d.label}</Text>
-                <Text style={[s.chipTarget, active && s.chipTargetActive]}>×{d.target}</Text>
+                <Text style={[s.chipTarget, active && s.chipTargetActive]}>{allTotals[d.id] || 0}</Text>
               </Pressable>
             );
           })}

@@ -108,9 +108,7 @@ export function HomeScreen() {
   const nextPrayerName = nextPrayer?.label ?? '—';
   const nextPrayerTime = nextPrayer?.time ?? '';
 
-  const handleCalendar = useCallback(() => {
-    setCalendarVisible(true);
-  }, []);
+
 
   const toggleDropdown = useCallback(() => {
     const opening = !dropdownOpen;
@@ -184,7 +182,6 @@ export function HomeScreen() {
             <HeaderSection
               title="BUGÜNÜN VAKİTLERİ"
               dayName={hijriDay}
-              onCalendarPress={handleCalendar}
             />
 
             {/* ── Countdown Ring with progress ── */}

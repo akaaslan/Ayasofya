@@ -21,7 +21,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.knasln.Ayasofya"
+      "package": "com.Ayasofya.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,6 +30,9 @@
       "eas": {
         "projectId": "e7fd08fd-4c8a-4e30-8100-e43ed2ddef9f"
       }
-    }
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
   }
 }

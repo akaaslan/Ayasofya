@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -26,19 +27,20 @@ import Svg, {
 } from 'react-native-svg';
 
 import { colors } from '../../theme/colors';
-import { getGrandTotal, saveDhikrCount } from '../../utils/dhikrStorage';
+import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount } from '../../utils/dhikrStorage';
+import { CustomDialog } from '../CustomDialog';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
 const { width: W } = Dimensions.get('window');
 
 const DHIKRS = [
-  { id: 'subhanallah', label: 'Sübhanallah', arabic: 'سُبْحَانَ اللّٰهِ', target: 33 },
-  { id: 'elhamdulillah', label: 'Elhamdülillah', arabic: 'اَلْحَمْدُ لِلّٰهِ', target: 33 },
-  { id: 'allahuekber', label: 'Allahu Ekber', arabic: 'اَللّٰهُ أَكْبَرُ', target: 33 },
-  { id: 'lailaheillallah', label: 'Lâ İlâhe İllallah', arabic: 'لَا إِلٰهَ إِلَّا اللّٰهُ', target: 99 },
-  { id: 'estagfirullah', label: 'Estağfirullah', arabic: 'أَسْتَغْفِرُ اللّٰهَ', target: 99 },
-  { id: 'salavat', label: 'Salavat', arabic: 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ', target: 99 },
+  { id: 'subhanallah', label: 'Sübhanallah', arabic: 'سُبْحَانَ اللّٰهِ', target: 100 },
+  { id: 'elhamdulillah', label: 'Elhamdülillah', arabic: 'اَلْحَمْدُ لِلّٰهِ', target: 100 },
+  { id: 'allahuekber', label: 'Allahu Ekber', arabic: 'اَللّٰهُ أَكْبَرُ', target: 100 },
+  { id: 'lailaheillallah', label: 'Lâ İlâhe İllallah', arabic: 'لَا إِلٰهَ إِلَّا اللّٰهُ', target: 100 },
+  { id: 'estagfirullah', label: 'Estağfirullah', arabic: 'أَسْتَغْفِرُ اللّٰهَ', target: 100 },
+  { id: 'salavat', label: 'Salavat', arabic: 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ', target: 100 },
 ];
 
 const SVG_SIZE = Math.min(W * 0.82, 340);
@@ -53,7 +55,7 @@ function polarXY(deg, r) {
   return { x: CX + r * Math.sin(rad), y: CY - r * Math.cos(rad) };
 }
 
-function TasbihRingSvg({ count, target, arabic, progress, rotateAnim }) {
+function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim }) {
   const beadCount = Math.min(target, 33);
   const filledBeads = Math.round(progress * beadCount);
 
@@ -151,13 +153,9 @@ function TasbihRingSvg({ count, target, arabic, progress, rotateAnim }) {
         {arabic}
       </SvgText>
       <SvgText x={CX} y={CY + 18} fill={colors.textPrimary}
-        fontSize={52} fontWeight="200" textAnchor="middle"
+        fontSize={50} fontWeight="200" textAnchor="middle"
         fontFamily={Platform.select({ ios: 'Georgia', android: 'serif' })}>
-        {count}
-      </SvgText>
-      <SvgText x={CX} y={CY + 40} fill={colors.textMuted}
-        fontSize={14} fontWeight="400" textAnchor="middle">
-        / {target}
+        {totalCount}
       </SvgText>
       <SvgText x={CX} y={CY + 62} fill={colors.textMuted}
         fontSize={8} fontWeight="700" textAnchor="middle" letterSpacing={2.5}>
@@ -171,13 +169,17 @@ export function TasbihDhikr() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [count, setCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [allTotals, setAllTotals] = useState({});
+  const [completionVisible, setCompletionVisible] = useState(false);
+  const current = DHIKRS[selectedIdx];
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const rotateTarget = useRef(0);
 
   useEffect(() => {
-    getGrandTotal().then((t) => setTotalCount(t));
-  }, []);
+    getDhikrTotal(current.id).then((t) => setTotalCount(t));
+    getDhikrData().then(data => setAllTotals(data.totals));
+  }, [current.id]);
 
   const fadeRing = useRef(new Animated.Value(0)).current;
   const scaleRing = useRef(new Animated.Value(0.85)).current;
@@ -203,7 +205,7 @@ export function TasbihDhikr() {
     ]).start();
   }, []);
 
-  const current = DHIKRS[selectedIdx];
+
   const progress = Math.min(count / current.target, 1);
 
   const beadStep = 360 / Math.min(current.target, 33);
@@ -223,17 +225,26 @@ export function TasbihDhikr() {
 
   const handleTap = useCallback(() => {
     triggerPulse();
-    Vibration.vibrate(Platform.OS === 'ios' ? 3 : 15);
+    Haptics.selectionAsync();
     setCount((c) => {
       const next = c + 1;
       if (next === current.target) {
         setTimeout(() => Vibration.vibrate([0, 40, 60, 40]), 100);
-        saveDhikrCount(current.id, current.target).catch(() => {});
+        saveDhikrSession(current.id, current.target).catch(() => {});
+        // Show prayer popup
+        setTimeout(() => setCompletionVisible(true), 400);
       }
       return next;
     });
+
+    // Save +1 to database immediately for persistence
+    incrementDhikrCount(current.id).catch(() => {});
+
     setTotalCount((t) => t + 1);
+    setAllTotals((prev) => ({ ...prev, [current.id]: (prev[current.id] || 0) + 1 }));
   }, [current.target, current.id, triggerPulse]);
+
+
 
   const handleReset = useCallback(() => {
     Alert.alert('Sıfırla', 'Sayacı sıfırlamak istediğinize emin misiniz?', [
@@ -261,7 +272,7 @@ export function TasbihDhikr() {
       <Animated.View style={[s.counterSection, { opacity: fadeRing, transform: [{ scale: scaleRing }] }]}>
         <Pressable onPress={handleTap} style={s.tapArea}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <TasbihRingSvg count={count} target={current.target} arabic={current.arabic} progress={progress} rotateAnim={rotateAnim} />
+            <TasbihRingSvg count={count} totalCount={totalCount} target={current.target} arabic={current.arabic} progress={progress} rotateAnim={rotateAnim} />
           </Animated.View>
         </Pressable>
 
@@ -275,8 +286,8 @@ export function TasbihDhikr() {
             <Text style={s.actionLabel}>Sıfırla</Text>
           </Pressable>
           <View style={s.totalBadge}>
-            <Text style={s.totalLabel}>TOPLAM</Text>
-            <Text style={s.totalValue}>{totalCount}</Text>
+            <Text style={s.totalLabel}>İLERLEME</Text>
+            <Text style={s.totalValue}>{count} / {current.target}</Text>
           </View>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
             <View style={[s.actionCircle, s.actionCircleMuted]}>
@@ -287,6 +298,15 @@ export function TasbihDhikr() {
         </Animated.View>
       </Animated.View>
 
+      <CustomDialog
+        visible={completionVisible}
+        icon="heart"
+        title="Zikir Tamamlandı"
+        message={`اللهم تقبل منا\n(Allahümme tekabbel minnâ)\n\nYa Rabbi, eksiklerimle beraber bu zikrimi katında kabul eyle, kalbime inşirah (ferahlık) ver.`}
+        buttons={[{ text: 'Allah Kabul Etsin' }]}
+        onClose={() => setCompletionVisible(false)}
+      />
+
       <Animated.View style={[s.selectorSection, { opacity: fadeSelector, transform: [{ translateY: slideSelector }] }]}>
         <Text style={s.selectorTitle}>✦  ZİKİR SEÇ  ✦</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.selectorScroll}>
@@ -295,7 +315,7 @@ export function TasbihDhikr() {
             return (
               <Pressable key={d.id} style={[s.chip, active && s.chipActive]} onPress={() => selectDhikr(idx)}>
                 <Text style={[s.chipText, active && s.chipTextActive]}>{d.label}</Text>
-                <Text style={[s.chipTarget, active && s.chipTargetActive]}>×{d.target}</Text>
+                <Text style={[s.chipTarget, active && s.chipTargetActive]}>{allTotals[d.id] || 0}</Text>
               </Pressable>
             );
           })}

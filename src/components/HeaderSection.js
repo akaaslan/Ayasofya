@@ -7,22 +7,13 @@ import { colors } from '../theme/colors';
  * Top header: displays the category label (e.g. "BUGÜNÜN VAKİTLERİ"),
  * Hijri day name (e.g. "14 RAMAZAN"), and a pressable calendar button.
  */
-export function HeaderSection({ title, dayName, onCalendarPress }) {
+export function HeaderSection({ title, dayName }) {
   return (
     <View style={styles.container}>
       <View>
         <Text style={styles.label}>{title}</Text>
         <Text style={styles.day}>{dayName}</Text>
       </View>
-      <Pressable
-        style={({ pressed }) => [styles.calendarBtn, pressed && styles.calendarBtnPressed]}
-        onPress={onCalendarPress}
-        hitSlop={10}
-        accessibilityLabel="Takvim"
-        accessibilityRole="button"
-      >
-        <Ionicons name="calendar-outline" size={18} color={colors.accent} />
-      </Pressable>
     </View>
   );
 }
