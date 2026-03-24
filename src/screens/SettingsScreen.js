@@ -301,7 +301,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
                   styles.themeLabel,
                   themeKey === item.key && { color: colors.accent },
                 ]}>
-                  {item.label}
+                  {t[`theme_${item.key}`] || item.label}
                 </Text>
               </Pressable>
             ))}
@@ -370,7 +370,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
             <View style={styles.subSection}>
               {Object.keys(PRAYER_LABELS).map((key) => (
                 <View key={key} style={styles.subRow}>
-                  <Text style={styles.subRowLabel}>{PRAYER_LABELS[key]}</Text>
+                  <Text style={styles.subRowLabel}>{t[key] || PRAYER_LABELS[key]}</Text>
                   <Switch
                     value={prayerToggles[key]}
                     onValueChange={() => handleTogglePrayer(key)}
@@ -494,7 +494,9 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               <Ionicons name="text-outline" size={20} color={colors.accent} />
               <View>
                 <Text style={styles.rowLabel}>{t.fontSize || 'Yazı Boyutu (Arapça)'}</Text>
-                <Text style={styles.subRowHint}>{['Küçük', 'Normal', 'Büyük'][fontSizeLevel]}</Text>
+                <Text style={styles.subRowHint}>
+                  {[t.fontSmall || 'Küçük', t.fontNormal || 'Normal', t.fontLarge || 'Büyük'][fontSizeLevel]}
+                </Text>
               </View>
             </View>
             <View style={styles.rowRight}>

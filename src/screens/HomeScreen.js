@@ -292,29 +292,29 @@ export function HomeScreen() {
               <View style={styles.ramadanBanner}>
                 <View style={styles.ramadanHeader}>
                   <Text style={styles.ramadanIcon}>☪</Text>
-                  <Text style={styles.ramadanTitle}>Ramazan-ı Şerif</Text>
-                  <Text style={styles.ramadanDay}>{ramadan.dayOfRamadan}. gün</Text>
+                  <Text style={styles.ramadanTitle}>{t.ramadanTitle || 'Ramazan-ı Şerif'}</Text>
+                  <Text style={styles.ramadanDay}>{ramadan.dayOfRamadan}. {t.day || 'gün'}</Text>
                 </View>
                 <View style={styles.ramadanCounters}>
                   {ramadanInfo.isBeforeIftar && !ramadanInfo.isBeforeSahur && (
                     <View style={styles.ramadanCounter}>
-                      <Text style={styles.ramadanCounterLabel}>İftara Kalan</Text>
+                      <Text style={styles.ramadanCounterLabel}>{t.timeToIftar || 'İftara Kalan'}</Text>
                       <Text style={styles.ramadanCounterValue}>{ramadanInfo.iftarCountdown}</Text>
                       <Text style={styles.ramadanCounterTime}>{ramadanInfo.iftarTime}</Text>
                     </View>
                   )}
                   {ramadanInfo.isBeforeSahur && (
                     <View style={styles.ramadanCounter}>
-                      <Text style={styles.ramadanCounterLabel}>Sahura Kalan</Text>
+                      <Text style={styles.ramadanCounterLabel}>{t.timeToSahur || 'Sahura Kalan'}</Text>
                       <Text style={styles.ramadanCounterValue}>{ramadanInfo.sahurCountdown}</Text>
                       <Text style={styles.ramadanCounterTime}>{ramadanInfo.sahurTime}</Text>
                     </View>
                   )}
                   {!ramadanInfo.isBeforeIftar && !ramadanInfo.isBeforeSahur && (
                     <View style={styles.ramadanCounter}>
-                      <Text style={styles.ramadanCounterLabel}>İftar Yapıldı</Text>
+                      <Text style={styles.ramadanCounterLabel}>{t.iftarDone || 'İftar Yapıldı'}</Text>
                       <Text style={styles.ramadanCounterValue}>🤲</Text>
-                      <Text style={styles.ramadanCounterTime}>Hayırlı iftarlar</Text>
+                      <Text style={styles.ramadanCounterTime}>{t.happyIftar || 'Hayırlı iftarlar'}</Text>
                     </View>
                   )}
                 </View>
@@ -370,7 +370,7 @@ export function HomeScreen() {
               >
                 <View style={[styles.imageCardSmallInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
                   <Ionicons name="hand-left" size={24} color={colors.accent} />
-                  <Text style={styles.imageCardSmallLabel}>Dualar</Text>
+                  <Text style={styles.imageCardSmallLabel}>{t.duasCard || 'Dualar'}</Text>
                 </View>
               </Pressable>
 
@@ -381,7 +381,7 @@ export function HomeScreen() {
               >
                 <View style={[styles.imageCardSmallInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
                   <Ionicons name="sparkles" size={24} color={colors.accent} />
-                  <Text style={styles.imageCardSmallLabel}>Esma-ül{'\n'}Hüsna</Text>
+                  <Text style={styles.imageCardSmallLabel}>{t.esmaCard ? t.esmaCard.replace(' ', '\n') : 'Esma-ül\nHüsna'}</Text>
                 </View>
               </Pressable>
 
@@ -406,8 +406,8 @@ export function HomeScreen() {
                 <Ionicons name="bookmarks" size={22} color={colors.accent} />
               </View>
               <View style={styles.mosqueText}>
-                <Text style={styles.mosqueTitle}>Günün Ayeti</Text>
-                <Text style={styles.mosqueSubtitle}>Her gün yeni bir ayet, yeni bir ilham.</Text>
+                <Text style={styles.mosqueTitle}>{t.dailyVerseTitle || 'Günün Ayeti'}</Text>
+                <Text style={styles.mosqueSubtitle}>{t.dailyVerseSubtitle || 'Her gün yeni bir ayet, yeni bir ilham.'}</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </Pressable>
@@ -420,8 +420,8 @@ export function HomeScreen() {
                 <Ionicons name="business" size={22} color={colors.accent} />
               </View>
               <View style={styles.mosqueText}>
-                <Text style={styles.mosqueTitle}>Yakındaki Camiler</Text>
-                <Text style={styles.mosqueSubtitle}>Konumunuza en yakın ibadethaneleri bulun.</Text>
+                <Text style={styles.mosqueTitle}>{t.nearbyMosquesTitle || 'Yakındaki Camiler'}</Text>
+                <Text style={styles.mosqueSubtitle}>{t.nearbyMosquesSubtitle || 'Konumunuza en yakın ibadethaneleri bulun.'}</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </Pressable>

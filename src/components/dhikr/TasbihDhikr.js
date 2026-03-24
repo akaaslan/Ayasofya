@@ -26,6 +26,7 @@ import Svg, {
 } from 'react-native-svg';
 
 import { useTheme } from '../../context/ThemeContext';
+import { useI18n } from '../../context/I18nContext';
 import { colors } from '../../theme/colors';
 import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount } from '../../utils/dhikrStorage';
 import { getFontSize, getTapSoundEnabled } from '../../utils/preferences';
@@ -57,7 +58,7 @@ function polarXY(deg, r) {
   return { x: CX + r * Math.sin(rad), y: CY - r * Math.cos(rad) };
 }
 
-function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim, fontScale = 1 }) {
+function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim, fontScale = 1, t }) {
   const beadCount = Math.min(target, 33);
   const filledBeads = Math.round(progress * beadCount);
 
@@ -161,7 +162,7 @@ function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim
       </SvgText>
       <SvgText x={CX} y={CY + 62} fill={colors.textMuted}
         fontSize={8} fontWeight="700" textAnchor="middle" letterSpacing={2.5}>
-        DOKUN VE ZİKRET
+        {t.touchAndDhikr || 'DOKUN VE ZİKRET'}
       </SvgText>
     </Svg>
   );
@@ -169,6 +170,7 @@ function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim
 
 export function TasbihDhikr() {
   useTheme();
+  const { t } = useI18n();
   const s = createStyles();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [count, setCount] = useState(0);
@@ -262,18 +264,18 @@ export function TasbihDhikr() {
 
 
   const handleReset = useCallback(() => {
-    Alert.alert('Sıfırla', 'Sayacı sıfırlamak istediğinize emin misiniz?', [
-      { text: 'İptal', style: 'cancel' },
-      { text: 'Sıfırla', style: 'destructive', onPress: () => { setCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
+    Alert.alert(t.reset || 'Sıfırla', t.resetConfirm || 'Sayacı sıfırlamak istediğinize emin misiniz?', [
+      { text: t.cancel || 'İptal', style: 'cancel' },
+      { text: t.reset || 'Sıfırla', style: 'destructive', onPress: () => { setCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
     ]);
-  }, []);
+  }, [t, rotateAnim, rotateTarget]);
 
   const handleResetAll = useCallback(() => {
-    Alert.alert('Tümünü Sıfırla', 'Sayacı sıfırlamak istediğinize emin misiniz?\n(Geçmiş veriler kayıtlı kalır)', [
-      { text: 'İptal', style: 'cancel' },
-      { text: 'Sıfırla', style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
+    Alert.alert(t.resetAll || 'Tümünü Sıfırla', t.resetAllConfirm || 'Sayacı sıfırlamak istediğinize emin misiniz?\n(Geçmiş veriler kayıtlı kalır)', [
+      { text: t.cancel || 'İptal', style: 'cancel' },
+      { text: t.reset || 'Sıfırla', style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
     ]);
-  }, []);
+  }, [t, rotateAnim, rotateTarget]);
 
   const selectDhikr = useCallback((idx) => {
     setSelectedIdx(idx);
@@ -287,28 +289,28 @@ export function TasbihDhikr() {
       <Animated.View style={[s.counterSection, { opacity: fadeRing, transform: [{ scale: scaleRing }] }]}>
         <Pressable onPress={handleTap} style={s.tapArea}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <TasbihRingSvg count={count} totalCount={totalCount} target={current.target} arabic={current.arabic} progress={progress} rotateAnim={rotateAnim} fontScale={fontScale} />
+            <TasbihRingSvg count={count} totalCount={totalCount} target={current.target} arabic={current.arabic} progress={progress} rotateAnim={rotateAnim} fontScale={fontScale} t={t} />
           </Animated.View>
         </Pressable>
 
-        <Text style={s.currentLabel}>{current.label}</Text>
+        <Text style={s.currentLabel}>{t[current.id] || current.label}</Text>
 
         <Animated.View style={[s.actions, { opacity: fadeActions, transform: [{ translateY: slideActions }] }]}>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleReset}>
             <View style={s.actionCircle}>
               <Ionicons name="refresh" size={18} color={colors.accent} />
             </View>
-            <Text style={s.actionLabel}>Sıfırla</Text>
+            <Text style={s.actionLabel}>{t.reset || 'Sıfırla'}</Text>
           </Pressable>
           <View style={s.totalBadge}>
-            <Text style={s.totalLabel}>İLERLEME</Text>
+            <Text style={s.totalLabel}>{t.progress || 'İLERLEME'}</Text>
             <Text style={s.totalValue}>{count} / {current.target}</Text>
           </View>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
             <View style={[s.actionCircle, s.actionCircleMuted]}>
               <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
             </View>
-            <Text style={[s.actionLabel, { color: colors.textMuted }]}>Tümü</Text>
+            <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all || 'Tümü'}</Text>
           </Pressable>
         </Animated.View>
       </Animated.View>
@@ -316,20 +318,20 @@ export function TasbihDhikr() {
       <CustomDialog
         visible={completionVisible}
         icon="heart"
-        title="Zikir Tamamlandı"
-        message={`اللهم تقبل منا\n(Allahümme tekabbel minnâ)\n\nYa Rabbi, eksiklerimle beraber bu zikrimi katında kabul eyle, kalbime inşirah (ferahlık) ver.`}
-        buttons={[{ text: 'Allah Kabul Etsin' }]}
+        title={t.dhikrComplete || "Zikir Tamamlandı"}
+        message={t.dhikrCompleteMsg || `اللهم تقبل منا\n(Allahümme tekabbel minnâ)\n\nYa Rabbi, eksiklerimle beraber bu zikrimi katında kabul eyle, kalbime inşirah (ferahlık) ver.`}
+        buttons={[{ text: t.dhikrAccepted || 'Allah Kabul Etsin' }]}
         onClose={() => setCompletionVisible(false)}
       />
 
       <Animated.View style={[s.selectorSection, { opacity: fadeSelector, transform: [{ translateY: slideSelector }] }]}>
-        <Text style={s.selectorTitle}>✦  ZİKİR SEÇ  ✦</Text>
+        <Text style={s.selectorTitle}>{t.selectDhikr || '✦  ZİKİR SEÇ  ✦'}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.selectorScroll}>
           {DHIKRS.map((d, idx) => {
             const active = idx === selectedIdx;
             return (
               <Pressable key={d.id} style={[s.chip, active && s.chipActive]} onPress={() => selectDhikr(idx)}>
-                <Text style={[s.chipText, active && s.chipTextActive]}>{d.label}</Text>
+                <Text style={[s.chipText, active && s.chipTextActive]}>{t[d.id] || d.label}</Text>
                 <Text style={[s.chipTarget, active && s.chipTargetActive]}>{allTotals[d.id] || 0}</Text>
               </Pressable>
             );

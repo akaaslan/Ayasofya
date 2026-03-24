@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { useTheme } from '../../context/ThemeContext';
+import { useI18n } from '../../context/I18nContext';
 import { colors } from '../../theme/colors';
 import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount } from '../../utils/dhikrStorage';
 import { getFontSize, getTapSoundEnabled } from '../../utils/preferences';
@@ -45,6 +46,7 @@ const TICKS = Array.from({ length: TICK_COUNT }, (_, i) => {
 
 export function ClassicDhikr() {
   useTheme();
+  const { t } = useI18n();
   const s = createStyles();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [count, setCount] = useState(0);
@@ -132,18 +134,18 @@ export function ClassicDhikr() {
 
 
   const handleReset = useCallback(() => {
-    Alert.alert('Sıfırla', 'Sayacı sıfırlamak istediğinize emin misiniz?', [
-      { text: 'İptal', style: 'cancel' },
-      { text: 'Sıfırla', style: 'destructive', onPress: () => setCount(0) },
+    Alert.alert(t.reset || 'Sıfırla', t.resetConfirm || 'Sayacı sıfırlamak istediğinize emin misiniz?', [
+      { text: t.cancel || 'İptal', style: 'cancel' },
+      { text: t.reset || 'Sıfırla', style: 'destructive', onPress: () => setCount(0) },
     ]);
-  }, []);
+  }, [t]);
 
   const handleResetAll = useCallback(() => {
-    Alert.alert('Tümünü Sıfırla', 'Sayacı sıfırlamak istediğinize emin misiniz?\n(Geçmiş veriler kayıtlı kalır)', [
-      { text: 'İptal', style: 'cancel' },
-      { text: 'Sıfırla', style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); } },
+    Alert.alert(t.resetAll || 'Tümünü Sıfırla', t.resetAllConfirm || 'Sayacı sıfırlamak istediğinize emin misiniz?\n(Geçmiş veriler kayıtlı kalır)', [
+      { text: t.cancel || 'İptal', style: 'cancel' },
+      { text: t.reset || 'Sıfırla', style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); } },
     ]);
-  }, []);
+  }, [t]);
 
   const selectDhikr = useCallback((idx) => {
     setSelectedIdx(idx);
@@ -166,7 +168,7 @@ export function ClassicDhikr() {
                 <View style={s.innerRing}>
                   <Text style={[s.arabicText, { fontSize: 18 * fontScale }]}>{current.arabic}</Text>
                   <Text style={[s.countText, { fontSize: 56 * fontScale, lineHeight: 62 * fontScale }]}>{totalCount}</Text>
-                  <Text style={s.tapHint}>DOKUN VE ZİKRET</Text>
+                  <Text style={s.tapHint}>{t.touchAndDhikr || 'DOKUN VE ZİKRET'}</Text>
                 </View>
               </View>
             </View>
@@ -176,15 +178,15 @@ export function ClassicDhikr() {
         <Animated.View style={[s.actions, { opacity: fadeActions, transform: [{ translateY: slideActions }] }]}>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleReset}>
             <Ionicons name="refresh" size={20} color={colors.accent} />
-            <Text style={s.actionLabel}>Sıfırla</Text>
+            <Text style={s.actionLabel}>{t.reset || 'Sıfırla'}</Text>
           </Pressable>
           <View style={s.totalBadge}>
-            <Text style={s.totalLabel}>İLERLEME</Text>
+            <Text style={s.totalLabel}>{t.progress || 'İLERLEME'}</Text>
             <Text style={s.totalValue}>{count} / {current.target}</Text>
           </View>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
             <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
-            <Text style={[s.actionLabel, { color: colors.textMuted }]}>Tümü</Text>
+            <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all || 'Tümü'}</Text>
           </Pressable>
         </Animated.View>
       </Animated.View>
@@ -192,20 +194,20 @@ export function ClassicDhikr() {
       <CustomDialog
         visible={completionVisible}
         icon="heart"
-        title="Zikir Tamamlandı"
-        message={`اللهم تقبل منا\n(Allahümme tekabbel minnâ)\n\nYa Rabbi, eksiklerimle beraber bu zikrimi katında kabul eyle, kalbime inşirah (ferahlık) ver.`}
-        buttons={[{ text: 'Allah Kabul Etsin' }]}
+        title={t.dhikrComplete || "Zikir Tamamlandı"}
+        message={t.dhikrCompleteMsg || `اللهم تقبل منا\n(Allahümme tekabbel minnâ)\n\nYa Rabbi, eksiklerimle beraber bu zikrimi katında kabul eyle, kalbime inşirah (ferahlık) ver.`}
+        buttons={[{ text: t.dhikrAccepted || 'Allah Kabul Etsin' }]}
         onClose={() => setCompletionVisible(false)}
       />
 
       <Animated.View style={[s.selectorSection, { opacity: fadeSelector, transform: [{ translateY: slideSelector }] }]}>
-        <Text style={s.selectorTitle}>✦  ZİKİR SEÇ  ✦</Text>
+        <Text style={s.selectorTitle}>{t.selectDhikr || '✦  ZİKİR SEÇ  ✦'}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.selectorScroll}>
           {DHIKRS.map((d, idx) => {
             const active = idx === selectedIdx;
             return (
               <Pressable key={d.id} style={[s.chip, active && s.chipActive]} onPress={() => selectDhikr(idx)}>
-                <Text style={[s.chipText, active && s.chipTextActive]}>{d.label}</Text>
+                <Text style={[s.chipText, active && s.chipTextActive]}>{t[d.id] || d.label}</Text>
                 <Text style={[s.chipTarget, active && s.chipTargetActive]}>{allTotals[d.id] || 0}</Text>
               </Pressable>
             );
