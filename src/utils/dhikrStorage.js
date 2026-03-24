@@ -13,21 +13,19 @@ export async function incrementDhikrCount(dhikrId) {
   const db = await getDB();
   const today = todayKey();
 
-  await db.withTransactionAsync(async () => {
-    // 1. Update total
-    await db.runAsync(
-      `INSERT INTO dhikr_totals (dhikrId, total) VALUES (?, 1)
-       ON CONFLICT(dhikrId) DO UPDATE SET total = total + 1`,
-      [dhikrId]
-    );
+  // 1. Update total
+  await db.runAsync(
+    `INSERT INTO dhikr_totals (dhikrId, total) VALUES (?, 1)
+     ON CONFLICT(dhikrId) DO UPDATE SET total = total + 1`,
+    [dhikrId]
+  );
 
-    // 2. Update daily total
-    await db.runAsync(
-      `INSERT INTO dhikr_daily (dateKey, dailyTotal) VALUES (?, 1)
-       ON CONFLICT(dateKey) DO UPDATE SET dailyTotal = dailyTotal + 1`,
-      [today]
-    );
-  });
+  // 2. Update daily total
+  await db.runAsync(
+    `INSERT INTO dhikr_daily (dateKey, dailyTotal) VALUES (?, 1)
+     ON CONFLICT(dateKey) DO UPDATE SET dailyTotal = dailyTotal + 1`,
+    [today]
+  );
 }
 
 /**
@@ -38,28 +36,26 @@ export async function saveDhikrSession(dhikrId, count) {
   const db = await getDB();
   const today = todayKey();
 
-  await db.withTransactionAsync(async () => {
-    // 1. Add session (totals are already tracked by incrementDhikrCount per-tap)
+  // 1. Add session (totals are already tracked by incrementDhikrCount per-tap)
+  await db.runAsync(
+    'INSERT INTO dhikr_sessions (dhikrId, count, date) VALUES (?, ?, ?)',
+    [dhikrId, count, today]
+  );
+
+  // 3. Keep last 100 sessions
+  const totalSessions = await db.getFirstAsync('SELECT COUNT(*) as c FROM dhikr_sessions');
+  if (totalSessions?.c > 100) {
+    const deleteCount = totalSessions.c - 100;
     await db.runAsync(
-      'INSERT INTO dhikr_sessions (dhikrId, count, date) VALUES (?, ?, ?)',
-      [dhikrId, count, today]
+      `DELETE FROM dhikr_sessions WHERE id IN (
+        SELECT id FROM dhikr_sessions ORDER BY id ASC LIMIT ?
+      )`,
+      [deleteCount]
     );
+  }
 
-    // 3. Keep last 100 sessions
-    const totalSessions = await db.getFirstAsync('SELECT COUNT(*) as c FROM dhikr_sessions');
-    if (totalSessions?.c > 100) {
-      const deleteCount = totalSessions.c - 100;
-      await db.runAsync(
-        `DELETE FROM dhikr_sessions WHERE id IN (
-          SELECT id FROM dhikr_sessions ORDER BY id ASC LIMIT ?
-        )`,
-        [deleteCount]
-      );
-    }
-
-    // 3. Clean up older daily totals
-    await db.runAsync('DELETE FROM dhikr_daily WHERE dateKey != ?', [today]);
-  });
+  // 3. Clean up older daily totals
+  await db.runAsync('DELETE FROM dhikr_daily WHERE dateKey != ?', [today]);
 
   return getDhikrData();
 }
@@ -71,21 +67,19 @@ export async function updateDhikrTotals(dhikrId, totalForThisDhikr, overallTotal
   const db = await getDB();
   const today = todayKey();
 
-  await db.withTransactionAsync(async () => {
-    // Overwrite the dhikr total
-    await db.runAsync(
-      `INSERT INTO dhikr_totals (dhikrId, total) VALUES (?, ?)
-       ON CONFLICT(dhikrId) DO UPDATE SET total = excluded.total`,
-      [dhikrId, totalForThisDhikr]
-    );
+  // Overwrite the dhikr total
+  await db.runAsync(
+    `INSERT INTO dhikr_totals (dhikrId, total) VALUES (?, ?)
+     ON CONFLICT(dhikrId) DO UPDATE SET total = excluded.total`,
+    [dhikrId, totalForThisDhikr]
+  );
 
-    // Reset daily total if new day
-    const currentDaily = await db.getFirstAsync('SELECT dateKey FROM dhikr_daily WHERE dateKey = ?', [today]);
-    if (!currentDaily) {
-      await db.runAsync('DELETE FROM dhikr_daily;');
-      await db.runAsync('INSERT INTO dhikr_daily (dateKey, dailyTotal) VALUES (?, 0)', [today]);
-    }
-  });
+  // Reset daily total if new day
+  const currentDaily = await db.getFirstAsync('SELECT dateKey FROM dhikr_daily WHERE dateKey = ?', [today]);
+  if (!currentDaily) {
+    await db.runAsync('DELETE FROM dhikr_daily;');
+    await db.runAsync('INSERT INTO dhikr_daily (dateKey, dailyTotal) VALUES (?, 0)', [today]);
+  }
 
   return getDhikrData();
 }
