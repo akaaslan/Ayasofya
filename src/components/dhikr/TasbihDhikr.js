@@ -9,7 +9,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   Vibration,
   View,
@@ -26,8 +25,11 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 
+import { useTheme } from '../../context/ThemeContext';
 import { colors } from '../../theme/colors';
 import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount } from '../../utils/dhikrStorage';
+import { getFontSize, getTapSoundEnabled } from '../../utils/preferences';
+import { playTapSound } from '../../utils/tapSound';
 import { CustomDialog } from '../CustomDialog';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
@@ -55,7 +57,7 @@ function polarXY(deg, r) {
   return { x: CX + r * Math.sin(rad), y: CY - r * Math.cos(rad) };
 }
 
-function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim }) {
+function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim, fontScale = 1 }) {
   const beadCount = Math.min(target, 33);
   const filledBeads = Math.round(progress * beadCount);
 
@@ -149,11 +151,11 @@ function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim
       </AnimatedG>
 
       <SvgText x={CX} y={CY - 24} fill={colors.accent}
-        fontSize={16} fontWeight="400" textAnchor="middle" opacity={0.9}>
+        fontSize={16 * fontScale} fontWeight="400" textAnchor="middle" opacity={0.9}>
         {arabic}
       </SvgText>
       <SvgText x={CX} y={CY + 18} fill={colors.textPrimary}
-        fontSize={50} fontWeight="200" textAnchor="middle"
+        fontSize={50 * fontScale} fontWeight="200" textAnchor="middle"
         fontFamily={Platform.select({ ios: 'Georgia', android: 'serif' })}>
         {totalCount}
       </SvgText>
@@ -166,15 +168,25 @@ function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim
 }
 
 export function TasbihDhikr() {
+  useTheme();
+  const s = createStyles();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [count, setCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [allTotals, setAllTotals] = useState({});
   const [completionVisible, setCompletionVisible] = useState(false);
+  const [fontScale, setFontScale] = useState(1);
+  const [tapSoundOn, setTapSoundOn] = useState(false);
   const current = DHIKRS[selectedIdx];
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const rotateTarget = useRef(0);
+
+  // Load font size preference
+  useEffect(() => {
+    getFontSize().then(level => setFontScale([0.8, 1, 1.25][level] || 1));
+    getTapSoundEnabled().then(setTapSoundOn);
+  }, []);
 
   useEffect(() => {
     getDhikrTotal(current.id).then((t) => setTotalCount(t));
@@ -189,7 +201,7 @@ export function TasbihDhikr() {
   const slideSelector = useRef(new Animated.Value(40)).current;
 
   useEffect(() => {
-    Animated.stagger(120, [
+    const anim = Animated.stagger(120, [
       Animated.parallel([
         Animated.timing(fadeRing, { toValue: 1, duration: 500, useNativeDriver: true }),
         Animated.spring(scaleRing, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
@@ -202,7 +214,9 @@ export function TasbihDhikr() {
         Animated.timing(fadeSelector, { toValue: 1, duration: 400, useNativeDriver: true }),
         Animated.timing(slideSelector, { toValue: 0, duration: 400, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       ]),
-    ]).start();
+    ]);
+    anim.start();
+    return () => anim.stop();
   }, []);
 
 
@@ -226,11 +240,12 @@ export function TasbihDhikr() {
   const handleTap = useCallback(() => {
     triggerPulse();
     Haptics.selectionAsync();
+    if (tapSoundOn) playTapSound();
     setCount((c) => {
       const next = c + 1;
       if (next === current.target) {
         setTimeout(() => Vibration.vibrate([0, 40, 60, 40]), 100);
-        saveDhikrSession(current.id, current.target).catch(() => {});
+        saveDhikrSession(current.id, current.target).catch(e => console.warn('Session save error:', e));
         // Show prayer popup
         setTimeout(() => setCompletionVisible(true), 400);
       }
@@ -238,11 +253,11 @@ export function TasbihDhikr() {
     });
 
     // Save +1 to database immediately for persistence
-    incrementDhikrCount(current.id).catch(() => {});
+    incrementDhikrCount(current.id).catch(e => console.warn('Dhikr increment error:', e));
 
     setTotalCount((t) => t + 1);
     setAllTotals((prev) => ({ ...prev, [current.id]: (prev[current.id] || 0) + 1 }));
-  }, [current.target, current.id, triggerPulse]);
+  }, [current.target, current.id, triggerPulse, tapSoundOn]);
 
 
 
@@ -272,7 +287,7 @@ export function TasbihDhikr() {
       <Animated.View style={[s.counterSection, { opacity: fadeRing, transform: [{ scale: scaleRing }] }]}>
         <Pressable onPress={handleTap} style={s.tapArea}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <TasbihRingSvg count={count} totalCount={totalCount} target={current.target} arabic={current.arabic} progress={progress} rotateAnim={rotateAnim} />
+            <TasbihRingSvg count={count} totalCount={totalCount} target={current.target} arabic={current.arabic} progress={progress} rotateAnim={rotateAnim} fontScale={fontScale} />
           </Animated.View>
         </Pressable>
 
@@ -325,7 +340,7 @@ export function TasbihDhikr() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = () => ({
   wrapper: { flex: 1 },
   counterSection: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: -16 },
   tapArea: { alignItems: 'center', justifyContent: 'center' },

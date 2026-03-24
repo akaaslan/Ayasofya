@@ -3,6 +3,7 @@ import { Dimensions, StyleSheet, View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg';
 
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -34,6 +35,8 @@ function Star8({ cx, cy, r, stroke, strokeWidth = 0.5, opacity = 0.12 }) {
  * interlocking circles, and lattice lines.
  */
 export function ScreenBackground({ children }) {
+  useTheme();
+  const styles = createStyles();
   return (
     <LinearGradient
       colors={[colors.backgroundTop, '#072b24', colors.backgroundBottom]}
@@ -122,7 +125,7 @@ export function ScreenBackground({ children }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   background: {
     flex: 1,
   },

@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { HolidayBanner } from '../components/HolidayBanner';
+import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import { DualarScreen } from '../screens/DualarScreen';
 import { QiblaScreen } from '../screens/QiblaScreen';
@@ -20,6 +21,8 @@ const TAB_ICONS = {
 };
 
 export function AppNavigator() {
+  useTheme();
+  const styles = createStyles();
   const [holidayBannerEnabled, setHolidayBannerEnabled] = useState(true);
   const [holidayBannerDismissed, setHolidayBannerDismissed] = useState(false);
 
@@ -84,7 +87,7 @@ export function AppNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   tabBar: {
     backgroundColor: 'rgba(8, 30, 26, 0.97)',
     borderTopWidth: 1,

@@ -5,12 +5,12 @@ import {
   Easing,
   Modal,
   Pressable,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
 
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 /**
  * Custom themed dialog replacing native Alert.alert().
@@ -24,6 +24,8 @@ import { colors } from '../theme/colors';
  *   onClose    – called when backdrop pressed or dialog dismissed
  */
 export function CustomDialog({ visible, icon, title, message, buttons = [], onClose }) {
+  useTheme();
+  const styles = createStyles();
   const fade = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.85)).current;
 
@@ -122,7 +124,7 @@ export function CustomDialog({ visible, icon, title, message, buttons = [], onCl
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',

@@ -1,29 +1,74 @@
 /**
  * Islamic / Turkish religious holidays utility.
- * Uses approximate Hijri → Gregorian mappings for upcoming years.
- * In a production app this would use an astronomical Hijri calendar library.
+ * Dynamically computes approximate Gregorian dates from Hijri calendar
+ * so holidays auto-shift each year without hardcoding.
  */
 
-/* ── Upcoming religious holidays (Gregorian dates) ─────────── */
-const HOLIDAYS = [
-  // 2026
-  { name: 'Regaib Kandili',       date: new Date(2026, 0, 1) },   // Jan 1 2026 (approx)
-  { name: 'Miraç Kandili',        date: new Date(2026, 0, 22) },
-  { name: 'Berat Kandili',        date: new Date(2026, 1, 6) },   // Feb 6
-  { name: 'Ramazan Başlangıcı',   date: new Date(2026, 1, 18) },  // Feb 18
-  { name: 'Kadir Gecesi',         date: new Date(2026, 2, 16) },  // Mar 16
-  { name: 'Ramazan Bayramı',      date: new Date(2026, 2, 20) },  // Mar 20-22
-  { name: 'Kurban Bayramı',       date: new Date(2026, 4, 27) },  // May 27-30
-  { name: 'Hicri Yılbaşı',        date: new Date(2026, 5, 17) },  // Jun 17
-  { name: 'Aşure Günü',           date: new Date(2026, 5, 26) },  // Jun 26
-  { name: 'Mevlid Kandili',       date: new Date(2026, 7, 26) },  // Aug 26
+import { gregorianToHijri } from './hijriDate';
 
-  // 2027 (approximate)
-  { name: 'Regaib Kandili',       date: new Date(2026, 11, 21) },
-  { name: 'Ramazan Başlangıcı',   date: new Date(2027, 1, 8) },
-  { name: 'Ramazan Bayramı',      date: new Date(2027, 2, 10) },
-  { name: 'Kurban Bayramı',       date: new Date(2027, 4, 17) },
+/* ── Holidays defined by Hijri month/day ─────────── */
+const HIJRI_HOLIDAYS = [
+  { name: 'Regaib Kandili',       month: 7, day: 1 },   // 1st Thurs of Recep (approx Recep 1)
+  { name: 'Miraç Kandili',        month: 7, day: 27 },  // 27 Recep
+  { name: 'Berat Kandili',        month: 8, day: 15 },  // 15 Şaban
+  { name: 'Ramazan Başlangıcı',   month: 9, day: 1 },   // 1 Ramazan
+  { name: 'Kadir Gecesi',         month: 9, day: 27 },  // 27 Ramazan
+  { name: 'Ramazan Bayramı',      month: 10, day: 1 },  // 1 Şevval
+  { name: 'Kurban Bayramı',       month: 12, day: 10 }, // 10 Zilhicce
+  { name: 'Hicri Yılbaşı',        month: 1, day: 1 },   // 1 Muharrem
+  { name: 'Aşure Günü',           month: 1, day: 10 },  // 10 Muharrem
+  { name: 'Mevlid Kandili',       month: 3, day: 12 },  // 12 Rebiülevvel
 ];
+
+/**
+ * Find the approximate Gregorian date for a given Hijri month/day
+ * by scanning days forward from a start point.
+ * Returns a Date or null if not found within scan range.
+ */
+function hijriToGregorian(hijriMonth, hijriDay, startGregorian, maxDays = 400) {
+  const start = new Date(startGregorian);
+  for (let i = 0; i < maxDays; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const h = gregorianToHijri(d);
+    if (h.month === hijriMonth && h.day === hijriDay) {
+      return d;
+    }
+  }
+  return null;
+}
+
+/**
+ * Build dynamic holidays list for the upcoming ~14 months from `now`.
+ * Caches per Gregorian year to avoid re-scanning on every call.
+ */
+const _cache = {};
+function buildHolidays(now) {
+  const yearKey = now.getFullYear();
+  if (_cache[yearKey]) return _cache[yearKey];
+
+  const scanStart = new Date(now.getFullYear(), 0, 1); // start of current year
+  const holidays = [];
+
+  for (const h of HIJRI_HOLIDAYS) {
+    // Scan from start of year
+    const d = hijriToGregorian(h.month, h.day, scanStart, 500);
+    if (d) holidays.push({ name: h.name, date: d });
+
+    // Also scan from ~354 days later for next Hijri year occurrence
+    const nextStart = new Date(scanStart);
+    nextStart.setDate(nextStart.getDate() + 340);
+    const d2 = hijriToGregorian(h.month, h.day, nextStart, 400);
+    if (d2 && d2.getTime() !== d?.getTime()) {
+      holidays.push({ name: h.name, date: d2 });
+    }
+  }
+
+  // Sort chronologically
+  holidays.sort((a, b) => a.date.getTime() - b.date.getTime());
+  _cache[yearKey] = holidays;
+  return holidays;
+}
 
 /** Helper: compute days/hours/minutes left */
 function computeDiff(targetDate, now) {
@@ -41,8 +86,9 @@ function computeDiff(targetDate, now) {
  */
 export function getNextHoliday(now = new Date()) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const holidays = buildHolidays(now);
 
-  for (const h of HOLIDAYS) {
+  for (const h of holidays) {
     if (h.date >= today) {
       const diff = computeDiff(h.date, now);
       return { name: h.name, date: h.date, ...diff };
@@ -57,7 +103,8 @@ export function getNextHoliday(now = new Date()) {
  */
 export function getAllUpcomingHolidays(now = new Date()) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return HOLIDAYS
+  const holidays = buildHolidays(now);
+  return holidays
     .filter((h) => h.date >= today)
     .map((h) => ({ name: h.name, date: h.date, ...computeDiff(h.date, now) }));
 }

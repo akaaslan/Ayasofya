@@ -6,7 +6,6 @@ import {
   Easing,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -14,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CustomDialog } from '../components/CustomDialog';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import {
   decrementKaza,
@@ -35,6 +35,7 @@ const PRAYERS = [
 
 /* ── Counter Row Component ─────────────────────── */
 function CounterRow({ prayer, count, onIncrement, onDecrement }) {
+  const styles = createStyles();
   return (
     <View style={styles.counterRow}>
       <View style={styles.counterLeft}>
@@ -72,6 +73,8 @@ function CounterRow({ prayer, count, onIncrement, onDecrement }) {
 
 /* ── Main Screen ────────────────────────────────── */
 export function KazaNamazScreen() {
+  useTheme();
+  const styles = createStyles();
   const navigation = useNavigation();
   const [counts, setCounts] = useState({});
   const [total, setTotal] = useState(0);
@@ -214,6 +217,26 @@ export function KazaNamazScreen() {
             </Pressable>
           </Animated.View>
 
+          {/* Kaza Progress Chart (#11) */}
+          {total > 0 && (
+            <Animated.View style={[styles.chartCard, { opacity: fadeSummary, transform: [{ translateY: slideSummary }] }]}>
+              <Text style={styles.chartTitle}>Kaza Dağılımı</Text>
+              {PRAYERS.map((prayer) => {
+                const c = counts[prayer.key] || 0;
+                const pct = total > 0 ? (c / total) * 100 : 0;
+                return (
+                  <View key={prayer.key} style={styles.chartRow}>
+                    <Text style={styles.chartLabel}>{prayer.label}</Text>
+                    <View style={styles.chartBarBg}>
+                      <View style={[styles.chartBarFill, { width: `${pct}%` }]} />
+                    </View>
+                    <Text style={styles.chartCount}>{c}</Text>
+                  </View>
+                );
+              })}
+            </Animated.View>
+          )}
+
           <View style={{ height: 100 }} />
         </ScrollView>
 
@@ -232,7 +255,7 @@ export function KazaNamazScreen() {
 }
 
 /* ── Styles ─────────────────────────────────────── */
-const styles = StyleSheet.create({
+const createStyles = () => ({
   safe: { flex: 1 },
   scroll: {
     paddingHorizontal: 18,
@@ -407,5 +430,51 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     fontWeight: '600',
+  },
+
+  /* Chart */
+  chartCard: {
+    backgroundColor: colors.panel,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  chartTitle: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  chartRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 10,
+  },
+  chartLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    width: 50,
+  },
+  chartBarBg: {
+    flex: 1,
+    height: 12,
+    backgroundColor: colors.ringBase,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  chartBarFill: {
+    height: '100%',
+    backgroundColor: colors.accent,
+    borderRadius: 6,
+  },
+  chartCount: {
+    color: colors.textMuted,
+    fontSize: 12,
+    width: 30,
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
   },
 });

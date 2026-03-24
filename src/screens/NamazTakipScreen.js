@@ -13,11 +13,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import {
   getDayTracking,
+  getMonthlyStats,
   getStreak,
   getWeeklyStats,
+  setDayPrayer,
   togglePrayer,
   TRACKABLE_PRAYERS,
 } from '../utils/prayerTracking';
@@ -33,6 +36,7 @@ const PRAYER_INFO = {
 
 /* ── Animated checkbox row ── */
 function PrayerRow({ prayerKey, checked, onToggle, isLast }) {
+  const styles = createStyles();
   const info = PRAYER_INFO[prayerKey];
   const scale = useRef(new Animated.Value(1)).current;
   const checkOpacity = useRef(new Animated.Value(checked ? 1 : 0)).current;
@@ -95,6 +99,7 @@ function PrayerRow({ prayerKey, checked, onToggle, isLast }) {
 
 /* ── Animated progress bar ── */
 function AnimatedProgressBar({ progress }) {
+  const styles = createStyles();
   const widthAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -120,6 +125,7 @@ function AnimatedProgressBar({ progress }) {
 
 /* ── Animated weekly bar ── */
 function WeekBar({ pct, isToday, dayLabel, dayNum }) {
+  const styles = createStyles();
   const heightAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -150,11 +156,15 @@ function WeekBar({ pct, isToday, dayLabel, dayNum }) {
 
 /* ── Component ─────────────────────────────────── */
 export function NamazTakipScreen() {
+  useTheme();
+  const styles = createStyles();
   const navigation = useNavigation();
   const [dayData, setDayData] = useState({});
   const [streak, setStreak] = useState(0);
   const [weekStats, setWeekStats] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [monthStats, setMonthStats] = useState(null);
 
   /* ── Entrance animations ── */
   const fadeHeader  = useRef(new Animated.Value(0)).current;
@@ -198,15 +208,17 @@ export function NamazTakipScreen() {
 
   /* ── Data loading ── */
   const loadData = useCallback(async () => {
-    const [day, s, week] = await Promise.all([
-      getDayTracking(),
+    const [day, s, week, mStats] = await Promise.all([
+      getDayTracking(selectedDate),
       getStreak(),
       getWeeklyStats(),
+      getMonthlyStats(selectedDate.getFullYear(), selectedDate.getMonth()),
     ]);
     setDayData(day);
     setStreak(s);
     setWeekStats(week);
-  }, []);
+    setMonthStats(mStats);
+  }, [selectedDate]);
 
   useEffect(() => {
     loadData();
@@ -214,9 +226,31 @@ export function NamazTakipScreen() {
 
   /* ── Toggle handler ── */
   const handleToggle = useCallback(async (prayerKey) => {
-    await togglePrayer(prayerKey);
+    const isToday = selectedDate.toDateString() === new Date().toDateString();
+    if (isToday) {
+      await togglePrayer(prayerKey);
+    } else {
+      const newVal = !dayData[prayerKey];
+      await setDayPrayer(prayerKey, newVal, selectedDate);
+    }
     setRefreshKey((k) => k + 1);
+  }, [selectedDate, dayData]);
+
+  /* ── Date navigation ── */
+  const goDay = useCallback((offset) => {
+    setSelectedDate((d) => {
+      const nd = new Date(d);
+      nd.setDate(nd.getDate() + offset);
+      if (nd > new Date()) return d; // don't go into future
+      return nd;
+    });
   }, []);
+
+  const isToday = selectedDate.toDateString() === new Date().toDateString();
+
+  const dateLabel = isToday
+    ? 'Bugün'
+    : selectedDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
 
   /* ── Count today's completed ── */
   const todayCompleted = TRACKABLE_PRAYERS.filter((p) => dayData[p]).length;
@@ -280,6 +314,24 @@ export function NamazTakipScreen() {
             <AnimatedProgressBar progress={todayProgress} />
           </Animated.View>
 
+          {/* ── Date Navigation ── */}
+          <Animated.View
+            style={[
+              styles.dateNav,
+              { opacity: fadeList, transform: [{ translateY: slideList }] },
+            ]}
+          >
+            <Pressable onPress={() => goDay(-1)} style={styles.dateNavBtn}>
+              <Ionicons name="chevron-back" size={20} color={colors.accent} />
+            </Pressable>
+            <Pressable onPress={() => setSelectedDate(new Date())} style={styles.dateNavCenter}>
+              <Text style={styles.dateNavLabel}>{dateLabel}</Text>
+            </Pressable>
+            <Pressable onPress={() => goDay(1)} style={[styles.dateNavBtn, isToday && { opacity: 0.3 }]} disabled={isToday}>
+              <Ionicons name="chevron-forward" size={20} color={colors.accent} />
+            </Pressable>
+          </Animated.View>
+
           {/* ── Prayer Checklist (animated rows) ── */}
           <Animated.View
             style={[
@@ -287,7 +339,7 @@ export function NamazTakipScreen() {
               { opacity: fadeList, transform: [{ translateY: slideList }] },
             ]}
           >
-            <Text style={styles.listTitle}>Bugünkü Namazlar</Text>
+            <Text style={styles.listTitle}>{isToday ? 'Bugünkü Namazlar' : dateLabel}</Text>
             {TRACKABLE_PRAYERS.map((key, idx) => (
               <PrayerRow
                 key={key}
@@ -310,7 +362,9 @@ export function NamazTakipScreen() {
             <View style={styles.weekRow}>
               {weekStats.map((day) => {
                 const pct = day.total > 0 ? day.completed / day.total : 0;
-                const isToday = day.dateKey === new Date().toISOString().slice(0, 10);
+                const now = new Date();
+                const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const isToday = day.dateKey === todayKey;
                 return (
                   <WeekBar
                     key={day.dateKey}
@@ -333,6 +387,32 @@ export function NamazTakipScreen() {
             </View>
           </Animated.View>
 
+          {/* ── Monthly Stats ── */}
+          {monthStats && (
+            <Animated.View
+              style={[
+                styles.statsCard,
+                { opacity: fadeStats, transform: [{ translateY: slideStats }], marginTop: 16 },
+              ]}
+            >
+              <Text style={styles.listTitle}>Aylık İstatistik</Text>
+              <View style={styles.monthStatRow}>
+                <View style={styles.monthStatItem}>
+                  <Text style={styles.monthStatNum}>{monthStats.totalPrayed}</Text>
+                  <Text style={styles.monthStatLabel}>Kılınan</Text>
+                </View>
+                <View style={styles.monthStatItem}>
+                  <Text style={styles.monthStatNum}>{monthStats.totalPossible}</Text>
+                  <Text style={styles.monthStatLabel}>Toplam</Text>
+                </View>
+                <View style={styles.monthStatItem}>
+                  <Text style={[styles.monthStatNum, { color: colors.accent }]}>%{monthStats.percentage}</Text>
+                  <Text style={styles.monthStatLabel}>Başarı</Text>
+                </View>
+              </View>
+            </Animated.View>
+          )}
+
           <View style={{ height: 40 }} />
         </ScrollView>
       </SafeAreaView>
@@ -341,7 +421,7 @@ export function NamazTakipScreen() {
 }
 
 /* ── Styles ─────────────────────────────────────── */
-const styles = StyleSheet.create({
+const createStyles = () => ({
   safe: { flex: 1 },
   scroll: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 30 },
 
@@ -537,5 +617,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.accent,
+  },
+
+  /* Date navigation */
+  dateNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.panel,
+    borderRadius: 14,
+    padding: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  dateNavBtn: {
+    padding: 6,
+  },
+  dateNavCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dateNavLabel: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  /* Monthly stats */
+  monthStatRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
+  },
+  monthStatItem: {
+    alignItems: 'center',
+  },
+  monthStatNum: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  monthStatLabel: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 2,
   },
 });

@@ -40,7 +40,7 @@ export async function incrementKaza(prayerKey, amount = 1) {
   const db = await getDB();
   await db.runAsync(
     `INSERT INTO kaza (prayerKey, count) VALUES (?, ?) 
-     ON CONFLICT(prayerKey) DO UPDATE SET count = MAX(0, count + excluded.count)`,
+     ON CONFLICT(prayerKey) DO UPDATE SET count = count + excluded.count`,
     [prayerKey, amount]
   );
   // Re-read data
@@ -54,8 +54,8 @@ export async function decrementKaza(prayerKey, amount = 1) {
   const db = await getDB();
   await db.runAsync(
     `INSERT INTO kaza (prayerKey, count) VALUES (?, 0) 
-     ON CONFLICT(prayerKey) DO UPDATE SET count = MAX(0, count - ?)`,
-    [prayerKey, amount]
+     ON CONFLICT(prayerKey) DO UPDATE SET count = CASE WHEN count - ? < 0 THEN 0 ELSE count - ? END`,
+    [prayerKey, amount, amount]
   );
   return loadKazaData();
 }

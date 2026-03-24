@@ -52,12 +52,14 @@ function parseDbRow(row, baseDate, tz) {
 
 /* ── API Fetch & Storage ── */
 
-let activeFetchPromise = null;
+let activeFetch = null; // { promise, lat, lng }
 
 async function fetchAndSaveToDb(lat, lng) {
-  if (activeFetchPromise) return activeFetchPromise;
+  if (activeFetch && activeFetch.lat === lat && activeFetch.lng === lng) {
+    return activeFetch.promise;
+  }
 
-  activeFetchPromise = (async () => {
+  const promise = (async () => {
     const url = `${API_BASE}?lat=${lat.toFixed(2)}&lon=${lng.toFixed(2)}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
@@ -105,10 +107,12 @@ async function fetchAndSaveToDb(lat, lng) {
     }
   })();
 
+  activeFetch = { promise, lat, lng };
+
   try {
-    await activeFetchPromise;
+    await promise;
   } finally {
-    activeFetchPromise = null;
+    activeFetch = null;
   }
 }
 

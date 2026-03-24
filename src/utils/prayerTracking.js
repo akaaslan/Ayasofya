@@ -108,34 +108,32 @@ export async function getWeeklyStats() {
   // Prepare all last 7 days keys
   const keys = [];
   const daysInfo = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const key = dateKey(d);
-    keys.push(`'${key}'`);
-    daysInfo.push({ date: d, key: key, idx: i });
+    keys.push(key);
+    daysInfo.push({ date: new Date(d), key, idx: i });
   }
   
-  const rows = await db.getAllAsync(`
-    SELECT dateKey, COUNT(*) as completed 
-    FROM prayer_tracking 
-    WHERE checked = 1 AND dateKey IN (${keys.join(',')})
-    GROUP BY dateKey
-  `);
+  const placeholders = keys.map(() => '?').join(',');
+  const rows = await db.getAllAsync(
+    `SELECT dateKey, COUNT(*) as completed 
+     FROM prayer_tracking 
+     WHERE checked = 1 AND dateKey IN (${placeholders})
+     GROUP BY dateKey`,
+    keys
+  );
   
   const countsMap = {};
   for (const row of rows) {
     countsMap[row.dateKey] = row.completed;
   }
   
-  // They should be returned in descending or ascending order?
-  // Original pushed from 6 to 0, so older dates to today.
-  daysInfo.reverse();
-  
   for (const info of daysInfo) {
     const completedCount = countsMap[info.key] || 0;
     stats.push({
-      date: new Date(info.date), // return a new date instance
+      date: new Date(info.date),
       dateKey: info.key,
       completed: completedCount,
       total: 5,
@@ -148,3 +146,72 @@ export async function getWeeklyStats() {
 }
 
 export { TRACKABLE_PRAYERS, dateKey };
+
+/**
+ * Set tracking for a specific prayer on a specific date.
+ * Used when editing past days.
+ */
+export async function setDayPrayer(prayerKey, checked, date) {
+  const db = await getDB();
+  const key = dateKey(date);
+  await db.runAsync(
+    `INSERT INTO prayer_tracking (dateKey, prayerKey, checked) VALUES (?, ?, ?)
+     ON CONFLICT(dateKey, prayerKey) DO UPDATE SET checked = excluded.checked`,
+    [key, prayerKey, checked ? 1 : 0]
+  );
+}
+
+/**
+ * Get monthly stats: each day of a given month with completed count.
+ * Returns { days: [{ dateKey, completed }], totalPrayed, totalPossible, percentage }
+ */
+export async function getMonthlyStats(year, month) {
+  const db = await getDB();
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const rows = await db.getAllAsync(
+    `SELECT dateKey, COUNT(*) as completed 
+     FROM prayer_tracking 
+     WHERE checked = 1 AND dateKey LIKE ?
+     GROUP BY dateKey`,
+    [prefix + '%']
+  );
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const totalPrayed = rows.reduce((s, r) => s + r.completed, 0);
+  const totalPossible = daysInMonth * 5;
+
+  return {
+    days: rows,
+    totalPrayed,
+    totalPossible,
+    percentage: totalPossible > 0 ? Math.round((totalPrayed / totalPossible) * 100) : 0,
+  };
+}
+
+/**
+ * Get yearly stats: each month's completion summary.
+ * Returns array of { month, totalPrayed, totalPossible, percentage }
+ */
+export async function getYearlyStats(year) {
+  const db = await getDB();
+  const results = [];
+
+  for (let m = 0; m < 12; m++) {
+    const prefix = `${year}-${String(m + 1).padStart(2, '0')}`;
+    const row = await db.getFirstAsync(
+      `SELECT COUNT(*) as total FROM prayer_tracking WHERE checked = 1 AND dateKey LIKE ?`,
+      [prefix + '%']
+    );
+    const daysInMonth = new Date(year, m + 1, 0).getDate();
+    const totalPossible = daysInMonth * 5;
+    const totalPrayed = row?.total || 0;
+    results.push({
+      month: m,
+      totalPrayed,
+      totalPossible,
+      percentage: totalPossible > 0 ? Math.round((totalPrayed / totalPossible) * 100) : 0,
+    });
+  }
+
+  return results;
+}

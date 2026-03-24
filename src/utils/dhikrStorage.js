@@ -39,17 +39,10 @@ export async function saveDhikrSession(dhikrId, count) {
   const today = todayKey();
 
   await db.withTransactionAsync(async () => {
-    // 1. Update total
-    await db.runAsync(
-      `INSERT INTO dhikr_totals (dhikrId, total) VALUES (?, ?)
-       ON CONFLICT(dhikrId) DO UPDATE SET total = total + excluded.total`,
-      [dhikrId, count]
-    );
-
-    // 2. Add session
+    // 1. Add session (totals are already tracked by incrementDhikrCount per-tap)
     await db.runAsync(
       'INSERT INTO dhikr_sessions (dhikrId, count, date) VALUES (?, ?, ?)',
-      [dhikrId, count, new Date().toISOString()]
+      [dhikrId, count, today]
     );
 
     // 3. Keep last 100 sessions
@@ -64,15 +57,8 @@ export async function saveDhikrSession(dhikrId, count) {
       );
     }
 
-    // 4. Update daily total
-    // Delete older daily totals to keep db clean
+    // 3. Clean up older daily totals
     await db.runAsync('DELETE FROM dhikr_daily WHERE dateKey != ?', [today]);
-
-    await db.runAsync(
-      `INSERT INTO dhikr_daily (dateKey, dailyTotal) VALUES (?, ?)
-       ON CONFLICT(dateKey) DO UPDATE SET dailyTotal = dailyTotal + excluded.dailyTotal`,
-      [today, count]
-    );
   });
 
   return getDhikrData();

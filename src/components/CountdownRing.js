@@ -1,7 +1,8 @@
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 /* ── Ring dimensions ────────────────────────────── */
 const CONTAINER    = 280;
@@ -35,6 +36,8 @@ const TICKS = Array.from({ length: TICK_COUNT }, (_, i) => {
  *   progress     – 0‒1 fraction (fills clockwise)
  */
 export function CountdownRing({ label, prayerName, countdown, caption, progress = 0 }) {
+  useTheme();
+  const styles = createStyles();
   const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
 
   return (
@@ -112,7 +115,7 @@ export function CountdownRing({ label, prayerName, countdown, caption, progress 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   center: {
     alignItems: 'center',
     marginTop: 14,

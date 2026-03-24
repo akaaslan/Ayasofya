@@ -8,14 +8,16 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   Vibration,
   View,
 } from 'react-native';
 
+import { useTheme } from '../../context/ThemeContext';
 import { colors } from '../../theme/colors';
 import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount } from '../../utils/dhikrStorage';
+import { getFontSize, getTapSoundEnabled } from '../../utils/preferences';
+import { playTapSound } from '../../utils/tapSound';
 import { CustomDialog } from '../CustomDialog';
 
 const DHIKRS = [
@@ -42,13 +44,23 @@ const TICKS = Array.from({ length: TICK_COUNT }, (_, i) => {
 });
 
 export function ClassicDhikr() {
+  useTheme();
+  const s = createStyles();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [count, setCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [allTotals, setAllTotals] = useState({});
   const [completionVisible, setCompletionVisible] = useState(false);
+  const [fontScale, setFontScale] = useState(1);
+  const [tapSoundOn, setTapSoundOn] = useState(false);
   const current = DHIKRS[selectedIdx];
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Load font size preference
+  useEffect(() => {
+    getFontSize().then(level => setFontScale([0.8, 1, 1.25][level] || 1));
+    getTapSoundEnabled().then(setTapSoundOn);
+  }, []);
 
   // Load dhikr totals
   useEffect(() => {
@@ -66,7 +78,7 @@ export function ClassicDhikr() {
   const slideSelector = useRef(new Animated.Value(40)).current;
 
   useEffect(() => {
-    Animated.stagger(120, [
+    const anim = Animated.stagger(120, [
       Animated.parallel([
         Animated.timing(fadeRing, { toValue: 1, duration: 500, useNativeDriver: true }),
         Animated.spring(scaleRing, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
@@ -79,7 +91,9 @@ export function ClassicDhikr() {
         Animated.timing(fadeSelector, { toValue: 1, duration: 400, useNativeDriver: true }),
         Animated.timing(slideSelector, { toValue: 0, duration: 400, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       ]),
-    ]).start();
+    ]);
+    anim.start();
+    return () => anim.stop();
   }, []);
 
 
@@ -96,11 +110,12 @@ export function ClassicDhikr() {
   const handleTap = useCallback(() => {
     triggerPulse();
     Haptics.selectionAsync();
+    if (tapSoundOn) playTapSound();
     setCount((c) => {
       const next = c + 1;
       if (next === current.target) {
         setTimeout(() => Vibration.vibrate([0, 40, 60, 40]), 100);
-        saveDhikrSession(current.id, current.target).catch(() => {});
+        saveDhikrSession(current.id, current.target).catch(e => console.warn('Session save error:', e));
         // Show prayer popup
         setTimeout(() => setCompletionVisible(true), 400);
       }
@@ -108,11 +123,11 @@ export function ClassicDhikr() {
     });
     
     // Save +1 to database immediately for persistence
-    incrementDhikrCount(current.id).catch(() => {});
+    incrementDhikrCount(current.id).catch(e => console.warn('Dhikr increment error:', e));
 
     setTotalCount((t) => t + 1);
     setAllTotals((prev) => ({ ...prev, [current.id]: (prev[current.id] || 0) + 1 }));
-  }, [current.target, current.id, triggerPulse]);
+  }, [current.target, current.id, triggerPulse, tapSoundOn]);
 
 
 
@@ -149,8 +164,8 @@ export function ClassicDhikr() {
             <View style={s.outerRing}>
               <View style={s.goldRing}>
                 <View style={s.innerRing}>
-                  <Text style={s.arabicText}>{current.arabic}</Text>
-                  <Text style={s.countText}>{totalCount}</Text>
+                  <Text style={[s.arabicText, { fontSize: 18 * fontScale }]}>{current.arabic}</Text>
+                  <Text style={[s.countText, { fontSize: 56 * fontScale, lineHeight: 62 * fontScale }]}>{totalCount}</Text>
                   <Text style={s.tapHint}>DOKUN VE ZİKRET</Text>
                 </View>
               </View>
@@ -201,7 +216,7 @@ export function ClassicDhikr() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = () => ({
   wrapper: { flex: 1 },
   counterSection: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: -10 },
   tapArea: { alignItems: 'center', justifyContent: 'center' },

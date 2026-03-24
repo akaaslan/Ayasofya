@@ -1,16 +1,15 @@
 {
   "expo": {
     "name": "ayasofya",
-    "slug": "ayasofya",
+    "slug": "Ayasofya",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#061e1a"
     },
     "ios": {
       "supportsTablet": true,
@@ -18,12 +17,11 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#061e1a"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.ayasofya.app",
-      "versionCode": 2,
+      "versionCode": 5,
       "blockedPermissions": [
         "android.permission.ACTIVITY_RECOGNITION"
       ],
@@ -47,7 +45,9 @@
         {
           "locationAlwaysPermission": "Uygulamanın namaz vakitlerini hesaplamak için konumunuza ihtiyacı var."
         }
-      ]
+      ],
+      "expo-audio",
+      ["expo-font", { "fonts": ["./assets/fonts/ionicons.ttf"] }]
     ]
   }
 }

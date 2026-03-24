@@ -7,7 +7,6 @@ import {
   Dimensions,
   Easing,
   Pressable,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -27,6 +26,7 @@ import Svg, {
 import { ScreenBackground } from '../components/ScreenBackground';
 import { useLocationContext } from '../context/LocationContext';
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const COMPASS_SIZE = width * 0.78;
@@ -165,6 +165,8 @@ function CompassSvg({ qiblaDeg }) {
 
 /* ── Screen ───────────────────────────────────────────────────── */
 export function QiblaScreen() {
+  useTheme();
+  const s = createStyles();
   const rotationAnim = useRef(new Animated.Value(0)).current;
   const animTarget = useRef(0);
   const smoothed = useRef(0);
@@ -264,6 +266,11 @@ export function QiblaScreen() {
     })();
   }, []);
 
+  // Cleanup on unmount (covers both initial + recalibrated listeners)
+  useEffect(() => {
+    return () => { subRef.current?.remove(); };
+  }, []);
+
   const accuracyLabel =
     accuracy >= 3 ? 'Yüksek' : accuracy === 2 ? 'Orta' : accuracy === 1 ? 'Düşük' : '';
   const locationName = city || 'İstanbul';
@@ -307,6 +314,16 @@ export function QiblaScreen() {
                 <Text style={s.warnText}>
                   Konum izni verilmedi — İstanbul varsayılan olarak kullanılıyor
                 </Text>
+              )}
+
+              {/* Calibration hint when accuracy is low */}
+              {accuracy >= 0 && accuracy <= 1 && (
+                <View style={s.calibrationHint}>
+                  <Ionicons name="warning-outline" size={16} color="#e8a84c" />
+                  <Text style={s.calibrationText}>
+                    Pusula hassasiyeti düşük — telefonunuzu 8 şeklinde çevirin
+                  </Text>
+                </View>
               )}
 
               {/* Compass */}
@@ -360,7 +377,7 @@ export function QiblaScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = () => ({
   safe: { flex: 1 },
   container: {
     flex: 1,
@@ -410,6 +427,20 @@ const s = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
     marginBottom: 4,
+  },
+  calibrationHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(232, 168, 76, 0.12)',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 6,
+    gap: 8,
+  },
+  calibrationText: {
+    color: '#e8a84c',
+    fontSize: 11,
+    flex: 1,
   },
   errorText: {
     color: '#e57373',

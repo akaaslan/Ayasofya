@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useState } from 'react';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   FlatList,
@@ -15,7 +17,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CustomDialog } from '../components/CustomDialog';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useI18n, LANGUAGE_LIST } from '../context/I18nContext';
 import { useLocationContext } from '../context/LocationContext';
+import { useTheme, THEME_LIST } from '../context/ThemeContext';
 import { CITY_LIST } from '../hooks/useLocation';
 import { colors } from '../theme/colors';
 import { playEzan, stopEzan, isEzanPlaying } from '../utils/adhanSound';
@@ -29,13 +33,25 @@ import {
 } from '../utils/notificationPrefs';
 import { useRamadan } from '../context/RamadanContext';
 import { getDhikrStyle, saveDhikrStyle } from '../utils/dhikrStylePref';
+import {
+  getHapticEnabled, setHapticEnabled,
+  getTapSoundEnabled, setTapSoundEnabled,
+  getFontSize, setFontSize,
+  getDhikrTarget, setDhikrTarget,
+  getKazaReminderEnabled, setKazaReminderEnabled,
+} from '../utils/preferences';
+import { exportBackup, importBackup } from '../utils/backup';
 
 export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) {
   const { lat, lng, tz, city, district, loading: locLoading, refresh, setManualCity } = useLocationContext();
+  const { t, lang, changeLanguage } = useI18n();
+  const { theme, themeKey, changeTheme } = useTheme();
+  const styles = createStyles();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [cityModalVisible, setCityModalVisible] = useState(false);
+  const [langModalVisible, setLangModalVisible] = useState(false);
   const [ezanPlaying, setEzanPlaying] = useState(false);
   const [preNotification, setPreNotification] = useState(false);
 
@@ -49,10 +65,20 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
 
   /* ── Dhikr style preference ── */
   const [dhikrStyle, setDhikrStyle] = useState('tasbih');
+  const [hapticEnabled, setHaptic] = useState(true);
+  const [tapSoundEnabled, setTapSound] = useState(false);
+  const [fontSizeLevel, setFontSizeLevel] = useState(1);
+  const [dhikrTarget, setDhikrTargetVal] = useState(33);
+  const [kazaReminder, setKazaReminder] = useState(false);
   
   useFocusEffect(
     useCallback(() => {
       getDhikrStyle().then(setDhikrStyle);
+      getHapticEnabled().then(setHaptic);
+      getTapSoundEnabled().then(setTapSound);
+      getFontSize().then(setFontSizeLevel);
+      getDhikrTarget().then(setDhikrTargetVal);
+      getKazaReminderEnabled().then(setKazaReminder);
     }, [])
   );
 
@@ -73,21 +99,29 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
   }, []);
   const hideDialog = useCallback(() => setDialog((d) => ({ ...d, visible: false })), []);
 
-  /* ── Schedule/cancel notifications when toggled ── */
+  /* ── Save prefs (debounced from schedule) ── */
   useEffect(() => {
-    if (notificationsEnabled && lat && lng) {
-      schedulePrayerNotifications(lat, lng, tz, prayerToggles);
-    } else {
-      cancelAllPrayerNotifications();
-    }
-    // Save prefs
     saveNotificationPrefs({
       enabled: notificationsEnabled,
       soundEnabled,
       preNotification,
       prayers: prayerToggles,
     });
-  }, [notificationsEnabled, lat, lng, tz, prayerToggles, soundEnabled, preNotification]);
+  }, [notificationsEnabled, soundEnabled, preNotification, prayerToggles]);
+
+  /* ── Schedule/cancel notifications when toggled (debounced) ── */
+  const scheduleTimer = useRef(null);
+  useEffect(() => {
+    if (scheduleTimer.current) clearTimeout(scheduleTimer.current);
+    scheduleTimer.current = setTimeout(() => {
+      if (notificationsEnabled && lat && lng) {
+        schedulePrayerNotifications(lat, lng, tz, prayerToggles, preNotification);
+      } else {
+        cancelAllPrayerNotifications();
+      }
+    }, 800);
+    return () => { if (scheduleTimer.current) clearTimeout(scheduleTimer.current); };
+  }, [notificationsEnabled, lat, lng, tz, prayerToggles, preNotification]);
 
   const handleCitySelect = useCallback((cityName) => {
     setManualCity(cityName);
@@ -123,6 +157,33 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
   const handleAbout = useCallback(() => {
     showDialog('information-circle', 'Ayasofya', 'Sürüm 1.1.0\n\nİslami namaz vakitleri uygulaması.\n\n• GPS ile hassas namaz vakitleri\n• Esma-ül Hüsna\n• Dua koleksiyonu\n• Ramazan modu\n• Kaza namazı takibi\n• Ezan sesi');
   }, [showDialog]);
+
+  const handleExportBackup = useCallback(async () => {
+    try {
+      await exportBackup();
+    } catch {
+      showDialog('alert-circle', t.commonError || 'Hata', t.backupExportFail || 'Yedek dosyası oluşturulamadı.');
+    }
+  }, [showDialog, t]);
+
+  const handleImportBackup = useCallback(async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: 'application/json' });
+      if (result.canceled) return;
+      const uri = result.assets[0].uri;
+      const content = await FileSystem.readAsStringAsync(uri);
+      const { counts } = await importBackup(content);
+      const total = Object.values(counts).reduce((a, b) => a + b, 0);
+      showDialog('checkmark-circle', t.backupRestored || 'Geri Yüklendi', `${total} ${t.backupRecords || 'kayıt geri yüklendi.'}`);
+    } catch {
+      showDialog('alert-circle', t.commonError || 'Hata', t.backupImportFail || 'Yedek dosyası okunamadı.');
+    }
+  }, [showDialog, t]);
+
+  const handleDhikrTargetChange = useCallback((val) => {
+    setDhikrTargetVal(val);
+    setDhikrTarget(val);
+  }, []);
 
   const PRAYER_LABELS = {
     imsak: 'İmsak', gunes: 'Güneş', ogle: 'Öğle', ikindi: 'İkindi', aksam: 'Akşam', yatsi: 'Yatsı',
@@ -195,6 +256,53 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
                   styles.ramadanToggleDesc,
                   dhikrStyle === opt.key && styles.ramadanToggleDescActive,
                 ]}>{opt.desc}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Language */}
+          <Text style={styles.sectionTitle}>{t.language || 'DİL'}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            onPress={() => setLangModalVisible(true)}
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="language-outline" size={20} color={colors.accent} />
+              <Text style={styles.rowLabel}>{t.selectLanguage || 'Uygulama Dili'}</Text>
+            </View>
+            <View style={styles.rowRight}>
+              <Text style={styles.rowValue}>
+                {LANGUAGE_LIST.find((l) => l.code === lang)?.flag}{' '}
+                {LANGUAGE_LIST.find((l) => l.code === lang)?.label}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+            </View>
+          </Pressable>
+
+          {/* Theme */}
+          <Text style={styles.sectionTitle}>{t.theme || 'TEMA'}</Text>
+          <View style={styles.themeGrid}>
+            {THEME_LIST.map((item) => (
+              <Pressable
+                key={item.key}
+                style={[
+                  styles.themeChip,
+                  themeKey === item.key && { borderColor: colors.accent },
+                ]}
+                onPress={() => changeTheme(item.key)}
+              >
+                <View style={[styles.themeCircle, { backgroundColor: item.color }]}>
+                  {themeKey === item.key && (
+                    <Ionicons name="checkmark" size={14} color="#fff" />
+                  )}
+                </View>
+                <Text style={[
+                  styles.themeLabel,
+                  themeKey === item.key && { color: colors.accent },
+                ]}>
+                  {item.label}
+                </Text>
               </Pressable>
             ))}
           </View>
@@ -332,6 +440,115 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
             />
           </View>
 
+          {/* Dhikr Settings */}
+          <Text style={styles.sectionTitle}>{t.dhikrSettings || 'ZİKİR AYARLARI'}</Text>
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Ionicons name="flag-outline" size={20} color={colors.accent} />
+              <View>
+                <Text style={styles.rowLabel}>{t.dhikrTargetLabel || 'Zikir Hedefi'}</Text>
+                <Text style={styles.subRowHint}>{t.dhikrTargetHint || 'Her çevrim için hedef sayı'}</Text>
+              </View>
+            </View>
+            <View style={styles.rowRight}>
+              <Pressable onPress={() => handleDhikrTargetChange(Math.max(10, dhikrTarget - 1))} style={styles.stepBtn}>
+                <Ionicons name="remove" size={18} color={colors.accent} />
+              </Pressable>
+              <Text style={styles.rowValue}>{dhikrTarget}</Text>
+              <Pressable onPress={() => handleDhikrTargetChange(dhikrTarget + 1)} style={styles.stepBtn}>
+                <Ionicons name="add" size={18} color={colors.accent} />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* General */}
+          <Text style={styles.sectionTitle}>{t.generalSettings || 'GENEL'}</Text>
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Ionicons name="phone-portrait-outline" size={20} color={colors.accent} />
+              <Text style={styles.rowLabel}>{t.haptic || 'Titreşim Geri Bildirimi'}</Text>
+            </View>
+            <Switch
+              value={hapticEnabled}
+              onValueChange={(v) => { setHaptic(v); setHapticEnabled(v); }}
+              trackColor={{ false: '#333', true: colors.accentSoft }}
+              thumbColor={hapticEnabled ? colors.accent : '#888'}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Ionicons name="musical-note-outline" size={20} color={colors.accent} />
+              <Text style={styles.rowLabel}>{t.tapSound || 'Zikir Dokunma Sesi'}</Text>
+            </View>
+            <Switch
+              value={tapSoundEnabled}
+              onValueChange={(v) => { setTapSound(v); setTapSoundEnabled(v); }}
+              trackColor={{ false: '#333', true: colors.accentSoft }}
+              thumbColor={tapSoundEnabled ? colors.accent : '#888'}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Ionicons name="text-outline" size={20} color={colors.accent} />
+              <View>
+                <Text style={styles.rowLabel}>{t.fontSize || 'Yazı Boyutu (Arapça)'}</Text>
+                <Text style={styles.subRowHint}>{['Küçük', 'Normal', 'Büyük'][fontSizeLevel]}</Text>
+              </View>
+            </View>
+            <View style={styles.rowRight}>
+              <Pressable onPress={() => { const v = Math.max(0, fontSizeLevel - 1); setFontSizeLevel(v); setFontSize(v); }} style={styles.stepBtn}>
+                <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '700' }}>A</Text>
+              </Pressable>
+              <Pressable onPress={() => { const v = Math.min(2, fontSizeLevel + 1); setFontSizeLevel(v); setFontSize(v); }} style={styles.stepBtn}>
+                <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '700' }}>A</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Kaza Reminder */}
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Ionicons name="alarm-outline" size={20} color={colors.accent} />
+              <View>
+                <Text style={styles.rowLabel}>{t.kazaReminder || 'Kaza Hatırlatma'}</Text>
+                <Text style={styles.subRowHint}>{t.kazaReminderHint || 'Vakit sonrası "Kıldınız mı?" bildirimi'}</Text>
+              </View>
+            </View>
+            <Switch
+              value={kazaReminder}
+              onValueChange={(v) => { setKazaReminder(v); setKazaReminderEnabled(v); }}
+              trackColor={{ false: '#333', true: colors.accentSoft }}
+              thumbColor={kazaReminder ? colors.accent : '#888'}
+            />
+          </View>
+
+          {/* Backup/Restore */}
+          <Text style={styles.sectionTitle}>{t.backupSection || 'VERİ YEDEKLERİ'}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            onPress={handleExportBackup}
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="cloud-upload-outline" size={20} color={colors.accent} />
+              <Text style={styles.rowLabel}>{t.backupExport || 'Verileri Yedekle'}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            onPress={handleImportBackup}
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="cloud-download-outline" size={20} color={colors.accent} />
+              <Text style={styles.rowLabel}>{t.backupImport || 'Yedekten Geri Yükle'}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </Pressable>
+
           {/* About */}
           <Text style={styles.sectionTitle}>HAKKINDA</Text>
           <Pressable
@@ -409,6 +626,48 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
         </View>
       </Modal>
 
+      {/* Language Selector Modal */}
+      <Modal
+        visible={langModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setLangModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t.selectLanguage || 'Dil Seçin'}</Text>
+            <FlatList
+              data={LANGUAGE_LIST}
+              keyExtractor={(item) => item.code}
+              style={styles.cityList}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.cityRow,
+                    item.code === lang && styles.cityRowActive,
+                    pressed && styles.rowPressed,
+                  ]}
+                  onPress={() => { changeLanguage(item.code); setLangModalVisible(false); }}
+                >
+                  <Text style={[styles.cityText, item.code === lang && styles.cityTextActive]}>
+                    {item.flag}  {item.label}
+                  </Text>
+                  {item.code === lang && (
+                    <Ionicons name="checkmark" size={18} color={colors.accent} />
+                  )}
+                </Pressable>
+              )}
+            />
+            <Pressable
+              style={styles.modalCloseBtn}
+              onPress={() => setLangModalVisible(false)}
+            >
+              <Text style={styles.modalCloseText}>{t.commonCancel || 'İptal'}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       {/* CustomDialog */}
       <CustomDialog
         visible={dialog.visible}
@@ -422,7 +681,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   safe: { flex: 1 },
   scroll: {
     paddingHorizontal: 18,
@@ -645,5 +904,47 @@ const styles = StyleSheet.create({
   },
   ramadanToggleDescActive: {
     color: colors.accentSoft,
+  },
+
+  /* Theme grid */
+  themeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  themeChip: {
+    alignItems: 'center',
+    width: '30%',
+    paddingVertical: 12,
+    backgroundColor: 'rgba(10, 38, 34, 0.85)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(133, 158, 116, 0.12)',
+  },
+  themeCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  themeLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  /* Step button (for dhikr target, font size) */
+  stepBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(200, 161, 90, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

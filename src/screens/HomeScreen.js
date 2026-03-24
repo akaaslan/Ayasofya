@@ -8,7 +8,6 @@ import {
   Linking,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -17,7 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CalendarModal } from '../components/CalendarModal';
 import { CountdownRing } from '../components/CountdownRing';
 import { CustomDialog } from '../components/CustomDialog';
+import { FastingTracker } from '../components/FastingTracker';
 import { HeaderSection } from '../components/HeaderSection';
+import { OfflineIndicator } from '../components/OfflineIndicator';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { useLocationContext } from '../context/LocationContext';
 import { useRamadan } from '../context/RamadanContext';
@@ -26,6 +27,7 @@ import { usePrayerTimes } from '../hooks/usePrayerTimes';
 import { getHijriDisplayString } from '../utils/hijriDate';
 import { getRamadanInfo } from '../utils/ramadanMode';
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 /** Turkish dative-case forms */
 const DATIVE = {
@@ -59,11 +61,15 @@ const DAILY_VERSES = [
 ];
 
 function getDayIndex(count) {
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now - startOfYear) / 86400000);
   return dayOfYear % count;
 }
 
 export function HomeScreen() {
+  useTheme();
+  const styles = createStyles();
   const navigation = useNavigation();
   const { lat, lng, tz, city, district } = useLocationContext();
   const clock = useCurrentTime();
@@ -152,7 +158,7 @@ export function HomeScreen() {
   const slideGrid = useRef(new Animated.Value(40)).current;
 
   useEffect(() => {
-    const stagger = [
+    const anim = Animated.stagger(150, [
       Animated.parallel([
         Animated.timing(fadeRing, { toValue: 1, duration: 600, useNativeDriver: true }),
         Animated.timing(slideRing, { toValue: 0, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
@@ -165,8 +171,9 @@ export function HomeScreen() {
         Animated.timing(fadeGrid, { toValue: 1, duration: 500, useNativeDriver: true }),
         Animated.timing(slideGrid, { toValue: 0, duration: 500, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       ]),
-    ];
-    Animated.stagger(150, stagger).start();
+    ]);
+    anim.start();
+    return () => anim.stop();
   }, []);
 
   return (
@@ -184,6 +191,11 @@ export function HomeScreen() {
               title="BUGÜNÜN VAKİTLERİ"
               dayName={hijriDay}
             />
+
+            <OfflineIndicator />
+
+            {/* Fasting tracker — only visible during Ramadan */}
+            {ramadan.isRamadan && <FastingTracker />}
 
             {/* ── Countdown Ring with progress ── */}
             <Animated.View style={{ opacity: fadeRing, transform: [{ translateY: slideRing }] }}>
@@ -442,7 +454,7 @@ export function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   safeArea: { flex: 1 },
   scrollView: { flex: 1 },
   scrollContent: { flexGrow: 1 },

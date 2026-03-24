@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import * as Speech from 'expo-speech';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -14,13 +15,31 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import { SURAHS } from '../data/surahData';
+import { getBookmark, setBookmark } from '../utils/quranBookmark';
 
 /* ── Component ─────────────────────────────────── */
 export function QuranScreen() {
+  useTheme();
+  const styles = createStyles();
   const navigation = useNavigation();
   const [selectedSurah, setSelectedSurah] = useState(null);
+  const [bookmarkId, setBookmarkId] = useState(null);
+
+  /* ── Load bookmark ── */
+  useFocusEffect(
+    useCallback(() => {
+      getBookmark().then((b) => setBookmarkId(b?.surahId ?? null));
+    }, [])
+  );
+
+  const handleSelectSurah = (item) => {
+    setBookmark(item.id, item.name);
+    setBookmarkId(item.id);
+    setSelectedSurah(item);
+  };
 
   /* ── Entrance animations ── */
   const fadeHeader = useRef(new Animated.Value(0)).current;
@@ -46,7 +65,15 @@ export function QuranScreen() {
     return (
       <ScreenBackground>
         <SafeAreaView style={styles.safe}>
-          <SurahReader surah={selectedSurah} onBack={() => setSelectedSurah(null)} />
+          <SurahReader
+            surah={selectedSurah}
+            onBack={() => setSelectedSurah(null)}
+            isBookmarked={bookmarkId === selectedSurah.id}
+            onBookmark={() => {
+              setBookmark(selectedSurah.id, selectedSurah.name);
+              setBookmarkId(selectedSurah.id);
+            }}
+          />
         </SafeAreaView>
       </ScreenBackground>
     );
@@ -75,6 +102,30 @@ export function QuranScreen() {
           </View>
         </Animated.View>
 
+        {/* bookmark resume banner */}
+        {bookmarkId && (
+          <Animated.View
+            style={[
+              styles.bookmarkBanner,
+              { opacity: fadeHeader, transform: [{ translateY: slideHeader }] },
+            ]}
+          >
+            <Pressable
+              style={styles.bookmarkBtn}
+              onPress={() => {
+                const s = SURAHS.find((x) => x.id === bookmarkId);
+                if (s) handleSelectSurah(s);
+              }}
+            >
+              <Ionicons name="bookmark" size={18} color={colors.accent} />
+              <Text style={styles.bookmarkText}>
+                Kaldığın yerden devam et – {SURAHS.find((x) => x.id === bookmarkId)?.name}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.accent} />
+            </Pressable>
+          </Animated.View>
+        )}
+
         {/* list */}
         <Animated.View
           style={[
@@ -93,8 +144,9 @@ export function QuranScreen() {
                   styles.surahRow,
                   pressed && styles.surahRowPressed,
                   index < SURAHS.length - 1 && styles.surahRowBorder,
+                  bookmarkId === item.id && styles.surahRowBookmarked,
                 ]}
-                onPress={() => setSelectedSurah(item)}
+                onPress={() => handleSelectSurah(item)}
               >
                 <View style={styles.surahNumBadge}>
                   <Text style={styles.surahNum}>{item.id}</Text>
@@ -115,9 +167,11 @@ export function QuranScreen() {
 }
 
 /* ── Surah Reading Sub-component ──────────────── */
-function SurahReader({ surah, onBack }) {
+function SurahReader({ surah, onBack, isBookmarked, onBookmark }) {
+  const styles = createStyles();
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideIn = useRef(new Animated.Value(20)).current;
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -125,6 +179,25 @@ function SurahReader({ surah, onBack }) {
       Animated.timing(slideIn, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
   }, []);
+
+  useEffect(() => {
+    return () => { Speech.stop(); };
+  }, []);
+
+  const handleSpeak = async () => {
+    if (isSpeaking) {
+      await Speech.stop();
+      setIsSpeaking(false);
+    } else {
+      setIsSpeaking(true);
+      Speech.speak(surah.text, {
+        language: 'ar',
+        onDone: () => setIsSpeaking(false),
+        onStopped: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
+      });
+    }
+  };
 
   return (
     <Animated.View
@@ -135,7 +208,7 @@ function SurahReader({ surah, onBack }) {
     >
       {/* back button + title */}
       <View style={styles.readerHeader}>
-        <Pressable style={styles.backBtn} onPress={onBack}>
+        <Pressable style={styles.backBtn} onPress={() => { Speech.stop(); onBack(); }}>
           <Ionicons name="chevron-back" size={22} color={colors.accent} />
           <Text style={styles.backText}>Geri</Text>
         </Pressable>
@@ -143,7 +216,22 @@ function SurahReader({ surah, onBack }) {
           <Text style={styles.readerTitle}>{surah.name}</Text>
           <Text style={styles.readerAyah}>{surah.ayahCount} ayet</Text>
         </View>
-        <View style={{ width: 60 }} />
+        <View style={styles.readerActions}>
+          <Pressable onPress={handleSpeak} style={styles.actionBtn}>
+            <Ionicons
+              name={isSpeaking ? 'stop-circle' : 'volume-high'}
+              size={22}
+              color={isSpeaking ? '#e74c3c' : colors.accent}
+            />
+          </Pressable>
+          <Pressable onPress={onBookmark} style={styles.actionBtn}>
+            <Ionicons
+              name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+              size={22}
+              color={colors.accent}
+            />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView
@@ -174,7 +262,7 @@ function SurahReader({ surah, onBack }) {
 }
 
 /* ── Styles ─────────────────────────────────────── */
-const styles = StyleSheet.create({
+const createStyles = () => ({
   safe: { flex: 1 },
 
   /* Header */
@@ -333,5 +421,47 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 26,
     color: colors.textSecondary,
+  },
+
+  /* Bookmark banner */
+  bookmarkBanner: {
+    paddingHorizontal: 16,
+    marginBottom: 6,
+  },
+  bookmarkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(200, 161, 90, 0.12)',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  bookmarkText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+
+  /* Surah row bookmark highlight */
+  surahRowBookmarked: {
+    backgroundColor: 'rgba(200, 161, 90, 0.06)',
+    borderRadius: 10,
+  },
+
+  /* Reader action buttons */
+  readerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 60,
+    justifyContent: 'flex-end',
+    gap: 6,
+  },
+  actionBtn: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -6,12 +6,12 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
 
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 import { gregorianToHijri } from '../utils/hijriDate';
 import { getPrayerTimes } from '../utils/prayerApi';
 import { calculatePrayerTimes } from '../utils/prayerCalculation';
@@ -48,6 +48,8 @@ function getFirstDayOfWeek(year, month) {
  *   lat, lng, tz – for prayer time calculation
  */
 export function CalendarModal({ visible, onClose, lat, lng, tz }) {
+  useTheme();
+  const styles = createStyles();
   const today = useMemo(() => new Date(), []);
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -268,7 +270,7 @@ export function CalendarModal({ visible, onClose, lat, lng, tz }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',

@@ -38,6 +38,12 @@ export function usePrayerTimes(lat, lng, timezone) {
     [lat, lng, timezone],
   );
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   /* ── Async fetch: cache → API → local fallback ── */
   const loadPrayers = useCallback(async () => {
     const now = new Date();
@@ -49,13 +55,14 @@ export function usePrayerTimes(lat, lng, timezone) {
         getPrayerTimes(now, lat, lng, timezone),
         getPrayerTimes(tomorrow, lat, lng, timezone),
       ]);
+      if (!mountedRef.current) return;
       prayersRef.current = todayResult.prayers;
       tomorrowPrayersRef.current = tomorrowResult.prayers;
       setPrayers(todayResult.prayers);
       setHicri(todayResult.hicri);
       setPrayerSource(todayResult.source);
     } catch {
-      // Should not happen (getPrayerTimes always falls back), but be safe
+      if (!mountedRef.current) return;
       const local = computeSync(now);
       prayersRef.current = local;
       setPrayers(local);
@@ -67,6 +74,8 @@ export function usePrayerTimes(lat, lng, timezone) {
 
   /* ── Initial load: sync render + async upgrade ── */
   useEffect(() => {
+    let cancelled = false;
+
     // Immediate sync data so the UI is never blank
     const now = new Date();
     const syncPrayers = computeSync(now);
@@ -74,7 +83,12 @@ export function usePrayerTimes(lat, lng, timezone) {
     setPrayers(syncPrayers);
 
     // Fire async fetch to upgrade
-    loadPrayers();
+    loadPrayers().then(() => {
+      if (cancelled) return;
+      // state already set inside loadPrayers
+    });
+
+    return () => { cancelled = true; };
   }, [computeSync, loadPrayers]);
 
   /* ── 1-second countdown tick ── */

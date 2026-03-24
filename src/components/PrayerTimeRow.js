@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 /** Map each prayer key to an appropriate Ionicon name */
 const PRAYER_ICONS = {
@@ -18,6 +19,8 @@ const PRAYER_ICONS = {
  * Shows icon, label, time. Highlighted when `active`.
  */
 export function PrayerTimeRow({ prayerKey, label, time, active, onPress }) {
+  useTheme();
+  const styles = createStyles();
   const iconName = PRAYER_ICONS[prayerKey] || 'ellipse-outline';
 
   return (
@@ -47,7 +50,7 @@ export function PrayerTimeRow({ prayerKey, label, time, active, onPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   row: {
     height: 52,
     borderRadius: 14,

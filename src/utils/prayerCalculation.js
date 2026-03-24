@@ -72,9 +72,10 @@ function minutesToDate(totalMinutes, baseDate, tz) {
   mins = mins % 1440;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
+  // Build UTC time, then offset by timezone to get correct local Date
   const d = new Date(baseDate);
-  const deviceTz = -d.getTimezoneOffset() / 60;
-  d.setHours(h + (deviceTz - tz), m, 0, 0);
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCMinutes(h * 60 + m - tz * 60);
   return d;
 }
 

@@ -1,25 +1,23 @@
 /**
  * Ezan / Adhan sound playback utility.
- * Uses expo-av for audio playback.
+ * Uses expo-audio for audio playback.
  *
  * NOTE: For a custom ezan audio, place the file in assets/ and import it.
  * Example: const EZAN_AUDIO = require('../../assets/ezan.mp3');
  */
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
-let soundObject = null;
+let player = null;
 
 /**
  * Configure audio mode for background playback.
  */
 export async function configureAudio() {
   try {
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      staysActiveInBackground: true,
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      shouldRouteThroughEarpiece: false,
     });
   } catch {
     // silent — may fail in Expo Go
@@ -30,30 +28,18 @@ export async function configureAudio() {
  * Play ezan sound from a bundled asset or URL.
  * If no custom asset is provided, falls back to a brief notification-style sound.
  *
- * @param {object|string} source - require('path') or { uri: 'https://...' }
+ * @param {object|string} source - require('path') or 'https://...'
  * @param {number} volume - 0.0 to 1.0
  */
 export async function playEzan(source = null, volume = 1.0) {
   try {
-    // Stop any currently playing sound
     await stopEzan();
-
     await configureAudio();
 
-    const { sound } = await Audio.Sound.createAsync(
-      source || { uri: 'https://www.islamcan.com/audio/adhan/azan1.mp3' },
-      { shouldPlay: true, volume, isLooping: false },
-    );
-
-    soundObject = sound;
-
-    // Auto-cleanup when finished
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.didJustFinish) {
-        sound.unloadAsync().catch(() => {});
-        soundObject = null;
-      }
-    });
+    const audioSource = source || 'https://www.islamcan.com/audio/adhan/azan1.mp3';
+    player = createAudioPlayer(audioSource);
+    player.volume = volume;
+    player.play();
 
     return true;
   } catch (e) {
@@ -67,13 +53,13 @@ export async function playEzan(source = null, volume = 1.0) {
  */
 export async function stopEzan() {
   try {
-    if (soundObject) {
-      await soundObject.stopAsync();
-      await soundObject.unloadAsync();
-      soundObject = null;
+    if (player) {
+      player.pause();
+      player.release();
+      player = null;
     }
   } catch {
-    soundObject = null;
+    player = null;
   }
 }
 
@@ -81,7 +67,7 @@ export async function stopEzan() {
  * Check if ezan is currently playing.
  */
 export function isEzanPlaying() {
-  return soundObject !== null;
+  return player?.playing ?? false;
 }
 
 /**
@@ -90,17 +76,12 @@ export function isEzanPlaying() {
 export async function playNotificationSound() {
   try {
     await configureAudio();
-    const { sound } = await Audio.Sound.createAsync(
-      { uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3' },
-      { shouldPlay: true, volume: 0.8 },
+    const notifPlayer = createAudioPlayer(
+      'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3'
     );
-
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.didJustFinish) {
-        sound.unloadAsync().catch(() => {});
-      }
-    });
-  } catch {
-    // silent
+    notifPlayer.volume = 0.8;
+    notifPlayer.play();
+  } catch (e) {
+    console.warn('Notification sound error:', e.message);
   }
 }

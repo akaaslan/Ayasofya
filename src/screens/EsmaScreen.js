@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
   FlatList,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -14,11 +14,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useTheme } from '../context/ThemeContext';
 import { ESMA_UL_HUSNA } from '../data/esmaData';
 import { colors } from '../theme/colors';
 
 /* ── Card Component ─────────────────────────────── */
 function EsmaCard({ item, index }) {
+  const styles = createStyles();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
@@ -51,8 +53,17 @@ function EsmaCard({ item, index }) {
       {/* Arabic name */}
       <Text style={styles.arabicText}>{item.arabic}</Text>
 
-      {/* Turkish transliteration */}
-      <Text style={styles.nameText}>{item.name}</Text>
+      {/* Turkish transliteration + pronunciation */}
+      <View style={styles.nameRow}>
+        <Text style={styles.nameText}>{item.name}</Text>
+        <Pressable
+          onPress={() => Speech.speak(item.arabic, { language: 'ar' })}
+          hitSlop={8}
+          style={styles.speakBtn}
+        >
+          <Ionicons name="volume-medium-outline" size={16} color={colors.accent} />
+        </Pressable>
+      </View>
 
       {/* Meaning */}
       <Text style={styles.meaningText} numberOfLines={2}>{item.meaning}</Text>
@@ -62,6 +73,8 @@ function EsmaCard({ item, index }) {
 
 /* ── Main Screen ────────────────────────────────── */
 export function EsmaScreen() {
+  useTheme();
+  const styles = createStyles();
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
 
@@ -152,7 +165,7 @@ export function EsmaScreen() {
 }
 
 /* ── Styles ─────────────────────────────────────── */
-const styles = StyleSheet.create({
+const createStyles = () => ({
   safe: { flex: 1 },
 
   /* Header */
@@ -269,6 +282,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  speakBtn: {
+    padding: 4,
   },
   meaningText: {
     color: colors.textSecondary,

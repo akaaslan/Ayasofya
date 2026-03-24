@@ -1,13 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 /**
  * Top header: displays the category label (e.g. "BUGÜNÜN VAKİTLERİ"),
  * Hijri day name (e.g. "14 RAMAZAN"), and a pressable calendar button.
  */
 export function HeaderSection({ title, dayName }) {
+  useTheme();
+  const styles = createStyles();
   return (
     <View style={styles.container}>
       <View>
@@ -18,7 +21,7 @@ export function HeaderSection({ title, dayName }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   container: {
     marginTop: 10,
     flexDirection: 'row',

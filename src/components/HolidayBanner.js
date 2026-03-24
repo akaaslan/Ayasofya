@@ -6,12 +6,12 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
 
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 import { getAllUpcomingHolidays, getNextHoliday } from '../utils/holidays';
 
 /* ── Turkish month names ── */
@@ -34,6 +34,8 @@ function formatCountdown(h) {
  * Tapping it opens a full list of upcoming holidays.
  */
 export function HolidayBanner({ visible, onClose }) {
+  useTheme();
+  const styles = createStyles();
   const [holiday, setHoliday] = useState(() => getNextHoliday());
   const [modalVisible, setModalVisible] = useState(false);
   const [allHolidays, setAllHolidays] = useState([]);
@@ -115,7 +117,9 @@ export function HolidayBanner({ visible, onClose }) {
               { opacity: modalFade, transform: [{ translateY: modalSlide }] },
             ]}
           >
-            <Pressable>{/* prevent close on card tap */}
+            <View onStartShouldSetResponder={() => true}>
+              {/* Drag handle */}
+              <View style={styles.dragHandle} />
               {/* Header */}
               <View style={styles.modalHeader}>
                 <Ionicons name="calendar" size={20} color={colors.accent} />
@@ -132,6 +136,8 @@ export function HolidayBanner({ visible, onClose }) {
               <ScrollView
                 style={styles.modalScroll}
                 showsVerticalScrollIndicator={false}
+                nestedScrollEnabled
+                bounces={false}
               >
                 {allHolidays.map((h, idx) => {
                   const isFirst = idx === 0;
@@ -157,7 +163,7 @@ export function HolidayBanner({ visible, onClose }) {
                 })}
                 <View style={{ height: 16 }} />
               </ScrollView>
-            </Pressable>
+            </View>
           </Animated.View>
         </Pressable>
       </Modal>
@@ -165,7 +171,7 @@ export function HolidayBanner({ visible, onClose }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => ({
   /* ── Banner ── */
   banner: {
     position: 'absolute',
@@ -238,6 +244,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
     maxHeight: '70%',
     paddingBottom: 20,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(200, 161, 90, 0.3)',
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 2,
   },
   modalHeader: {
     flexDirection: 'row',

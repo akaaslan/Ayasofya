@@ -1,28 +1,39 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { ClassicDhikr } from '../components/dhikr/ClassicDhikr';
 import { TasbihDhikr } from '../components/dhikr/TasbihDhikr';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 import { getDhikrStyle, saveDhikrStyle } from '../utils/dhikrStylePref';
+import { getDailyTotal, getGrandTotal } from '../utils/dhikrStorage';
 
 export function DualarScreen() {
+  useTheme();
+  const s = createStyles();
   const [style, setStyle] = useState('tasbih');
   const [modalVisible, setModalVisible] = useState(false);
+  const [dailyTotal, setDailyTotal] = useState(0);
+  const [grandTotal, setGrandTotal] = useState(0);
 
-  useEffect(() => {
-    getDhikrStyle().then(s => {
-      if (s === 'digital') {
-        setStyle('tasbih');
-        saveDhikrStyle('tasbih');
-      } else {
-        setStyle(s);
-      }
-    });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getDhikrStyle().then(s => {
+        if (s === 'digital') {
+          setStyle('tasbih');
+          saveDhikrStyle('tasbih');
+        } else {
+          setStyle(s);
+        }
+      });
+      getDailyTotal().then(setDailyTotal);
+      getGrandTotal().then(setGrandTotal);
+    }, [])
+  );
 
   const changeStyle = async (newStyle) => {
     setStyle(newStyle);
@@ -61,6 +72,19 @@ export function DualarScreen() {
           <View style={{ width: 40 }} /> 
         </View>
 
+        {/* Daily stats bar */}
+        <View style={s.statsBar}>
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{dailyTotal}</Text>
+            <Text style={s.statLabel}>Bugün</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{grandTotal}</Text>
+            <Text style={s.statLabel}>Toplam</Text>
+          </View>
+        </View>
+
         {style === 'classic' && <ClassicDhikr />}
         {style === 'tasbih' && <TasbihDhikr />}
 
@@ -97,7 +121,7 @@ export function DualarScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = () => ({
   safe: { flex: 1 },
   headerContainer: {
     flexDirection: 'row',
@@ -177,5 +201,32 @@ const s = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 12,
     marginTop: 2,
+  },
+  statsBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 20,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNum: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  statLabel: {
+    color: colors.textMuted,
+    fontSize: 9,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  statDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: colors.divider,
   },
 });
