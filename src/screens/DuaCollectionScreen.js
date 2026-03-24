@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { DUA_CATEGORIES } from '../data/duaData';
 import { colors } from '../theme/colors';
@@ -23,7 +24,7 @@ import { getDuaFavorites, toggleDuaFavorite } from '../utils/duaFavorites';
 
 
 /* ── Dua Item Component ────────────────────────── */
-function DuaItem({ dua, isFavorite, onToggleFavorite }) {
+function DuaItem({ dua, isFavorite, onToggleFavorite, t }) {
   const styles = createStyles();
   const [expanded, setExpanded] = useState(false);
 
@@ -70,13 +71,13 @@ function DuaItem({ dua, isFavorite, onToggleFavorite }) {
 
           {dua.transliteration && (
             <View style={styles.duaSection}>
-              <Text style={styles.duaSectionLabel}>Okunuşu</Text>
+              <Text style={styles.duaSectionLabel}>{t.duaTransliterationLabel || 'Okunuşu'}</Text>
               <Text style={styles.duaTransliteration}>{dua.transliteration}</Text>
             </View>
           )}
 
           <View style={styles.duaSection}>
-            <Text style={styles.duaSectionLabel}>Anlamı</Text>
+            <Text style={styles.duaSectionLabel}>{t.duaMeaningLabel || 'Anlamı'}</Text>
             <Text style={styles.duaMeaning}>{dua.meaning}</Text>
           </View>
 
@@ -84,7 +85,7 @@ function DuaItem({ dua, isFavorite, onToggleFavorite }) {
             <Text style={styles.duaSource}>— {dua.source}</Text>
             <Pressable onPress={handleShare} style={styles.shareBtn}>
               <Ionicons name="share-outline" size={16} color={colors.accent} />
-              <Text style={styles.shareText}>Paylaş</Text>
+              <Text style={styles.shareText}>{t.share || 'Paylaş'}</Text>
             </Pressable>
           </View>
         </View>
@@ -94,7 +95,7 @@ function DuaItem({ dua, isFavorite, onToggleFavorite }) {
 }
 
 /* ── Category Section ──────────────────────────── */
-function CategorySection({ category, index, favorites, onToggleFavorite }) {
+function CategorySection({ category, index, favorites, onToggleFavorite, t }) {
   const styles = createStyles();
   const [open, setOpen] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -132,7 +133,7 @@ function CategorySection({ category, index, favorites, onToggleFavorite }) {
           </View>
           <View>
             <Text style={styles.categoryTitle}>{category.title}</Text>
-            <Text style={styles.categoryCount}>{category.duas.length} dua</Text>
+            <Text style={styles.categoryCount}>{category.duas.length} {t.duaCount || 'dua'}</Text>
           </View>
         </View>
         <Ionicons
@@ -150,6 +151,7 @@ function CategorySection({ category, index, favorites, onToggleFavorite }) {
               dua={dua}
               isFavorite={favorites.includes(dua.id)}
               onToggleFavorite={onToggleFavorite}
+              t={t}
             />
           ))}
         </View>
@@ -171,6 +173,7 @@ function getDailyDua() {
 
 export function DuaCollectionScreen() {
   useTheme();
+  const { t } = useI18n();
   const styles = createStyles();
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -229,8 +232,8 @@ export function DuaCollectionScreen() {
             <Ionicons name="chevron-back" size={24} color={colors.accent} />
           </Pressable>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>DUA KOLEKSİYONU</Text>
-            <Text style={styles.headerSubtitle}>Günlük ve özel dualar</Text>
+            <Text style={styles.headerTitle}>{t.duaTitle || 'DUA KOLEKSİYONU'}</Text>
+            <Text style={styles.headerSubtitle}>{t.duaSubtitle || 'Günlük ve özel dualar'}</Text>
           </View>
           <Pressable onPress={() => setShowFavOnly((f) => !f)} style={styles.backBtn}>
             <Ionicons
@@ -246,7 +249,7 @@ export function DuaCollectionScreen() {
           <Ionicons name="search" size={16} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Dua ara..."
+            placeholder={t.duaSearch || "Dua ara..."}
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -277,7 +280,7 @@ export function DuaCollectionScreen() {
               >
                 <View style={styles.dailyHeader}>
                   <Ionicons name="sparkles" size={18} color={colors.accent} />
-                  <Text style={styles.dailyTitle}>Günün Duası</Text>
+                  <Text style={styles.dailyTitle}>{t.duaDaily || 'Günün Duası'}</Text>
                   <Ionicons
                     name={showDailyDua ? 'chevron-up' : 'chevron-down'}
                     size={16}
@@ -301,13 +304,14 @@ export function DuaCollectionScreen() {
               index={index}
               favorites={favorites}
               onToggleFavorite={handleToggleFavorite}
+              t={t}
             />
           )}
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="search-outline" size={40} color={colors.textMuted} />
               <Text style={styles.emptyText}>
-                {showFavOnly ? 'Henüz favori dua eklemediniz' : 'Sonuç bulunamadı'}
+                {showFavOnly ? (t.noFavDua || 'Henüz favori dua eklemediniz') : (t.noResults || 'Sonuç bulunamadı')}
               </Text>
             </View>
           }

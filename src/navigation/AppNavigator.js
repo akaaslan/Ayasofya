@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 
 import { HolidayBanner } from '../components/HolidayBanner';
+import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import { DualarScreen } from '../screens/DualarScreen';
@@ -22,6 +23,7 @@ const TAB_ICONS = {
 
 export function AppNavigator() {
   useTheme();
+  const { t } = useI18n();
   const styles = createStyles();
   const [holidayBannerEnabled, setHolidayBannerEnabled] = useState(true);
   const [holidayBannerDismissed, setHolidayBannerDismissed] = useState(false);
@@ -56,21 +58,21 @@ export function AppNavigator() {
         <Tab.Screen
           name="Home"
           component={HomeStack}
-          options={{ tabBarLabel: 'Ana Sayfa' }}
+          options={{ tabBarLabel: t.tabHome || 'Ana Sayfa' }}
         />
         <Tab.Screen
           name="Qibla"
           component={QiblaScreen}
-          options={{ tabBarLabel: 'Kıble' }}
+          options={{ tabBarLabel: t.tabQibla || 'Kıble' }}
         />
         <Tab.Screen
           name="Dualar"
           component={DualarScreen}
-          options={{ tabBarLabel: 'Zikirmatik' }}
+          options={{ tabBarLabel: t.tabDhikr || 'Zikirmatik' }}
         />
         <Tab.Screen
           name="Settings"
-          options={{ tabBarLabel: 'Ayarlar' }}
+          options={{ tabBarLabel: t.tabSettings || 'Ayarlar' }}
         >
           {() => (
             <SettingsScreen

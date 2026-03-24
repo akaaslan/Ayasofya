@@ -193,7 +193,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
     <ScreenBackground>
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <Text style={styles.header}>AYARLAR</Text>
+          <Text style={styles.header}>{t.settingsTitle || 'AYARLAR'}</Text>
 
           {/* Ramadan indicator */}
           {ramadan.isRamadan && (
@@ -206,12 +206,12 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           )}
 
           {/* Ramadan Mode Toggle */}
-          <Text style={styles.sectionTitle}>RAMAZAN MODU</Text>
+          <Text style={styles.sectionTitle}>{t.ramadanMode || 'RAMAZAN MODU'}</Text>
           <View style={styles.ramadanToggleGroup}>
             {[
-              { key: 'auto', label: 'Otomatik', desc: 'Takvime göre' },
-              { key: 'on', label: 'Açık', desc: 'Her zaman göster' },
-              { key: 'off', label: 'Kapalı', desc: 'Gizle' },
+              { key: 'auto', label: t.ramadanAuto || 'Otomatik', desc: t.ramadanAutoDesc || 'Takvime göre' },
+              { key: 'on', label: t.ramadanOn || 'Açık', desc: t.ramadanOnDesc || 'Her zaman göster' },
+              { key: 'off', label: t.ramadanOff || 'Kapalı', desc: t.ramadanOffDesc || 'Gizle' },
             ].map((opt) => (
               <Pressable
                 key={opt.key}
@@ -234,11 +234,11 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           </View>
 
           {/* Dhikr Style */}
-          <Text style={styles.sectionTitle}>ZİKİRMATİK GÖRÜNÜMÜ</Text>
+          <Text style={styles.sectionTitle}>{t.dhikrStyle || 'ZİKİRMATİK GÖRÜNÜMÜ'}</Text>
           <View style={styles.ramadanToggleGroup}>
             {[
-              { key: 'classic', label: 'Klasik', desc: 'Halka tasarım' },
-              { key: 'tasbih', label: 'Tesbih', desc: 'Boncuk halka' },
+              { key: 'classic', label: t.dhikrClassic || 'Klasik', desc: t.dhikrClassicDesc || 'Halka tasarım' },
+              { key: 'tasbih', label: t.dhikrTasbih || 'Tesbih', desc: t.dhikrTasbihDesc || 'Boncuk halka' },
             ].map((opt) => (
               <Pressable
                 key={opt.key}
@@ -308,13 +308,13 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           </View>
 
           {/* Location */}
-          <Text style={styles.sectionTitle}>KONUM</Text>
+          <Text style={styles.sectionTitle}>{t.locationSection || 'KONUM'}</Text>
           <View style={styles.locationInfo}>
             <Text style={styles.locationCoords}>
               {lat.toFixed(4)}°, {lng.toFixed(4)}°
             </Text>
             <Text style={styles.locationNote}>
-              Namaz vakitleri tam GPS koordinatlarınıza göre hesaplanır
+              {t.locationNote || 'Namaz vakitleri tam GPS koordinatlarınıza göre hesaplanır'}
             </Text>
           </View>
           <Pressable
@@ -324,7 +324,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           >
             <View style={styles.rowLeft}>
               <Ionicons name="location-outline" size={20} color={colors.accent} />
-              <Text style={styles.rowLabel}>Şehir</Text>
+              <Text style={styles.rowLabel}>{t.city || 'Şehir'}</Text>
             </View>
             <View style={styles.rowRight}>
               <Text style={styles.rowValue}>{district ? `${district}, ${city}` : city}</Text>
@@ -339,11 +339,11 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           >
             <View style={styles.rowLeft}>
               <Ionicons name="navigate-outline" size={20} color={colors.accent} />
-              <Text style={styles.rowLabel}>GPS ile Konum Al</Text>
+              <Text style={styles.rowLabel}>{t.gpsRefresh || 'GPS ile Konum Al'}</Text>
             </View>
             <View style={styles.rowRight}>
               {locLoading ? (
-                <Text style={styles.rowHint}>Aranıyor...</Text>
+                <Text style={styles.rowHint}>{t.searching || 'Aranıyor...'}</Text>
               ) : (
                 <Ionicons name="refresh-outline" size={18} color={colors.textSecondary} />
               )}
@@ -351,11 +351,11 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           </Pressable>
 
           {/* Notifications */}
-          <Text style={styles.sectionTitle}>BİLDİRİMLER</Text>
+          <Text style={styles.sectionTitle}>{t.notificationsSection || 'BİLDİRİMLER'}</Text>
           <View style={styles.row}>
             <View style={styles.rowLeft}>
               <Ionicons name="notifications-outline" size={20} color={colors.accent} />
-              <Text style={styles.rowLabel}>Ezan Bildirimleri</Text>
+              <Text style={styles.rowLabel}>{t.prayerNotifications || 'Ezan Bildirimleri'}</Text>
             </View>
             <Switch
               value={notificationsEnabled}
@@ -384,8 +384,8 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               {/* Pre-notification */}
               <View style={[styles.subRow, { marginTop: 8 }]}>
                 <View>
-                  <Text style={styles.subRowLabel}>Ön Bildirim (15 dk önce)</Text>
-                  <Text style={styles.subRowHint}>Ezan vaktinden önce hatırlatır</Text>
+                  <Text style={styles.subRowLabel}>{t.preNotification || 'Ön Bildirim (15 dk önce)'}</Text>
+                  <Text style={styles.subRowHint}>{t.preNotificationHint || 'Ezan vaktinden önce hatırlatır'}</Text>
                 </View>
                 <Switch
                   value={preNotification}
@@ -399,11 +399,11 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           )}
 
           {/* Sound */}
-          <Text style={styles.sectionTitle}>EZAN SESİ</Text>
+          <Text style={styles.sectionTitle}>{t.soundSection || 'EZAN SESİ'}</Text>
           <View style={styles.row}>
             <View style={styles.rowLeft}>
               <Ionicons name="volume-high-outline" size={20} color={colors.accent} />
-              <Text style={styles.rowLabel}>Ezan Sesi</Text>
+              <Text style={styles.rowLabel}>{t.ezanSound || 'Ezan Sesi'}</Text>
             </View>
             <Switch
               value={soundEnabled}
@@ -420,17 +420,17 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           >
             <View style={styles.rowLeft}>
               <Ionicons name={ezanPlaying ? 'stop-circle' : 'play-circle'} size={20} color={colors.accent} />
-              <Text style={styles.rowLabel}>{ezanPlaying ? 'Ezanı Durdur' : 'Ezan Sesini Test Et'}</Text>
+              <Text style={styles.rowLabel}>{ezanPlaying ? (t.stopEzan || 'Ezanı Durdur') : (t.testEzan || 'Ezan Sesini Test Et')}</Text>
             </View>
             <Ionicons name={ezanPlaying ? 'stop' : 'play'} size={18} color={colors.textSecondary} />
           </Pressable>
 
           {/* Holiday Banner */}
-          <Text style={styles.sectionTitle}>DİNİ BAYRAM SAYACI</Text>
+          <Text style={styles.sectionTitle}>{t.holidaySection || 'DİNİ BAYRAM SAYACI'}</Text>
           <View style={styles.row}>
             <View style={styles.rowLeft}>
               <Ionicons name="star-outline" size={20} color={colors.accent} />
-              <Text style={styles.rowLabel}>Bayram Geri Sayımı</Text>
+              <Text style={styles.rowLabel}>{t.holidayCountdown || 'Bayram Geri Sayımı'}</Text>
             </View>
             <Switch
               value={holidayBannerEnabled}
@@ -550,7 +550,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           </Pressable>
 
           {/* About */}
-          <Text style={styles.sectionTitle}>HAKKINDA</Text>
+          <Text style={styles.sectionTitle}>{t.aboutSection || 'HAKKINDA'}</Text>
           <Pressable
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             onPress={handleAbout}
@@ -558,7 +558,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           >
             <View style={styles.rowLeft}>
               <Ionicons name="information-circle-outline" size={20} color={colors.accent} />
-              <Text style={styles.rowLabel}>Uygulama Hakkında</Text>
+              <Text style={styles.rowLabel}>{t.about || 'Uygulama Hakkında'}</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
           </Pressable>
@@ -572,7 +572,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
           >
             <View style={styles.rowLeft}>
               <Ionicons name="star-outline" size={20} color={colors.accent} />
-              <Text style={styles.rowLabel}>Uygulamayı Değerlendirin</Text>
+              <Text style={styles.rowLabel}>{t.rateApp || 'Uygulamayı Değerlendirin'}</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
           </Pressable>
@@ -588,7 +588,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Şehir Seçin</Text>
+            <Text style={styles.modalTitle}>{t.selectCity || 'Şehir Seçin'}</Text>
             <FlatList
               data={CITY_LIST}
               keyExtractor={(item) => item}
@@ -620,7 +620,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               style={styles.modalCloseBtn}
               onPress={() => setCityModalVisible(false)}
             >
-              <Text style={styles.modalCloseText}>İptal</Text>
+              <Text style={styles.modalCloseText}>{t.cancel || 'İptal'}</Text>
             </Pressable>
           </View>
         </View>

@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import {
@@ -35,7 +36,7 @@ const PRAYER_INFO = {
 };
 
 /* ── Animated checkbox row ── */
-function PrayerRow({ prayerKey, checked, onToggle, isLast }) {
+function PrayerRow({ prayerKey, checked, onToggle, isLast, t }) {
   const styles = createStyles();
   const info = PRAYER_INFO[prayerKey];
   const scale = useRef(new Animated.Value(1)).current;
@@ -83,7 +84,7 @@ function PrayerRow({ prayerKey, checked, onToggle, isLast }) {
               color={checked ? colors.accent : colors.textMuted}
             />
             <Text style={[styles.prayerLabel, checked && styles.prayerLabelChecked]}>
-              {info.label}
+              {t[prayerKey] || info.label}
             </Text>
           </View>
           <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
@@ -157,6 +158,7 @@ function WeekBar({ pct, isToday, dayLabel, dayNum }) {
 /* ── Component ─────────────────────────────────── */
 export function NamazTakipScreen() {
   useTheme();
+  const { t } = useI18n();
   const styles = createStyles();
   const navigation = useNavigation();
   const [dayData, setDayData] = useState({});
@@ -249,7 +251,7 @@ export function NamazTakipScreen() {
   const isToday = selectedDate.toDateString() === new Date().toDateString();
 
   const dateLabel = isToday
-    ? 'Bugün'
+    ? (t.today || 'Bugün')
     : selectedDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
 
   /* ── Count today's completed ── */
@@ -275,8 +277,8 @@ export function NamazTakipScreen() {
                 <Ionicons name="chevron-back" size={24} color={colors.accent} />
               </Pressable>
               <View style={styles.headerCenter}>
-                <Text style={styles.title}>Namaz Takip</Text>
-                <Text style={styles.subtitle}>Günlük namazlarınızı takip edin</Text>
+                <Text style={styles.title}>{t.prayerTrackingTitle || 'Namaz Takip'}</Text>
+                <Text style={styles.subtitle}>{t.prayerTrackingDesc || 'Günlük namazlarınızı takip edin'}</Text>
               </View>
               <View style={{ width: 32 }} />
             </View>
@@ -295,12 +297,12 @@ export function NamazTakipScreen() {
                 <Animated.Text style={[styles.streakNum, { transform: [{ scale: streakScale }] }]}>
                   {streak}
                 </Animated.Text>
-                <Text style={styles.streakLabel}>Gün Seri</Text>
+                <Text style={styles.streakLabel}>{t.streakLabel || 'Gün Seri'}</Text>
               </View>
             </View>
             <View style={styles.streakRight}>
               <Text style={styles.todayProgress}>{todayCompleted}/5</Text>
-              <Text style={styles.todayLabel}>Bugün</Text>
+              <Text style={styles.todayLabel}>{t.today || 'Bugün'}</Text>
             </View>
           </Animated.View>
 
@@ -339,7 +341,7 @@ export function NamazTakipScreen() {
               { opacity: fadeList, transform: [{ translateY: slideList }] },
             ]}
           >
-            <Text style={styles.listTitle}>{isToday ? 'Bugünkü Namazlar' : dateLabel}</Text>
+            <Text style={styles.listTitle}>{isToday ? (t.todaysPrayers || 'Bugünkü Namazlar') : dateLabel}</Text>
             {TRACKABLE_PRAYERS.map((key, idx) => (
               <PrayerRow
                 key={key}
@@ -347,6 +349,7 @@ export function NamazTakipScreen() {
                 checked={dayData[key] === true}
                 onToggle={handleToggle}
                 isLast={idx === TRACKABLE_PRAYERS.length - 1}
+                t={t}
               />
             ))}
           </Animated.View>
@@ -358,7 +361,7 @@ export function NamazTakipScreen() {
               { opacity: fadeStats, transform: [{ translateY: slideStats }] },
             ]}
           >
-            <Text style={styles.listTitle}>Haftalık Görünüm</Text>
+            <Text style={styles.listTitle}>{t.weekly || 'Haftalık Görünüm'}</Text>
             <View style={styles.weekRow}>
               {weekStats.map((day) => {
                 const pct = day.total > 0 ? day.completed / day.total : 0;
@@ -379,7 +382,7 @@ export function NamazTakipScreen() {
             {/* ── Weekly total ── */}
             <View style={styles.weekTotal}>
               <Text style={styles.weekTotalLabel}>
-                Bu Hafta Toplam
+                {t.weeklyTotal || 'Bu Hafta Toplam'}
               </Text>
               <Text style={styles.weekTotalNum}>
                 {weekStats.reduce((s, d) => s + d.completed, 0)} / {weekStats.length * 5}
@@ -395,19 +398,19 @@ export function NamazTakipScreen() {
                 { opacity: fadeStats, transform: [{ translateY: slideStats }], marginTop: 16 },
               ]}
             >
-              <Text style={styles.listTitle}>Aylık İstatistik</Text>
+              <Text style={styles.listTitle}>{t.monthly || 'Aylık İstatistik'}</Text>
               <View style={styles.monthStatRow}>
                 <View style={styles.monthStatItem}>
                   <Text style={styles.monthStatNum}>{monthStats.totalPrayed}</Text>
-                  <Text style={styles.monthStatLabel}>Kılınan</Text>
+                  <Text style={styles.monthStatLabel}>{t.prayed || 'Kılınan'}</Text>
                 </View>
                 <View style={styles.monthStatItem}>
                   <Text style={styles.monthStatNum}>{monthStats.totalPossible}</Text>
-                  <Text style={styles.monthStatLabel}>Toplam</Text>
+                  <Text style={styles.monthStatLabel}>{t.total || 'Toplam'}</Text>
                 </View>
                 <View style={styles.monthStatItem}>
                   <Text style={[styles.monthStatNum, { color: colors.accent }]}>%{monthStats.percentage}</Text>
-                  <Text style={styles.monthStatLabel}>Başarı</Text>
+                  <Text style={styles.monthStatLabel}>{t.success || 'Başarı'}</Text>
                 </View>
               </View>
             </Animated.View>

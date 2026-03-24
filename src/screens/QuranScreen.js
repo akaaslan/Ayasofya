@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -16,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
 import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
 import { colors } from '../theme/colors';
 import { SURAHS } from '../data/surahData';
 import { getBookmark, setBookmark } from '../utils/quranBookmark';
@@ -23,6 +23,7 @@ import { getBookmark, setBookmark } from '../utils/quranBookmark';
 /* ── Component ─────────────────────────────────── */
 export function QuranScreen() {
   useTheme();
+  const { t } = useI18n();
   const styles = createStyles();
   const navigation = useNavigation();
   const [selectedSurah, setSelectedSurah] = useState(null);
@@ -73,6 +74,7 @@ export function QuranScreen() {
               setBookmark(selectedSurah.id, selectedSurah.name);
               setBookmarkId(selectedSurah.id);
             }}
+            t={t}
           />
         </SafeAreaView>
       </ScreenBackground>
@@ -95,8 +97,8 @@ export function QuranScreen() {
               <Ionicons name="chevron-back" size={24} color={colors.accent} />
             </Pressable>
             <View style={styles.headerCenter}>
-              <Text style={styles.title}>Kur'an-ı Kerim</Text>
-              <Text style={styles.subtitle}>Kısa Sureler (Amme Cüzü)</Text>
+              <Text style={styles.title}>{t.quranTitle || "Kur'an-ı Kerim"}</Text>
+              <Text style={styles.subtitle}>{t.quranSubtitle || "Kısa Sureler (Amme Cüzü)"}</Text>
             </View>
             <View style={{ width: 32 }} />
           </View>
@@ -119,7 +121,7 @@ export function QuranScreen() {
             >
               <Ionicons name="bookmark" size={18} color={colors.accent} />
               <Text style={styles.bookmarkText}>
-                Kaldığın yerden devam et – {SURAHS.find((x) => x.id === bookmarkId)?.name}
+                {t.continueReading || 'Kaldığın yerden devam et'} – {SURAHS.find((x) => x.id === bookmarkId)?.name}
               </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.accent} />
             </Pressable>
@@ -153,7 +155,7 @@ export function QuranScreen() {
                 </View>
                 <View style={styles.surahInfo}>
                   <Text style={styles.surahName}>{item.name}</Text>
-                  <Text style={styles.surahAyah}>{item.ayahCount} ayet</Text>
+                  <Text style={styles.surahAyah}>{item.ayahCount} {t.ayahCountLabel || 'ayet'}</Text>
                 </View>
                 <Text style={styles.surahArabic}>{item.arabic}</Text>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
@@ -167,11 +169,10 @@ export function QuranScreen() {
 }
 
 /* ── Surah Reading Sub-component ──────────────── */
-function SurahReader({ surah, onBack, isBookmarked, onBookmark }) {
+function SurahReader({ surah, onBack, isBookmarked, onBookmark, t }) {
   const styles = createStyles();
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideIn = useRef(new Animated.Value(20)).current;
-  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -179,25 +180,6 @@ function SurahReader({ surah, onBack, isBookmarked, onBookmark }) {
       Animated.timing(slideIn, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
   }, []);
-
-  useEffect(() => {
-    return () => { Speech.stop(); };
-  }, []);
-
-  const handleSpeak = async () => {
-    if (isSpeaking) {
-      await Speech.stop();
-      setIsSpeaking(false);
-    } else {
-      setIsSpeaking(true);
-      Speech.speak(surah.text, {
-        language: 'ar',
-        onDone: () => setIsSpeaking(false),
-        onStopped: () => setIsSpeaking(false),
-        onError: () => setIsSpeaking(false),
-      });
-    }
-  };
 
   return (
     <Animated.View
@@ -208,22 +190,15 @@ function SurahReader({ surah, onBack, isBookmarked, onBookmark }) {
     >
       {/* back button + title */}
       <View style={styles.readerHeader}>
-        <Pressable style={styles.backBtn} onPress={() => { Speech.stop(); onBack(); }}>
+        <Pressable style={styles.backBtn} onPress={onBack}>
           <Ionicons name="chevron-back" size={22} color={colors.accent} />
-          <Text style={styles.backText}>Geri</Text>
+          <Text style={styles.backText}>{t.back || 'Geri'}</Text>
         </Pressable>
         <View style={styles.readerTitleWrap}>
           <Text style={styles.readerTitle}>{surah.name}</Text>
-          <Text style={styles.readerAyah}>{surah.ayahCount} ayet</Text>
+          <Text style={styles.readerAyah}>{surah.ayahCount} {t.ayahCountLabel || 'ayet'}</Text>
         </View>
         <View style={styles.readerActions}>
-          <Pressable onPress={handleSpeak} style={styles.actionBtn}>
-            <Ionicons
-              name={isSpeaking ? 'stop-circle' : 'volume-high'}
-              size={22}
-              color={isSpeaking ? '#e74c3c' : colors.accent}
-            />
-          </Pressable>
           <Pressable onPress={onBookmark} style={styles.actionBtn}>
             <Ionicons
               name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
@@ -246,7 +221,7 @@ function SurahReader({ surah, onBack, isBookmarked, onBookmark }) {
         {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerLabel}>Meâl</Text>
+          <Text style={styles.dividerLabel}>{t.meaning || 'Meâl'}</Text>
           <View style={styles.dividerLine} />
         </View>
 

@@ -8,12 +8,14 @@ import { ClassicDhikr } from '../components/dhikr/ClassicDhikr';
 import { TasbihDhikr } from '../components/dhikr/TasbihDhikr';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { colors } from '../theme/colors';
+import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { getDhikrStyle, saveDhikrStyle } from '../utils/dhikrStylePref';
 import { getDailyTotal, getGrandTotal } from '../utils/dhikrStorage';
 
 export function DualarScreen() {
   useTheme();
+  const { t } = useI18n();
   const s = createStyles();
   const [style, setStyle] = useState('tasbih');
   const [modalVisible, setModalVisible] = useState(false);
@@ -51,7 +53,7 @@ export function DualarScreen() {
     ]).start();
   }, []);
 
-  const TITLES = { classic: 'Z\u0130K\u0130RMAT\u0130K', tasbih: 'TESB\u0130H' };
+  const TITLES = { classic: (t.dhikrClassic || 'ZİKİRMATİK').toUpperCase(), tasbih: (t.dhikrTasbih || 'TESBİH').toUpperCase() };
 
   return (
     <ScreenBackground>
@@ -76,12 +78,12 @@ export function DualarScreen() {
         <View style={s.statsBar}>
           <View style={s.statItem}>
             <Text style={s.statNum}>{dailyTotal}</Text>
-            <Text style={s.statLabel}>Bugün</Text>
+            <Text style={s.statLabel}>{t.today || 'Bugün'}</Text>
           </View>
           <View style={s.statDivider} />
           <View style={s.statItem}>
             <Text style={s.statNum}>{grandTotal}</Text>
-            <Text style={s.statLabel}>Toplam</Text>
+            <Text style={s.statLabel}>{'Toplam'}</Text>
           </View>
         </View>
 
@@ -96,21 +98,21 @@ export function DualarScreen() {
         >
           <Pressable style={s.modalOverlay} onPress={() => setModalVisible(false)}>
             <View style={s.modalContent}>
-              <Text style={s.modalTitle}>GÖRÜNÜM SEÇ</Text>
+              <Text style={s.modalTitle}>{(t.dhikrStyle || 'GÖRÜNÜM SEÇ').toUpperCase()}</Text>
               
               <TouchableOpacity style={[s.option, style === 'tasbih' && s.optionActive]} onPress={() => changeStyle('tasbih')}>
                 <Ionicons name="radio-button-on" size={24} color={style === 'tasbih' ? colors.accent : colors.textMuted} />
                 <View style={s.optionInfo}>
-                  <Text style={[s.optionLabel, style === 'tasbih' && s.optionLabelActive]}>Tesbih Modu</Text>
-                  <Text style={s.optionDesc}>Geleneksel boncuk deneyimi</Text>
+                  <Text style={[s.optionLabel, style === 'tasbih' && s.optionLabelActive]}>{t.dhikrTasbih || 'Tesbih Modu'}</Text>
+                  <Text style={s.optionDesc}>{t.dhikrTasbihDesc || 'Geleneksel boncuk deneyimi'}</Text>
                 </View>
               </TouchableOpacity>
 
               <TouchableOpacity style={[s.option, style === 'classic' && s.optionActive]} onPress={() => changeStyle('classic')}>
                 <Ionicons name="color-filter-outline" size={24} color={style === 'classic' ? colors.accent : colors.textMuted} />
                 <View style={s.optionInfo}>
-                  <Text style={[s.optionLabel, style === 'classic' && s.optionLabelActive]}>Klasik Mod</Text>
-                  <Text style={s.optionDesc}>Sade mekanik zikirmatik</Text>
+                  <Text style={[s.optionLabel, style === 'classic' && s.optionLabelActive]}>{t.dhikrClassic || 'Klasik Mod'}</Text>
+                  <Text style={s.optionDesc}>{t.dhikrClassicDesc || 'Sade mekanik zikirmatik'}</Text>
                 </View>
               </TouchableOpacity>
             </View>

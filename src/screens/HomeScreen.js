@@ -20,6 +20,7 @@ import { FastingTracker } from '../components/FastingTracker';
 import { HeaderSection } from '../components/HeaderSection';
 import { OfflineIndicator } from '../components/OfflineIndicator';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useI18n } from '../context/I18nContext';
 import { useLocationContext } from '../context/LocationContext';
 import { useRamadan } from '../context/RamadanContext';
 import { useCurrentTime } from '../hooks/useCurrentTime';
@@ -69,6 +70,7 @@ function getDayIndex(count) {
 
 export function HomeScreen() {
   useTheme();
+  const { t } = useI18n();
   const styles = createStyles();
   const navigation = useNavigation();
   const { lat, lng, tz, city, district } = useLocationContext();
@@ -89,8 +91,8 @@ export function HomeScreen() {
   /* ── Dialog state ── */
   const [dialog, setDialog] = useState({ visible: false, icon: null, title: '', message: '', buttons: [] });
   const showDialog = useCallback((icon, title, message, buttons) => {
-    setDialog({ visible: true, icon, title, message, buttons: buttons || [{ text: 'Tamam' }] });
-  }, []);
+    setDialog({ visible: true, icon, title, message, buttons: buttons || [{ text: t.ok || 'Tamam' }] });
+  }, [t]);
   const hideDialog = useCallback(() => setDialog((d) => ({ ...d, visible: false })), []);
 
   /* ── Calendar state ── */
@@ -112,7 +114,7 @@ export function HomeScreen() {
     return city;
   }, [city, district]);
 
-  const nextPrayerName = nextPrayer?.label ?? '—';
+  const nextPrayerName = nextPrayer ? (t[nextPrayer.key] || nextPrayer.label) : '—';
   const nextPrayerTime = nextPrayer?.time ?? '';
 
 
@@ -139,15 +141,15 @@ export function HomeScreen() {
   const handleVerse = useCallback(() => {
     const idx = getDayIndex(7);
     const v = DAILY_VERSES[idx];
-    showDialog('book', 'Bugünün Ayeti', `${v.verse}\n\n— ${v.source}`, [{ text: 'Tamam' }]);
-  }, [showDialog]);
+    showDialog('book', t.todaysVerse || 'Bugünün Ayeti', `${v.verse}\n\n— ${v.source}`, [{ text: t.ok || 'Tamam' }]);
+  }, [showDialog, t]);
 
   const handleMosque = useCallback(() => {
     const url = `https://www.google.com/maps/search/cami+mosque/@${lat},${lng},14z`;
     Linking.openURL(url).catch(() => {
-      showDialog('business', 'Hata', 'Harita uygulaması açılamadı.', [{ text: 'Tamam' }]);
+      showDialog('business', t.error || 'Hata', 'Harita uygulaması açılamadı.', [{ text: t.ok || 'Tamam' }]);
     });
-  }, [lat, lng, showDialog]);
+  }, [lat, lng, showDialog, t]);
 
   /* ── Entrance animations ── */
   const fadeRing  = useRef(new Animated.Value(0)).current;
@@ -188,7 +190,7 @@ export function HomeScreen() {
         >
           <View style={styles.container}>
             <HeaderSection
-              title="BUGÜNÜN VAKİTLERİ"
+              title={t.todaysPrayerTimes || "BUGÜNÜN VAKİTLERİ"}
               dayName={hijriDay}
             />
 
@@ -200,10 +202,10 @@ export function HomeScreen() {
             {/* ── Countdown Ring with progress ── */}
             <Animated.View style={{ opacity: fadeRing, transform: [{ translateY: slideRing }] }}>
               <CountdownRing
-                label="SONRAKİ VAKİT"
+                label={t.nextPrayer || "SONRAKİ VAKİT"}
                 prayerName={nextPrayerName}
                 countdown={countdown}
-                caption="KALAN SÜRE"
+                caption={t.remainingTime || "KALAN SÜRE"}
                 progress={progress}
               />
             </Animated.View>
@@ -215,10 +217,10 @@ export function HomeScreen() {
                 onPress={toggleDropdown}
               >
                 <Ionicons name="time-outline" size={22} color={colors.accent} />
-                <Text style={styles.dropdownBtnText}>Ezan Saatleri</Text>
+                <Text style={styles.dropdownBtnText}>{t.prayerTimesBtn || 'Ezan Saatleri'}</Text>
                 {nextPrayer && (
                   <View style={styles.nextBadge}>
-                    <Text style={styles.nextBadgeText}>{nextPrayer.label} · {nextPrayer.time}</Text>
+                    <Text style={styles.nextBadgeText}>{t[nextPrayer.key] || nextPrayer.label} · {nextPrayer.time}</Text>
                   </View>
                 )}
                 <Ionicons
@@ -269,7 +271,7 @@ export function HomeScreen() {
                         color={isActive ? colors.accent : colors.textMuted}
                       />
                       <Text style={[styles.dropdownLabel, isActive && styles.dropdownLabelActive]}>
-                        {item.label}
+                        {t[item.key] || item.label}
                       </Text>
                     </View>
                     <Text style={[styles.dropdownTime, isActive && styles.dropdownTimeActive]}>
@@ -341,7 +343,7 @@ export function HomeScreen() {
                   <View style={styles.cardIconWrap}>
                     <Ionicons name="checkmark-circle" size={36} color={colors.accent} />
                   </View>
-                  <Text style={styles.imageCardLabel}>Namaz{"\n"}Takip</Text>
+                  <Text style={styles.imageCardLabel}>{t.prayerTracking ? t.prayerTracking.replace(' ', '\n') : 'Namaz\nTakip'}</Text>
                 </View>
               </Pressable>
 
@@ -354,7 +356,7 @@ export function HomeScreen() {
                   <View style={styles.cardIconWrap}>
                     <Ionicons name="book" size={36} color={colors.accent} />
                   </View>
-                  <Text style={styles.imageCardLabel}>Kur'an{"\n"}Oku</Text>
+                  <Text style={styles.imageCardLabel}>{t.quranReader ? t.quranReader.replace(' ', '\n') : "Kur'an\nOku"}</Text>
                 </View>
               </Pressable>
             </View>
@@ -390,7 +392,7 @@ export function HomeScreen() {
               >
                 <View style={[styles.imageCardSmallInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
                   <Ionicons name="time" size={24} color={colors.accent} />
-                  <Text style={styles.imageCardSmallLabel}>Kaza{'\n'}Namazı</Text>
+                  <Text style={styles.imageCardSmallLabel}>{t.kazaPrayer ? t.kazaPrayer.replace(' ', '\n') : 'Kaza\nNamazı'}</Text>
                 </View>
               </Pressable>
             </View>

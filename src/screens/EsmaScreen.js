@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -15,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
 import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
 import { ESMA_UL_HUSNA } from '../data/esmaData';
 import { colors } from '../theme/colors';
 
@@ -56,13 +56,6 @@ function EsmaCard({ item, index }) {
       {/* Turkish transliteration + pronunciation */}
       <View style={styles.nameRow}>
         <Text style={styles.nameText}>{item.name}</Text>
-        <Pressable
-          onPress={() => Speech.speak(item.arabic, { language: 'ar' })}
-          hitSlop={8}
-          style={styles.speakBtn}
-        >
-          <Ionicons name="volume-medium-outline" size={16} color={colors.accent} />
-        </Pressable>
       </View>
 
       {/* Meaning */}
@@ -74,6 +67,7 @@ function EsmaCard({ item, index }) {
 /* ── Main Screen ────────────────────────────────── */
 export function EsmaScreen() {
   useTheme();
+  const { t } = useI18n();
   const styles = createStyles();
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
@@ -117,8 +111,8 @@ export function EsmaScreen() {
             <Ionicons name="chevron-back" size={24} color={colors.accent} />
           </Pressable>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>ESMA-ÜL HÜSNA</Text>
-            <Text style={styles.headerSubtitle}>Allah'ın 99 Güzel İsmi</Text>
+            <Text style={styles.headerTitle}>{t.esmaTitle || 'ESMA-ÜL HÜSNA'}</Text>
+            <Text style={styles.headerSubtitle}>{t.esmaSubtitle || "Allah'ın 99 Güzel İsmi"}</Text>
           </View>
           <View style={{ width: 40 }} />
         </Animated.View>
@@ -128,7 +122,7 @@ export function EsmaScreen() {
           <Ionicons name="search" size={18} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="İsim veya anlam ara..."
+            placeholder={t.esmaSearch || "İsim veya anlam ara..."}
             placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={setSearch}
@@ -143,7 +137,7 @@ export function EsmaScreen() {
 
         {/* Count */}
         <Text style={styles.countText}>
-          {filtered.length === 99 ? '99 İsim' : `${filtered.length} sonuç`}
+          {filtered.length === 99 ? `99 ${t.names || 'İsim'}` : `${filtered.length} ${t.results || 'sonuç'}`}
         </Text>
 
         {/* Grid */}

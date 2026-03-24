@@ -27,6 +27,7 @@ import { ScreenBackground } from '../components/ScreenBackground';
 import { useLocationContext } from '../context/LocationContext';
 import { colors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
 
 const { width } = Dimensions.get('window');
 const COMPASS_SIZE = width * 0.78;
@@ -68,7 +69,7 @@ function polarXY(deg, r) {
 }
 
 /* ── SVG Compass Face ─────────────────────────────────────────── */
-function CompassSvg({ qiblaDeg }) {
+function CompassSvg({ qiblaDeg, t }) {
   const ticks = [];
   for (let i = 0; i < 360; i += 2) {
     const isMajor = i % 90 === 0;
@@ -87,10 +88,10 @@ function CompassSvg({ qiblaDeg }) {
   }
 
   const cardinals = [
-    { deg: 0, label: 'K', clr: colors.accent, sz: 18 },
-    { deg: 90, label: 'D', clr: colors.textPrimary, sz: 15 },
-    { deg: 180, label: 'G', clr: colors.textPrimary, sz: 15 },
-    { deg: 270, label: 'B', clr: colors.textPrimary, sz: 15 },
+    { deg: 0, label: t.north || 'K', clr: colors.accent, sz: 18 },
+    { deg: 90, label: t.east || 'D', clr: colors.textPrimary, sz: 15 },
+    { deg: 180, label: t.south || 'G', clr: colors.textPrimary, sz: 15 },
+    { deg: 270, label: t.west || 'B', clr: colors.textPrimary, sz: 15 },
   ].map((c) => {
     const p = polarXY(c.deg, R_TICK - 28);
     return (
@@ -166,6 +167,7 @@ function CompassSvg({ qiblaDeg }) {
 /* ── Screen ───────────────────────────────────────────────────── */
 export function QiblaScreen() {
   useTheme();
+  const { t } = useI18n();
   const s = createStyles();
   const rotationAnim = useRef(new Animated.Value(0)).current;
   const animTarget = useRef(0);
@@ -272,47 +274,47 @@ export function QiblaScreen() {
   }, []);
 
   const accuracyLabel =
-    accuracy >= 3 ? 'Yüksek' : accuracy === 2 ? 'Orta' : accuracy === 1 ? 'Düşük' : '';
-  const locationName = city || 'İstanbul';
-  const countryName = country || 'Türkiye';
+    accuracy >= 3 ? (t.accuracyHigh || 'Yüksek') : accuracy === 2 ? (t.accuracyMed || 'Orta') : accuracy === 1 ? (t.accuracyLow || 'Düşük') : '';
+  const locationName = city || (t.istanbul || 'İstanbul');
+  const countryName = country || (t.turkey || 'Türkiye');
 
   return (
     <ScreenBackground>
       <SafeAreaView style={s.safe}>
         <View style={s.container}>
-          <Text style={s.title}>KIBLE PUSULASI</Text>
+          <Text style={s.title}>{t.qiblaTitle || 'KIBLE PUSULASI'}</Text>
 
           {status === 'error' ? (
             <Text style={s.errorText}>
-              Pusula sensörü okunamadı.{'\n'}Lütfen konum iznini kontrol edin.
+              {t.compassError || 'Pusula sensörü okunamadı.\nLütfen konum iznini kontrol edin.'}
             </Text>
           ) : (
             <>
               {/* Degree info bar */}
               <View style={s.infoBar}>
                 <View style={s.infoItem}>
-                  <Text style={s.infoLabel}>YÖN</Text>
+                  <Text style={s.infoLabel}>{t.direction || 'YÖN'}</Text>
                   <Text style={s.infoValue}>{Math.round(heading)}°</Text>
                 </View>
                 <View style={s.infoDivider} />
                 <View style={s.infoItem}>
-                  <Text style={s.infoLabel}>KIBLE</Text>
+                  <Text style={s.infoLabel}>{t.qiblaLabel || 'KIBLE'}</Text>
                   <Text style={s.infoValue}>{qiblaDeg.toFixed(1)}°</Text>
                 </View>
                 {accuracyLabel !== '' && (
-                  <>
-                    <View style={s.infoDivider} />
-                    <View style={s.infoItem}>
-                      <Text style={s.infoLabel}>DOĞRULUK</Text>
-                      <Text style={s.infoValue}>{accuracyLabel}</Text>
-                    </View>
-                  </>
-                )}
+                <>
+                  <View style={s.infoDivider} />
+                  <View style={s.infoItem}>
+                    <Text style={s.infoLabel}>{t.accuracy || 'DOĞRULUK'}</Text>
+                    <Text style={s.infoValue}>{accuracyLabel}</Text>
+                  </View>
+                </>
+              )}
               </View>
 
               {status === 'denied' && (
                 <Text style={s.warnText}>
-                  Konum izni verilmedi — İstanbul varsayılan olarak kullanılıyor
+                  {t.locationDenied || 'Konum izni verilmedi — İstanbul varsayılan olarak kullanılıyor'}
                 </Text>
               )}
 
@@ -321,7 +323,7 @@ export function QiblaScreen() {
                 <View style={s.calibrationHint}>
                   <Ionicons name="warning-outline" size={16} color="#e8a84c" />
                   <Text style={s.calibrationText}>
-                    Pusula hassasiyeti düşük — telefonunuzu 8 şeklinde çevirin
+                    {t.compassLowAccuracy || 'Pusula hassasiyeti düşük — telefonunuzu 8 şeklinde çevirin'}
                   </Text>
                 </View>
               )}
@@ -335,7 +337,7 @@ export function QiblaScreen() {
                   </Svg>
                 </View>
                 <Animated.View style={{ transform: [{ rotate: compassSpin }] }}>
-                  <CompassSvg qiblaDeg={qiblaDeg} />
+                  <CompassSvg qiblaDeg={qiblaDeg} t={t} />
                 </Animated.View>
               </View>
 
@@ -344,15 +346,15 @@ export function QiblaScreen() {
               <View style={s.distanceRow}>
                 <Ionicons name="location-sharp" size={14} color={colors.accent} />
                 <Text style={s.distanceText}>
-                  {formatThousands(Math.round(kabeDistance))} km Kabe'ye mesafe
+                  {formatThousands(Math.round(kabeDistance))} {t.distanceToKaaba || "km Kabe'ye mesafe"}
                 </Text>
               </View>
 
               {/* Status */}
               <Text style={[s.statusText, isPointingQibla && s.statusOk]}>
                 {isPointingQibla
-                  ? '✓ Kıble yönündesiniz!'
-                  : `Kıble ${qiblaRelative > 180 ? 'solunuzda' : 'sağınızda'} — ${Math.round(
+                  ? (t.qiblaFound || '✓ Kıble yönündesiniz!')
+                  : `${qiblaRelative > 180 ? (t.qiblaLeft || 'Kıble solunuzda') : (t.qiblaRight || 'Kıble sağınızda')} — ${Math.round(
                       qiblaRelative < 180 ? qiblaRelative : 360 - qiblaRelative,
                     )}°`}
               </Text>
@@ -363,11 +365,11 @@ export function QiblaScreen() {
                 onPress={handleRecalibrate}
               >
                 <Ionicons name="refresh" size={16} color={colors.accent} />
-                <Text style={s.btnText}>Yeniden Kalibre Et</Text>
+                <Text style={s.btnText}>{t.recalibrate || 'Yeniden Kalibre Et'}</Text>
               </Pressable>
 
               <Text style={s.hint}>
-                Doğruluk için telefonunuzu 8 şeklinde hareket ettirin
+                {t.calibrationHint || 'Doğruluk için telefonunuzu 8 şeklinde hareket ettirin'}
               </Text>
             </>
           )}
