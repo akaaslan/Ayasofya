@@ -48,7 +48,7 @@ export function FastingTracker() {
     <View style={[styles.container, { backgroundColor: theme.panel, borderColor: theme.divider }]}>
       <View style={styles.header}>
         <Ionicons name="moon" size={18} color={theme.accent} />
-        <Text style={[styles.title, { color: theme.textPrimary }]}>{t.fastingTracker || 'Oruç Takibi'}</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>{t.fastingTracker}</Text>
         <Text style={[styles.statsText, { color: theme.textMuted }]}>
           {t.fullFastDaysDesc ? t.fullFastDaysDesc.replace('{days}', stats.fullFastDays) : `${stats.fullFastDays} gün tam oruç`}
         </Text>
@@ -69,7 +69,7 @@ export function FastingTracker() {
             color={today.suhoor ? theme.accent : theme.textMuted}
           />
           <Text style={[styles.btnText, { color: today.suhoor ? theme.accent : theme.textSecondary }]}>
-            {t.sahurBtn || 'Sahur'}
+            {t.sahurBtn}
           </Text>
         </Pressable>
 
@@ -87,7 +87,7 @@ export function FastingTracker() {
             color={today.iftar ? theme.accent : theme.textMuted}
           />
           <Text style={[styles.btnText, { color: today.iftar ? theme.accent : theme.textSecondary }]}>
-            {t.iftarBtn || 'İftar'}
+            {t.iftarBtn}
           </Text>
         </Pressable>
       </View>

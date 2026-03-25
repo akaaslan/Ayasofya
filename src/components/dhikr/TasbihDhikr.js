@@ -153,7 +153,7 @@ function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim
       </SvgText>
       <SvgText x={CX} y={CY + 62} fill={colors.textMuted}
         fontSize={8} fontWeight="700" textAnchor="middle" letterSpacing={2.5}>
-        {t.touchAndDhikr || 'DOKUN VE ZİKRET'}
+        {t.touchAndDhikr}
       </SvgText>
     </Svg>
   );
@@ -258,16 +258,16 @@ export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, current
 
 
   const handleReset = useCallback(() => {
-    Alert.alert(t.reset || 'Sıfırla', t.resetConfirm || 'Sayacı sıfırlamak istediğinize emin misiniz?', [
-      { text: t.cancel || 'İptal', style: 'cancel' },
-      { text: t.reset || 'Sıfırla', style: 'destructive', onPress: () => { setCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
+    Alert.alert(t.reset, t.resetConfirm, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.reset, style: 'destructive', onPress: () => { setCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
     ]);
   }, [t, rotateAnim, rotateTarget]);
 
   const handleResetAll = useCallback(() => {
-    Alert.alert(t.resetAll || 'Tümünü Sıfırla', t.resetAllConfirm || 'Sayacı sıfırlamak istediğinize emin misiniz?\n(Geçmiş veriler kayıtlı kalır)', [
-      { text: t.cancel || 'İptal', style: 'cancel' },
-      { text: t.reset || 'Sıfırla', style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
+    Alert.alert(t.resetAll, t.resetAllConfirm, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.reset, style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
     ]);
   }, [t, rotateAnim, rotateTarget]);
 
@@ -294,23 +294,23 @@ export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, current
             <View style={s.actionCircle}>
               <Ionicons name="refresh" size={18} color={colors.accent} />
             </View>
-            <Text style={s.actionLabel}>{t.reset || 'Sıfırla'}</Text>
+            <Text style={s.actionLabel}>{t.reset}</Text>
           </Pressable>
           <View style={s.totalBadge}>
-            <Text style={s.totalLabel}>{t.progress || 'İLERLEME'}</Text>
+            <Text style={s.totalLabel}>{t.progress}</Text>
             <Text style={s.totalValue}>{cycleCount} / {currentTarget}</Text>
           </View>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
             <View style={[s.actionCircle, s.actionCircleMuted]}>
               <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
             </View>
-            <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all || 'Tümü'}</Text>
+            <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all}</Text>
           </Pressable>
         </Animated.View>
       </Animated.View>
 
       <Animated.View style={[s.selectorSection, { opacity: fadeSelector, transform: [{ translateY: slideSelector }] }]}>
-        <Text style={s.selectorTitle}>{t.selectDhikr || '✦  ZİKİR SEÇ  ✦'}</Text>
+        <Text style={s.selectorTitle}>{t.selectDhikr}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.selectorScroll}>
           {dhikrs.map((d, idx) => {
             const active = idx === selectedIdx;

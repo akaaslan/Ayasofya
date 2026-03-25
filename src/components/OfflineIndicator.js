@@ -22,7 +22,7 @@ export function OfflineIndicator() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>{t.offlineWarning || '⚡ Çevrimdışı — Önbellekteki veriler kullanılıyor'}</Text>
+      <Text style={styles.text}>{t.offlineWarning}</Text>
     </View>
   );
 }

@@ -28,11 +28,11 @@ import {
 
 /* ── Prayer display info ─────────────────────── */
 const PRAYER_INFO = {
-  imsak:  { label: 'İmsak (Sabah)', icon: 'sunny-outline' },
-  ogle:   { label: 'Öğle',          icon: 'sunny' },
-  ikindi: { label: 'İkindi',        icon: 'partly-sunny-outline' },
-  aksam:  { label: 'Akşam',         icon: 'cloudy-night-outline' },
-  yatsi:  { label: 'Yatsı',         icon: 'moon-outline' },
+  imsak:  { icon: 'sunny-outline' },
+  ogle:   { icon: 'sunny' },
+  ikindi: { icon: 'partly-sunny-outline' },
+  aksam:  { icon: 'cloudy-night-outline' },
+  yatsi:  { icon: 'moon-outline' },
 };
 
 /* ── Animated checkbox row ── */
@@ -252,7 +252,7 @@ export function NamazTakipScreen() {
   const localeDate = lang === 'tr' ? 'tr-TR' : 'en-US';
 
   const dateLabel = isToday
-    ? (t.today || 'Bugün')
+    ? (t.today)
     : selectedDate.toLocaleDateString(localeDate, { day: 'numeric', month: 'long', weekday: 'long' });
 
   /* ── Count today's completed ── */
@@ -278,8 +278,8 @@ export function NamazTakipScreen() {
                 <Ionicons name="chevron-back" size={24} color={colors.accent} />
               </Pressable>
               <View style={styles.headerCenter}>
-                <Text style={styles.title}>{t.prayerTrackingTitle || 'Namaz Takip'}</Text>
-                <Text style={styles.subtitle}>{t.prayerTrackingDesc || 'Günlük namazlarınızı takip edin'}</Text>
+                <Text style={styles.title}>{t.prayerTrackingTitle}</Text>
+                <Text style={styles.subtitle}>{t.prayerTrackingDesc}</Text>
               </View>
               <View style={{ width: 32 }} />
             </View>
@@ -298,12 +298,12 @@ export function NamazTakipScreen() {
                 <Animated.Text style={[styles.streakNum, { transform: [{ scale: streakScale }] }]}>
                   {streak}
                 </Animated.Text>
-                <Text style={styles.streakLabel}>{t.streakLabel || 'Gün Seri'}</Text>
+                <Text style={styles.streakLabel}>{t.streakLabel}</Text>
               </View>
             </View>
             <View style={styles.streakRight}>
               <Text style={styles.todayProgress}>{todayCompleted}/5</Text>
-              <Text style={styles.todayLabel}>{t.today || 'Bugün'}</Text>
+              <Text style={styles.todayLabel}>{t.today}</Text>
             </View>
           </Animated.View>
 
@@ -342,7 +342,7 @@ export function NamazTakipScreen() {
               { opacity: fadeList, transform: [{ translateY: slideList }] },
             ]}
           >
-            <Text style={styles.listTitle}>{isToday ? (t.todaysPrayers || 'Bugünkü Namazlar') : dateLabel}</Text>
+            <Text style={styles.listTitle}>{isToday ? (t.todaysPrayers) : dateLabel}</Text>
             {TRACKABLE_PRAYERS.map((key, idx) => (
               <PrayerRow
                 key={key}
@@ -362,14 +362,14 @@ export function NamazTakipScreen() {
               { opacity: fadeStats, transform: [{ translateY: slideStats }] },
             ]}
           >
-            <Text style={styles.listTitle}>{t.weekly || 'Haftalık Görünüm'}</Text>
+            <Text style={styles.listTitle}>{t.weekly}</Text>
             <View style={styles.weekRow}>
               {weekStats.map((day) => {
                 const pct = day.total > 0 ? day.completed / day.total : 0;
                 const now = new Date();
                 const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                 const isTodayWeek = day.dateKey === todayKey;
-                const weekDayLabels = [t.sunShort || 'Paz', t.monShort || 'Pzt', t.tueShort || 'Sal', t.wedShort || 'Çar', t.thuShort || 'Per', t.friShort || 'Cum', t.satShort || 'Cmt'];
+                const weekDayLabels = [t.sunShort, t.monShort, t.tueShort, t.wedShort, t.thuShort, t.friShort, t.satShort];
                 return (
                   <WeekBar
                     key={day.dateKey}
@@ -384,7 +384,7 @@ export function NamazTakipScreen() {
             {/* ── Weekly total ── */}
             <View style={styles.weekTotal}>
               <Text style={styles.weekTotalLabel}>
-                {t.weeklyTotal || 'Bu Hafta Toplam'}
+                {t.weeklyTotal}
               </Text>
               <Text style={styles.weekTotalNum}>
                 {weekStats.reduce((s, d) => s + d.completed, 0)} / {weekStats.length * 5}
@@ -400,19 +400,19 @@ export function NamazTakipScreen() {
                 { opacity: fadeStats, transform: [{ translateY: slideStats }], marginTop: 16 },
               ]}
             >
-              <Text style={styles.listTitle}>{t.monthly || 'Aylık İstatistik'}</Text>
+              <Text style={styles.listTitle}>{t.monthly}</Text>
               <View style={styles.monthStatRow}>
                 <View style={styles.monthStatItem}>
                   <Text style={styles.monthStatNum}>{monthStats.totalPrayed}</Text>
-                  <Text style={styles.monthStatLabel}>{t.prayed || 'Kılınan'}</Text>
+                  <Text style={styles.monthStatLabel}>{t.prayed}</Text>
                 </View>
                 <View style={styles.monthStatItem}>
                   <Text style={styles.monthStatNum}>{monthStats.totalPossible}</Text>
-                  <Text style={styles.monthStatLabel}>{t.total || 'Toplam'}</Text>
+                  <Text style={styles.monthStatLabel}>{t.total}</Text>
                 </View>
                 <View style={styles.monthStatItem}>
                   <Text style={[styles.monthStatNum, { color: colors.accent }]}>%{monthStats.percentage}</Text>
-                  <Text style={styles.monthStatLabel}>{t.success || 'Başarı'}</Text>
+                  <Text style={styles.monthStatLabel}>{t.success}</Text>
                 </View>
               </View>
             </Animated.View>

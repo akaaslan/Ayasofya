@@ -11,6 +11,7 @@ import {
 
 import { colors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
 
 /**
  * Custom themed dialog replacing native Alert.alert().
@@ -24,6 +25,7 @@ import { useTheme } from '../context/ThemeContext';
  *   onClose    – called when backdrop pressed or dialog dismissed
  */
 export function CustomDialog({ visible, icon, title, message, buttons = [], onClose }) {
+  const t = useI18n();
   useTheme();
   const styles = createStyles();
   const fade = useRef(new Animated.Value(0)).current;
@@ -57,7 +59,7 @@ export function CustomDialog({ visible, icon, title, message, buttons = [], onCl
     });
   };
 
-  const resolvedButtons = buttons.length > 0 ? buttons : [{ text: 'Tamam' }];
+  const resolvedButtons = buttons.length > 0 ? buttons : [{ text: t.ok }];
 
   return (
     <Modal

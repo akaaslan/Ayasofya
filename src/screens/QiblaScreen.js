@@ -274,38 +274,38 @@ export function QiblaScreen() {
   }, []);
 
   const accuracyLabel =
-    accuracy >= 3 ? (t.accuracyHigh || 'Yüksek') : accuracy === 2 ? (t.accuracyMed || 'Orta') : accuracy === 1 ? (t.accuracyLow || 'Düşük') : '';
-  const locationName = city || (t.istanbul || 'İstanbul');
-  const countryName = country || (t.turkey || 'Türkiye');
+    accuracy >= 3 ? (t.accuracyHigh) : accuracy === 2 ? (t.accuracyMed) : accuracy === 1 ? (t.accuracyLow) : '';
+  const locationName = city || (t.istanbul);
+  const countryName = country || (t.turkey);
 
   return (
     <ScreenBackground>
       <SafeAreaView style={s.safe}>
         <View style={s.container}>
-          <Text style={s.title}>{t.qiblaTitle || 'KIBLE PUSULASI'}</Text>
+          <Text style={s.title}>{t.qiblaTitle}</Text>
 
           {status === 'error' ? (
             <Text style={s.errorText}>
-              {t.compassError || 'Pusula sensörü okunamadı.\nLütfen konum iznini kontrol edin.'}
+              {t.compassError}
             </Text>
           ) : (
             <>
               {/* Degree info bar */}
               <View style={s.infoBar}>
                 <View style={s.infoItem}>
-                  <Text style={s.infoLabel}>{t.direction || 'YÖN'}</Text>
+                  <Text style={s.infoLabel}>{t.direction}</Text>
                   <Text style={s.infoValue}>{Math.round(heading)}°</Text>
                 </View>
                 <View style={s.infoDivider} />
                 <View style={s.infoItem}>
-                  <Text style={s.infoLabel}>{t.qiblaLabel || 'KIBLE'}</Text>
+                  <Text style={s.infoLabel}>{t.qiblaLabel}</Text>
                   <Text style={s.infoValue}>{qiblaDeg.toFixed(1)}°</Text>
                 </View>
                 {accuracyLabel !== '' && (
                 <>
                   <View style={s.infoDivider} />
                   <View style={s.infoItem}>
-                    <Text style={s.infoLabel}>{t.accuracy || 'DOĞRULUK'}</Text>
+                    <Text style={s.infoLabel}>{t.accuracy}</Text>
                     <Text style={s.infoValue}>{accuracyLabel}</Text>
                   </View>
                 </>
@@ -314,7 +314,7 @@ export function QiblaScreen() {
 
               {status === 'denied' && (
                 <Text style={s.warnText}>
-                  {t.locationDenied || 'Konum izni verilmedi — İstanbul varsayılan olarak kullanılıyor'}
+                  {t.locationDenied}
                 </Text>
               )}
 
@@ -323,7 +323,7 @@ export function QiblaScreen() {
                 <View style={s.calibrationHint}>
                   <Ionicons name="warning-outline" size={16} color="#e8a84c" />
                   <Text style={s.calibrationText}>
-                    {t.compassLowAccuracy || 'Pusula hassasiyeti düşük — telefonunuzu 8 şeklinde çevirin'}
+                    {t.compassLowAccuracy}
                   </Text>
                 </View>
               )}
@@ -346,15 +346,15 @@ export function QiblaScreen() {
               <View style={s.distanceRow}>
                 <Ionicons name="location-sharp" size={14} color={colors.accent} />
                 <Text style={s.distanceText}>
-                  {formatThousands(Math.round(kabeDistance))} {t.distanceToKaaba || "km Kabe'ye mesafe"}
+                  {formatThousands(Math.round(kabeDistance))} {t.distanceToKaaba}
                 </Text>
               </View>
 
               {/* Status */}
               <Text style={[s.statusText, isPointingQibla && s.statusOk]}>
                 {isPointingQibla
-                  ? (t.qiblaFound || '✓ Kıble yönündesiniz!')
-                  : `${qiblaRelative > 180 ? (t.qiblaLeft || 'Kıble solunuzda') : (t.qiblaRight || 'Kıble sağınızda')} — ${Math.round(
+                  ? (t.qiblaFound)
+                  : `${qiblaRelative > 180 ? (t.qiblaLeft) : (t.qiblaRight)} — ${Math.round(
                       qiblaRelative < 180 ? qiblaRelative : 360 - qiblaRelative,
                     )}°`}
               </Text>
@@ -365,11 +365,11 @@ export function QiblaScreen() {
                 onPress={handleRecalibrate}
               >
                 <Ionicons name="refresh" size={16} color={colors.accent} />
-                <Text style={s.btnText}>{t.recalibrate || 'Yeniden Kalibre Et'}</Text>
+                <Text style={s.btnText}>{t.recalibrate}</Text>
               </Pressable>
 
               <Text style={s.hint}>
-                {t.calibrationHint || 'Doğruluk için telefonunuzu 8 şeklinde hareket ettirin'}
+                {t.calibrationHint}
               </Text>
             </>
           )}

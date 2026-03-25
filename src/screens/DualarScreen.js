@@ -143,7 +143,7 @@ export function DualarScreen() {
     ]).start();
   }, []);
 
-  const TITLES = { classic: (t.dhikrClassic || 'ZİKİRMATİK').toUpperCase(), tasbih: (t.dhikrTasbih || 'TESBİH').toUpperCase() };
+  const TITLES = { classic: (t.dhikrClassic).toUpperCase(), tasbih: (t.dhikrTasbih).toUpperCase() };
 
   return (
     <ScreenBackground>
@@ -168,12 +168,12 @@ export function DualarScreen() {
         <View style={s.statsBar}>
           <View style={s.statItem}>
             <Text style={s.statNum}>{dailyTotal}</Text>
-            <Text style={s.statLabel}>{t.today || 'Bugün'}</Text>
+            <Text style={s.statLabel}>{t.today}</Text>
           </View>
           <View style={s.statDivider} />
           <View style={s.statItem}>
             <Text style={s.statNum}>{grandTotal}</Text>
-            <Text style={s.statLabel}>{'Toplam'}</Text>
+            <Text style={s.statLabel}>{t.total}</Text>
           </View>
         </View>
 
@@ -188,27 +188,27 @@ export function DualarScreen() {
         >
           <Pressable style={s.modalOverlay} onPress={() => setModalVisible(false)}>
             <View style={s.modalContent}>
-              <Text style={s.modalTitle}>{(t.dhikrStyle || 'GÖRÜNÜM SEÇ').toUpperCase()}</Text>
+              <Text style={s.modalTitle}>{(t.dhikrStyle).toUpperCase()}</Text>
               
               <TouchableOpacity style={[s.option, style === 'tasbih' && s.optionActive]} onPress={() => changeStyle('tasbih')}>
                 <Ionicons name="radio-button-on" size={24} color={style === 'tasbih' ? colors.accent : colors.textMuted} />
                 <View style={s.optionInfo}>
-                  <Text style={[s.optionLabel, style === 'tasbih' && s.optionLabelActive]}>{t.dhikrTasbih || 'Tesbih Modu'}</Text>
-                  <Text style={s.optionDesc}>{t.dhikrTasbihDesc || 'Geleneksel boncuk deneyimi'}</Text>
+                  <Text style={[s.optionLabel, style === 'tasbih' && s.optionLabelActive]}>{t.dhikrTasbih}</Text>
+                  <Text style={s.optionDesc}>{t.dhikrTasbihDesc}</Text>
                 </View>
               </TouchableOpacity>
 
               <TouchableOpacity style={[s.option, style === 'classic' && s.optionActive]} onPress={() => changeStyle('classic')}>
                 <Ionicons name="color-filter-outline" size={24} color={style === 'classic' ? colors.accent : colors.textMuted} />
                 <View style={s.optionInfo}>
-                  <Text style={[s.optionLabel, style === 'classic' && s.optionLabelActive]}>{t.dhikrClassic || 'Klasik Mod'}</Text>
-                  <Text style={s.optionDesc}>{t.dhikrClassicDesc || 'Sade mekanik zikirmatik'}</Text>
+                  <Text style={[s.optionLabel, style === 'classic' && s.optionLabelActive]}>{t.dhikrClassic}</Text>
+                  <Text style={s.optionDesc}>{t.dhikrClassicDesc}</Text>
                 </View>
               </TouchableOpacity>
               
               <View style={s.targetSection}>
-                <Text style={s.modalTitle}>{t.dhikrTargetLabel || 'ZİKİR HEDEFİ'}</Text>
-                <Text style={s.targetHint}>{t[currentDhikr.id] || currentDhikr.label} {t.forWord || 'için'}</Text>
+                <Text style={s.modalTitle}>{t.dhikrTargetLabel}</Text>
+                <Text style={s.targetHint}>{t[currentDhikr.id] || currentDhikr.label} {t.forWord}</Text>
                 <TextInput
                   style={s.targetInput}
                   keyboardType="numeric"
@@ -225,7 +225,7 @@ export function DualarScreen() {
 
               <View style={s.togglesSection}>
                 <View style={s.toggleRow}>
-                  <Text style={s.toggleLabel}>{t.targetNotification || 'Hedefe Ulaşıldı Bildirimi'}</Text>
+                  <Text style={s.toggleLabel}>{t.targetNotification}</Text>
                   <Switch
                     value={prayerPopupEnabled}
                     onValueChange={togglePrayerPopup}
@@ -234,7 +234,7 @@ export function DualarScreen() {
                   />
                 </View>
                 <View style={[s.toggleRow, { marginTop: 12 }]}>
-                  <Text style={s.toggleLabel}>{t.targetVibration || 'Hedefe Ulaşıldı Titreşimi'}</Text>
+                  <Text style={s.toggleLabel}>{t.targetVibration}</Text>
                   <Switch
                     value={targetVibrationEnabled}
                     onValueChange={toggleTargetVibration}
@@ -253,7 +253,7 @@ export function DualarScreen() {
           </View>
           <View style={s.toastTextCol}>
             <Text style={s.toastArabic}>اللّٰهُمَّ تَقَبَّلْ مِنَّا</Text>
-            <Text style={s.toastMsg}>{t.dhikrAcceptedHint || 'Aşk ve niyetle çektin, kabul ola.'}</Text>
+            <Text style={s.toastMsg}>{t.dhikrAcceptedHint}</Text>
           </View>
         </Animated.View>
       </SafeAreaView>

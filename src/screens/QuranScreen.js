@@ -97,8 +97,8 @@ export function QuranScreen() {
               <Ionicons name="chevron-back" size={24} color={colors.accent} />
             </Pressable>
             <View style={styles.headerCenter}>
-              <Text style={styles.title}>{t.quranTitle || "Kur'an-ı Kerim"}</Text>
-              <Text style={styles.subtitle}>{t.quranSubtitle || "Kısa Sureler (Amme Cüzü)"}</Text>
+              <Text style={styles.title}>{t.quranTitle}</Text>
+              <Text style={styles.subtitle}>{t.quranSubtitle}</Text>
             </View>
             <View style={{ width: 32 }} />
           </View>
@@ -121,7 +121,7 @@ export function QuranScreen() {
             >
               <Ionicons name="bookmark" size={18} color={colors.accent} />
               <Text style={styles.bookmarkText}>
-                {t.continueReading || 'Kaldığın yerden devam et'} – {SURAHS.find((x) => x.id === bookmarkId)?.name}
+                {t.continueReading} – {SURAHS.find((x) => x.id === bookmarkId)?.name}
               </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.accent} />
             </Pressable>
@@ -192,11 +192,11 @@ function SurahReader({ surah, onBack, isBookmarked, onBookmark, t }) {
       <View style={styles.readerHeader}>
         <Pressable style={styles.backBtn} onPress={onBack}>
           <Ionicons name="chevron-back" size={22} color={colors.accent} />
-          <Text style={styles.backText}>{t.back || 'Geri'}</Text>
+          <Text style={styles.backText}>{t.back}</Text>
         </Pressable>
         <View style={styles.readerTitleWrap}>
           <Text style={styles.readerTitle}>{surah.name}</Text>
-          <Text style={styles.readerAyah}>{surah.ayahCount} {t.ayahCountLabel || 'ayet'}</Text>
+          <Text style={styles.readerAyah}>{surah.ayahCount} {t.ayahCountLabel}</Text>
         </View>
         <View style={styles.readerActions}>
           <Pressable onPress={onBookmark} style={styles.actionBtn}>
@@ -221,7 +221,7 @@ function SurahReader({ surah, onBack, isBookmarked, onBookmark, t }) {
         {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerLabel}>{t.meaning || 'Meâl'}</Text>
+          <Text style={styles.dividerLabel}>{t.meaning}</Text>
           <View style={styles.dividerLine} />
         </View>
 

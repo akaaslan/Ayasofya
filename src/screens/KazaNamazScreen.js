@@ -26,12 +26,12 @@ import {
 
 /* ── Prayer info ─────────────────────────────────── */
 const PRAYERS = [
-  { key: 'sabah',   label: 'Sabah',   icon: 'sunny-outline' },
-  { key: 'ogle',    label: 'Öğle',    icon: 'sunny' },
-  { key: 'ikindi',  label: 'İkindi',  icon: 'partly-sunny-outline' },
-  { key: 'aksam',   label: 'Akşam',   icon: 'cloudy-night-outline' },
-  { key: 'yatsi',   label: 'Yatsı',   icon: 'moon-outline' },
-  { key: 'vitir',   label: 'Vitir',   icon: 'star-outline' },
+  { key: 'sabah', icon: 'sunny-outline' },
+  { key: 'ogle', icon: 'sunny' },
+  { key: 'ikindi', icon: 'partly-sunny-outline' },
+  { key: 'aksam', icon: 'cloudy-night-outline' },
+  { key: 'yatsi', icon: 'moon-outline' },
+  { key: 'vitir', icon: 'star-outline' },
 ];
 
 function CounterRow({ prayer, count, onIncrement, onDecrement, t }) {
@@ -83,7 +83,7 @@ export function KazaNamazScreen() {
   /* ── Dialog state ── */
   const [dialog, setDialog] = useState({ visible: false, icon: null, title: '', message: '', buttons: [] });
   const showDialog = useCallback((icon, title, message, buttons) => {
-    setDialog({ visible: true, icon, title, message, buttons: buttons || [{ text: t.ok || 'Tamam' }] });
+    setDialog({ visible: true, icon, title, message, buttons: buttons || [{ text: t.ok }] });
   }, [t]);
   const hideDialog = useCallback(() => setDialog((d) => ({ ...d, visible: false })), []);
 
@@ -137,12 +137,12 @@ export function KazaNamazScreen() {
   const handleReset = useCallback(() => {
     showDialog(
       'trash-outline',
-      t.resetKaza || 'Sıfırla',
-      t.resetKazaConfirm || 'Tüm kaza namazı sayaçlarını sıfırlamak istediğinize emin misiniz?',
+      t.resetKaza,
+      t.resetKazaConfirm,
       [
-        { text: t.cancel || 'İptal' },
+        { text: t.cancel },
         {
-          text: t.resetKaza || 'Sıfırla',
+          text: t.resetKaza,
           style: 'destructive',
           onPress: async () => {
             await resetAllKaza();
@@ -166,8 +166,8 @@ export function KazaNamazScreen() {
               <Ionicons name="chevron-back" size={24} color={colors.accent} />
             </Pressable>
             <View style={styles.headerCenter}>
-              <Text style={styles.headerTitle}>{t.kazaTitle || 'KAZA NAMAZI'}</Text>
-              <Text style={styles.headerSubtitle}>{t.kazaDesc || 'Kılınmamış namaz takibi'}</Text>
+              <Text style={styles.headerTitle}>{t.kazaTitle}</Text>
+              <Text style={styles.headerSubtitle}>{t.kazaDesc}</Text>
             </View>
             <View style={{ width: 40 }} />
           </Animated.View>
@@ -176,24 +176,24 @@ export function KazaNamazScreen() {
           <Animated.View style={[styles.infoCard, { opacity: fadeHeader, transform: [{ translateY: slideHeader }] }]}>
             <Ionicons name="information-circle" size={18} color={colors.accent} />
             <Text style={styles.infoText}>
-              {t.kazaInfo || 'Kılmadığınız namazları + butonuyla ekleyin.\nKaza olarak kıldıklarınızı - butonuyla düşün.'}
+              {t.kazaInfo}
             </Text>
           </Animated.View>
 
           {/* Total summary */}
           <Animated.View style={[styles.totalCard, { opacity: fadeSummary, transform: [{ translateY: slideSummary }] }]}>
-            <Text style={styles.totalLabel}>{t.kazaTotal || 'TOPLAM KAZA'}</Text>
+            <Text style={styles.totalLabel}>{t.kazaTotal}</Text>
             <Text style={[styles.totalCount, total === 0 && styles.totalCountZero]}>
               {total}
             </Text>
             <Text style={styles.totalSubtext}>
-              {total === 0 ? (t.kazaZero || 'Tebrikler! Kaza namazınız yok.') : (t.kazaDebt || 'vakit namaz borcunuz var')}
+              {total === 0 ? (t.kazaZero) : (t.kazaDebt)}
             </Text>
           </Animated.View>
 
           {/* Prayer counters */}
           <Animated.View style={{ opacity: fadeContent, transform: [{ translateY: slideContent }] }}>
-            <Text style={styles.sectionTitle}>{t.prayerTimes || 'NAMAZ VAKİTLERİ'}</Text>
+            <Text style={styles.sectionTitle}>{t.prayerTimes}</Text>
             {PRAYERS.map((prayer) => (
               <CounterRow
                 key={prayer.key}
@@ -213,14 +213,14 @@ export function KazaNamazScreen() {
               onPress={handleReset}
             >
               <Ionicons name="refresh" size={18} color={colors.textMuted} />
-              <Text style={styles.resetText}>{t.resetAll || 'Tümünü Sıfırla'}</Text>
+              <Text style={styles.resetText}>{t.resetAll}</Text>
             </Pressable>
           </Animated.View>
 
           {/* Kaza Progress Chart (#11) */}
           {total > 0 && (
             <Animated.View style={[styles.chartCard, { opacity: fadeSummary, transform: [{ translateY: slideSummary }] }]}>
-              <Text style={styles.chartTitle}>{t.kazaChart || 'Kaza Dağılımı'}</Text>
+              <Text style={styles.chartTitle}>{t.kazaChart}</Text>
               {PRAYERS.map((prayer) => {
                 const c = counts[prayer.key] || 0;
                 const pct = total > 0 ? (c / total) * 100 : 0;

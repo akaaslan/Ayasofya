@@ -111,8 +111,8 @@ export function EsmaScreen() {
             <Ionicons name="chevron-back" size={24} color={colors.accent} />
           </Pressable>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{t.esmaTitle || 'ESMA-ÜL HÜSNA'}</Text>
-            <Text style={styles.headerSubtitle}>{t.esmaSubtitle || "Allah'ın 99 Güzel İsmi"}</Text>
+            <Text style={styles.headerTitle}>{t.esmaTitle}</Text>
+            <Text style={styles.headerSubtitle}>{t.esmaSubtitle}</Text>
           </View>
           <View style={{ width: 40 }} />
         </Animated.View>
@@ -122,7 +122,7 @@ export function EsmaScreen() {
           <Ionicons name="search" size={18} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder={t.esmaSearch || "İsim veya anlam ara..."}
+            placeholder={t.esmaSearch}
             placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={setSearch}
@@ -137,7 +137,7 @@ export function EsmaScreen() {
 
         {/* Count */}
         <Text style={styles.countText}>
-          {filtered.length === 99 ? `99 ${t.names || 'İsim'}` : `${filtered.length} ${t.results || 'sonuç'}`}
+          {filtered.length === 99 ? `99 ${t.names}` : `${filtered.length} ${t.results}`}
         </Text>
 
         {/* Grid */}

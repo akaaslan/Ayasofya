@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CalendarModal } from '../components/CalendarModal';
 import { CountdownRing } from '../components/CountdownRing';
 import { CustomDialog } from '../components/CustomDialog';
 import { FastingTracker } from '../components/FastingTracker';
@@ -29,16 +28,6 @@ import { getHijriDisplayString } from '../utils/hijriDate';
 import { getRamadanInfo } from '../utils/ramadanMode';
 import { colors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
-
-/** Turkish dative-case forms */
-const DATIVE = {
-  imsak:  'İmsaka',
-  gunes:  'Güneşe',
-  ogle:   'Öğleye',
-  ikindi: 'İkindiye',
-  aksam:  'Akşama',
-  yatsi:  'Yatsıya',
-};
 
 /** Icons for each prayer */
 const PRAYER_ICONS = {
@@ -98,7 +87,7 @@ export function HomeScreen() {
   /* ── Dialog state ── */
   const [dialog, setDialog] = useState({ visible: false, icon: null, title: '', message: '', buttons: [] });
   const showDialog = useCallback((icon, title, message, buttons) => {
-    setDialog({ visible: true, icon, title, message, buttons: buttons || [{ text: t.ok || 'Tamam' }] });
+    setDialog({ visible: true, icon, title, message, buttons: buttons || [{ text: t.ok }] });
   }, [t]);
   const hideDialog = useCallback(() => setDialog((d) => ({ ...d, visible: false })), []);
 
@@ -148,13 +137,13 @@ export function HomeScreen() {
   const handleVerse = useCallback(() => {
     const idx = getDayIndex(7);
     const v = getDailyVerse(idx, t);
-    showDialog('book', t.todaysVerse || 'Bugünün Ayeti', `${v.verse}\n\n— ${v.source}`, [{ text: t.ok || 'Tamam' }]);
+    showDialog('book', t.todaysVerse, `${v.verse}\n\n— ${v.source}`, [{ text: t.ok }]);
   }, [showDialog, t]);
 
   const handleMosque = useCallback(() => {
     const url = `https://www.google.com/maps/search/cami+mosque/@${lat},${lng},14z`;
     Linking.openURL(url).catch(() => {
-      showDialog('business', t.error || 'Hata', t.mapError || 'Harita uygulaması açılamadı.', [{ text: t.ok || 'Tamam' }]);
+      showDialog('business', t.error, t.mapError, [{ text: t.ok }]);
     });
   }, [lat, lng, showDialog, t]);
 
@@ -197,7 +186,7 @@ export function HomeScreen() {
         >
           <View style={styles.container}>
             <HeaderSection
-              title={t.todaysPrayerTimes || "BUGÜNÜN VAKİTLERİ"}
+              title={t.todaysPrayerTimes}
               dayName={hijriDay}
             />
 
@@ -209,10 +198,10 @@ export function HomeScreen() {
             {/* ── Countdown Ring with progress ── */}
             <Animated.View style={{ opacity: fadeRing, transform: [{ translateY: slideRing }] }}>
               <CountdownRing
-                label={t.nextPrayer || "SONRAKİ VAKİT"}
+                label={t.nextPrayer}
                 prayerName={nextPrayerName}
                 countdown={countdown}
-                caption={t.remainingTime || "KALAN SÜRE"}
+                caption={t.remainingTime}
                 progress={progress}
               />
             </Animated.View>
@@ -224,7 +213,7 @@ export function HomeScreen() {
                 onPress={toggleDropdown}
               >
                 <Ionicons name="time-outline" size={22} color={colors.accent} />
-                <Text style={styles.dropdownBtnText}>{t.prayerTimesBtn || 'Ezan Saatleri'}</Text>
+                <Text style={styles.dropdownBtnText}>{t.prayerTimesBtn}</Text>
                 {nextPrayer && (
                   <View style={styles.nextBadge}>
                     <Text style={styles.nextBadgeText}>{t[nextPrayer.key] || nextPrayer.label} · {nextPrayer.time}</Text>
@@ -299,29 +288,29 @@ export function HomeScreen() {
               <View style={styles.ramadanBanner}>
                 <View style={styles.ramadanHeader}>
                   <Text style={styles.ramadanIcon}>☪</Text>
-                  <Text style={styles.ramadanTitle}>{t.ramadanTitle || 'Ramazan-ı Şerif'}</Text>
-                  <Text style={styles.ramadanDay}>{ramadan.dayOfRamadan}. {t.day || 'gün'}</Text>
+                  <Text style={styles.ramadanTitle}>{t.ramadanTitle}</Text>
+                  <Text style={styles.ramadanDay}>{ramadan.dayOfRamadan}. {t.day}</Text>
                 </View>
                 <View style={styles.ramadanCounters}>
                   {ramadanInfo.isBeforeIftar && !ramadanInfo.isBeforeSahur && (
                     <View style={styles.ramadanCounter}>
-                      <Text style={styles.ramadanCounterLabel}>{t.timeToIftar || 'İftara Kalan'}</Text>
+                      <Text style={styles.ramadanCounterLabel}>{t.timeToIftar}</Text>
                       <Text style={styles.ramadanCounterValue}>{ramadanInfo.iftarCountdown}</Text>
                       <Text style={styles.ramadanCounterTime}>{ramadanInfo.iftarTime}</Text>
                     </View>
                   )}
                   {ramadanInfo.isBeforeSahur && (
                     <View style={styles.ramadanCounter}>
-                      <Text style={styles.ramadanCounterLabel}>{t.timeToSahur || 'Sahura Kalan'}</Text>
+                      <Text style={styles.ramadanCounterLabel}>{t.timeToSahur}</Text>
                       <Text style={styles.ramadanCounterValue}>{ramadanInfo.sahurCountdown}</Text>
                       <Text style={styles.ramadanCounterTime}>{ramadanInfo.sahurTime}</Text>
                     </View>
                   )}
                   {!ramadanInfo.isBeforeIftar && !ramadanInfo.isBeforeSahur && (
                     <View style={styles.ramadanCounter}>
-                      <Text style={styles.ramadanCounterLabel}>{t.iftarDone || 'İftar Yapıldı'}</Text>
+                      <Text style={styles.ramadanCounterLabel}>{t.iftarDone}</Text>
                       <Text style={styles.ramadanCounterValue}>🤲</Text>
-                      <Text style={styles.ramadanCounterTime}>{t.happyIftar || 'Hayırlı iftarlar'}</Text>
+                      <Text style={styles.ramadanCounterTime}>{t.happyIftar}</Text>
                     </View>
                   )}
                 </View>
@@ -377,7 +366,7 @@ export function HomeScreen() {
               >
                 <View style={[styles.imageCardSmallInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
                   <Ionicons name="hand-left" size={24} color={colors.accent} />
-                  <Text style={styles.imageCardSmallLabel}>{t.duasCard || 'Dualar'}</Text>
+                  <Text style={styles.imageCardSmallLabel}>{t.duasCard}</Text>
                 </View>
               </Pressable>
 
@@ -388,7 +377,7 @@ export function HomeScreen() {
               >
                 <View style={[styles.imageCardSmallInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
                   <Ionicons name="sparkles" size={24} color={colors.accent} />
-                  <Text style={styles.imageCardSmallLabel}>{t.esmaCard ? t.esmaCard.replace(' ', '\n') : 'Esma-ül\nHüsna'}</Text>
+                  <Text style={styles.imageCardSmallLabel}>{t.esmaCard}</Text>
                 </View>
               </Pressable>
 
@@ -399,7 +388,7 @@ export function HomeScreen() {
               >
                 <View style={[styles.imageCardSmallInner, { backgroundColor: 'rgba(10, 46, 40, 0.95)' }]}>
                   <Ionicons name="time" size={24} color={colors.accent} />
-                  <Text style={styles.imageCardSmallLabel}>{t.kazaPrayer ? t.kazaPrayer.replace(' ', '\n') : 'Kaza\nNamazı'}</Text>
+                  <Text style={styles.imageCardSmallLabel}>{t.kazaPrayer}</Text>
                 </View>
               </Pressable>
             </View>
@@ -413,8 +402,8 @@ export function HomeScreen() {
                 <Ionicons name="bookmarks" size={22} color={colors.accent} />
               </View>
               <View style={styles.mosqueText}>
-                <Text style={styles.mosqueTitle}>{t.dailyVerseTitle || 'Günün Ayeti'}</Text>
-                <Text style={styles.mosqueSubtitle}>{t.dailyVerseSubtitle || 'Her gün yeni bir ayet, yeni bir ilham.'}</Text>
+                <Text style={styles.mosqueTitle}>{t.dailyVerseTitle}</Text>
+                <Text style={styles.mosqueSubtitle}>{t.dailyVerseSubtitle}</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </Pressable>
@@ -427,8 +416,8 @@ export function HomeScreen() {
                 <Ionicons name="business" size={22} color={colors.accent} />
               </View>
               <View style={styles.mosqueText}>
-                <Text style={styles.mosqueTitle}>{t.nearbyMosquesTitle || 'Yakındaki Camiler'}</Text>
-                <Text style={styles.mosqueSubtitle}>{t.nearbyMosquesSubtitle || 'Konumunuza en yakın ibadethaneleri bulun.'}</Text>
+                <Text style={styles.mosqueTitle}>{t.nearbyMosquesTitle}</Text>
+                <Text style={styles.mosqueSubtitle}>{t.nearbyMosquesSubtitle}</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </Pressable>
@@ -450,14 +439,6 @@ export function HomeScreen() {
           onClose={hideDialog}
         />
 
-        {/* ── Calendar Modal ── */}
-        <CalendarModal
-          visible={calendarVisible}
-          onClose={() => setCalendarVisible(false)}
-          lat={lat}
-          lng={lng}
-          tz={tz}
-        />
       </SafeAreaView>
     </ScreenBackground>
   );

@@ -36,8 +36,8 @@ function DuaItem({ dua, isFavorite, onToggleFavorite, t }) {
   const handleShare = useCallback(async () => {
     let text = dua.title;
     if (dua.arabic) text += `\n\n${dua.arabic}`;
-    if (dua.transliteration) text += `\n\nOkunuşu: ${dua.transliteration}`;
-    text += `\n\nAnlamı: ${dua.meaning}`;
+    if (dua.transliteration) text += `\n\n${t.duaTransliterationLabel}: ${dua.transliteration}`;
+    text += `\n\n${t.duaMeaningLabel}: ${dua.meaning}`;
     text += `\n\n— ${dua.source}`;
     text += '\n\n📿 Ayasofya Uygulaması';
     await Share.share({ message: text });
@@ -71,13 +71,13 @@ function DuaItem({ dua, isFavorite, onToggleFavorite, t }) {
 
           {dua.transliteration && (
             <View style={styles.duaSection}>
-              <Text style={styles.duaSectionLabel}>{t.duaTransliterationLabel || 'Okunuşu'}</Text>
+              <Text style={styles.duaSectionLabel}>{t.duaTransliterationLabel}</Text>
               <Text style={styles.duaTransliteration}>{dua.transliteration}</Text>
             </View>
           )}
 
           <View style={styles.duaSection}>
-            <Text style={styles.duaSectionLabel}>{t.duaMeaningLabel || 'Anlamı'}</Text>
+            <Text style={styles.duaSectionLabel}>{t.duaMeaningLabel}</Text>
             <Text style={styles.duaMeaning}>{dua.meaning}</Text>
           </View>
 
@@ -85,7 +85,7 @@ function DuaItem({ dua, isFavorite, onToggleFavorite, t }) {
             <Text style={styles.duaSource}>— {dua.source}</Text>
             <Pressable onPress={handleShare} style={styles.shareBtn}>
               <Ionicons name="share-outline" size={16} color={colors.accent} />
-              <Text style={styles.shareText}>{t.share || 'Paylaş'}</Text>
+              <Text style={styles.shareText}>{t.share}</Text>
             </Pressable>
           </View>
         </View>
@@ -232,8 +232,8 @@ export function DuaCollectionScreen() {
             <Ionicons name="chevron-back" size={24} color={colors.accent} />
           </Pressable>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{t.duaTitle || 'DUA KOLEKSİYONU'}</Text>
-            <Text style={styles.headerSubtitle}>{t.duaSubtitle || 'Günlük ve özel dualar'}</Text>
+            <Text style={styles.headerTitle}>{t.duaTitle}</Text>
+            <Text style={styles.headerSubtitle}>{t.duaSubtitle}</Text>
           </View>
           <Pressable onPress={() => setShowFavOnly((f) => !f)} style={styles.backBtn}>
             <Ionicons
@@ -249,7 +249,7 @@ export function DuaCollectionScreen() {
           <Ionicons name="search" size={16} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder={t.duaSearch || "Dua ara..."}
+            placeholder={t.duaSearch}
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -280,7 +280,7 @@ export function DuaCollectionScreen() {
               >
                 <View style={styles.dailyHeader}>
                   <Ionicons name="sparkles" size={18} color={colors.accent} />
-                  <Text style={styles.dailyTitle}>{t.duaDaily || 'Günün Duası'}</Text>
+                  <Text style={styles.dailyTitle}>{t.duaDaily}</Text>
                   <Ionicons
                     name={showDailyDua ? 'chevron-up' : 'chevron-down'}
                     size={16}
@@ -311,7 +311,7 @@ export function DuaCollectionScreen() {
             <View style={styles.emptyState}>
               <Ionicons name="search-outline" size={40} color={colors.textMuted} />
               <Text style={styles.emptyText}>
-                {showFavOnly ? (t.noFavDua || 'Henüz favori dua eklemediniz') : (t.noResults || 'Sonuç bulunamadı')}
+                {showFavOnly ? (t.noFavDua) : (t.noResults)}
               </Text>
             </View>
           }

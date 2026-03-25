@@ -128,16 +128,16 @@ export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, curren
 
 
   const handleReset = useCallback(() => {
-    Alert.alert(t.reset || 'Sıfırla', t.resetConfirm || 'Sayacı sıfırlamak istediğinize emin misiniz?', [
-      { text: t.cancel || 'İptal', style: 'cancel' },
-      { text: t.reset || 'Sıfırla', style: 'destructive', onPress: () => setCount(0) },
+    Alert.alert(t.reset, t.resetConfirm, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.reset, style: 'destructive', onPress: () => setCount(0) },
     ]);
   }, [t]);
 
   const handleResetAll = useCallback(() => {
-    Alert.alert(t.resetAll || 'Tümünü Sıfırla', t.resetAllConfirm || 'Sayacı sıfırlamak istediğinize emin misiniz?\n(Geçmiş veriler kayıtlı kalır)', [
-      { text: t.cancel || 'İptal', style: 'cancel' },
-      { text: t.reset || 'Sıfırla', style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); } },
+    Alert.alert(t.resetAll, t.resetAllConfirm, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.reset, style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); } },
     ]);
   }, [t]);
 
@@ -162,7 +162,7 @@ export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, curren
                 <View style={s.innerRing}>
                   <Text style={[s.arabicText, { fontSize: 18 * fontScale }]}>{currentDhikr.arabic}</Text>
                   <Text style={[s.countText, { fontSize: 56 * fontScale, lineHeight: 62 * fontScale }]}>{totalCount}</Text>
-                  <Text style={s.tapHint}>{t.touchAndDhikr || 'DOKUN VE ZİKRET'}</Text>
+                  <Text style={s.tapHint}>{t.touchAndDhikr}</Text>
                 </View>
               </View>
             </View>
@@ -172,21 +172,21 @@ export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, curren
         <Animated.View style={[s.actions, { opacity: fadeActions, transform: [{ translateY: slideActions }] }]}>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleReset}>
             <Ionicons name="refresh" size={20} color={colors.accent} />
-            <Text style={s.actionLabel}>{t.reset || 'Sıfırla'}</Text>
+            <Text style={s.actionLabel}>{t.reset}</Text>
           </Pressable>
           <View style={s.totalBadge}>
-            <Text style={s.totalLabel}>{t.progress || 'İLERLEME'}</Text>
+            <Text style={s.totalLabel}>{t.progress}</Text>
             <Text style={s.totalValue}>{cycleCount} / {currentTarget}</Text>
           </View>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
             <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
-            <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all || 'Tümü'}</Text>
+            <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all}</Text>
           </Pressable>
         </Animated.View>
       </Animated.View>
 
       <Animated.View style={[s.selectorSection, { opacity: fadeSelector, transform: [{ translateY: slideSelector }] }]}>
-        <Text style={s.selectorTitle}>{t.selectDhikr || '✦  ZİKİR SEÇ  ✦'}</Text>
+        <Text style={s.selectorTitle}>{t.selectDhikr}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.selectorScroll}>
           {dhikrs.map((d, idx) => {
             const active = idx === selectedIdx;

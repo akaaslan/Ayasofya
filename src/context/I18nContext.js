@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { tr } from '../i18n/tr';
 import { en } from '../i18n/en';
 import { de } from '../i18n/de';
-import { ar } from '../i18n/ar';
+import { ar } from '../i18n/ar-SA';
 import { es } from '../i18n/es';
 import { fr } from '../i18n/fr';
 import { id } from '../i18n/id';
