@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,12 +33,10 @@ import {
   saveNotificationPrefs,
 } from '../utils/notificationPrefs';
 import { useRamadan } from '../context/RamadanContext';
-import { getDhikrStyle, saveDhikrStyle } from '../utils/dhikrStylePref';
 import {
   getHapticEnabled, setHapticEnabled,
   getTapSoundEnabled, setTapSoundEnabled,
   getFontSize, setFontSize,
-  getDhikrTarget, setDhikrTarget,
   getKazaReminderEnabled, setKazaReminderEnabled,
 } from '../utils/preferences';
 import { exportBackup, importBackup } from '../utils/backup';
@@ -63,21 +62,16 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
   /* ── Ramadan from context ── */
   const { ramadan, override, setOverride } = useRamadan();
 
-  /* ── Dhikr style preference ── */
-  const [dhikrStyle, setDhikrStyle] = useState('tasbih');
   const [hapticEnabled, setHaptic] = useState(true);
   const [tapSoundEnabled, setTapSound] = useState(false);
   const [fontSizeLevel, setFontSizeLevel] = useState(1);
-  const [dhikrTarget, setDhikrTargetVal] = useState(33);
   const [kazaReminder, setKazaReminder] = useState(false);
   
   useFocusEffect(
     useCallback(() => {
-      getDhikrStyle().then(setDhikrStyle);
       getHapticEnabled().then(setHaptic);
       getTapSoundEnabled().then(setTapSound);
       getFontSize().then(setFontSizeLevel);
-      getDhikrTarget().then(setDhikrTargetVal);
       getKazaReminderEnabled().then(setKazaReminder);
     }, [])
   );
@@ -180,10 +174,6 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
     }
   }, [showDialog, t]);
 
-  const handleDhikrTargetChange = useCallback((val) => {
-    setDhikrTargetVal(val);
-    setDhikrTarget(val);
-  }, []);
 
   const PRAYER_LABELS = {
     imsak: 'İmsak', gunes: 'Güneş', ogle: 'Öğle', ikindi: 'İkindi', aksam: 'Akşam', yatsi: 'Yatsı',
@@ -233,32 +223,6 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
             ))}
           </View>
 
-          {/* Dhikr Style */}
-          <Text style={styles.sectionTitle}>{t.dhikrStyle || 'ZİKİRMATİK GÖRÜNÜMÜ'}</Text>
-          <View style={styles.ramadanToggleGroup}>
-            {[
-              { key: 'classic', label: t.dhikrClassic || 'Klasik', desc: t.dhikrClassicDesc || 'Halka tasarım' },
-              { key: 'tasbih', label: t.dhikrTasbih || 'Tesbih', desc: t.dhikrTasbihDesc || 'Boncuk halka' },
-            ].map((opt) => (
-              <Pressable
-                key={opt.key}
-                style={[
-                  styles.ramadanToggleBtn,
-                  dhikrStyle === opt.key && styles.ramadanToggleBtnActive,
-                ]}
-                onPress={() => { setDhikrStyle(opt.key); saveDhikrStyle(opt.key); }}
-              >
-                <Text style={[
-                  styles.ramadanToggleLabel,
-                  dhikrStyle === opt.key && styles.ramadanToggleLabelActive,
-                ]}>{opt.label}</Text>
-                <Text style={[
-                  styles.ramadanToggleDesc,
-                  dhikrStyle === opt.key && styles.ramadanToggleDescActive,
-                ]}>{opt.desc}</Text>
-              </Pressable>
-            ))}
-          </View>
 
           {/* Language */}
           <Text style={styles.sectionTitle}>{t.language || 'DİL'}</Text>
@@ -440,26 +404,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
             />
           </View>
 
-          {/* Dhikr Settings */}
-          <Text style={styles.sectionTitle}>{t.dhikrSettings || 'ZİKİR AYARLARI'}</Text>
-          <View style={styles.row}>
-            <View style={styles.rowLeft}>
-              <Ionicons name="flag-outline" size={20} color={colors.accent} />
-              <View>
-                <Text style={styles.rowLabel}>{t.dhikrTargetLabel || 'Zikir Hedefi'}</Text>
-                <Text style={styles.subRowHint}>{t.dhikrTargetHint || 'Her çevrim için hedef sayı'}</Text>
-              </View>
-            </View>
-            <View style={styles.rowRight}>
-              <Pressable onPress={() => handleDhikrTargetChange(Math.max(10, dhikrTarget - 1))} style={styles.stepBtn}>
-                <Ionicons name="remove" size={18} color={colors.accent} />
-              </Pressable>
-              <Text style={styles.rowValue}>{dhikrTarget}</Text>
-              <Pressable onPress={() => handleDhikrTargetChange(dhikrTarget + 1)} style={styles.stepBtn}>
-                <Ionicons name="add" size={18} color={colors.accent} />
-              </Pressable>
-            </View>
-          </View>
+
 
           {/* General */}
           <Text style={styles.sectionTitle}>{t.generalSettings || 'GENEL'}</Text>

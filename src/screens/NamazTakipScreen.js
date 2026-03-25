@@ -158,7 +158,7 @@ function WeekBar({ pct, isToday, dayLabel, dayNum }) {
 /* ── Component ─────────────────────────────────── */
 export function NamazTakipScreen() {
   useTheme();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const styles = createStyles();
   const navigation = useNavigation();
   const [dayData, setDayData] = useState({});
@@ -249,10 +249,11 @@ export function NamazTakipScreen() {
   }, []);
 
   const isToday = selectedDate.toDateString() === new Date().toDateString();
+  const localeDate = lang === 'tr' ? 'tr-TR' : 'en-US';
 
   const dateLabel = isToday
     ? (t.today || 'Bugün')
-    : selectedDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+    : selectedDate.toLocaleDateString(localeDate, { day: 'numeric', month: 'long', weekday: 'long' });
 
   /* ── Count today's completed ── */
   const todayCompleted = TRACKABLE_PRAYERS.filter((p) => dayData[p]).length;
@@ -367,13 +368,14 @@ export function NamazTakipScreen() {
                 const pct = day.total > 0 ? day.completed / day.total : 0;
                 const now = new Date();
                 const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                const isToday = day.dateKey === todayKey;
+                const isTodayWeek = day.dateKey === todayKey;
+                const weekDayLabels = [t.sunShort || 'Paz', t.monShort || 'Pzt', t.tueShort || 'Sal', t.wedShort || 'Çar', t.thuShort || 'Per', t.friShort || 'Cum', t.satShort || 'Cmt'];
                 return (
                   <WeekBar
                     key={day.dateKey}
                     pct={pct}
-                    isToday={isToday}
-                    dayLabel={day.dayLabel}
+                    isToday={isTodayWeek}
+                    dayLabel={weekDayLabels[day.date.getDay()]}
                     dayNum={day.dayNum}
                   />
                 );

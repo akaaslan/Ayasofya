@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, Modal, PanResponder, Pressable, Text, TextInput, TouchableOpacity, View, Switch } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -12,6 +13,7 @@ import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { getDhikrStyle, saveDhikrStyle } from '../utils/dhikrStylePref';
 import { getDailyTotal, getGrandTotal } from '../utils/dhikrStorage';
+import { DHIKRS } from '../constants/dhikrs';
 
 export function DualarScreen() {
   useTheme();
@@ -21,6 +23,11 @@ export function DualarScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [dailyTotal, setDailyTotal] = useState(0);
   const [grandTotal, setGrandTotal] = useState(0);
+  
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [targets, setTargets] = useState({});
+  const [prayerPopupEnabled, setPrayerPopupEnabled] = useState(true);
+  const [targetVibrationEnabled, setTargetVibrationEnabled] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
@@ -34,8 +41,45 @@ export function DualarScreen() {
       });
       getDailyTotal().then(setDailyTotal);
       getGrandTotal().then(setGrandTotal);
+      AsyncStorage.getItem('@ayasofya_dhikr_targets').then(v => {
+        setTargets(v ? JSON.parse(v) : {});
+      });
+      AsyncStorage.getItem('@ayasofya_prayer_popup').then(v => {
+        setPrayerPopupEnabled(v !== 'false');
+      });
+      AsyncStorage.getItem('@ayasofya_target_vib').then(v => {
+        setTargetVibrationEnabled(v !== 'false');
+      });
     }, [])
   );
+
+  const currentDhikr = DHIKRS[selectedIdx];
+  const currentTargetValue = targets[currentDhikr.id];
+  const inputValue = currentTargetValue !== undefined ? String(currentTargetValue) : String(currentDhikr.defaultTarget);
+  const effectiveTarget = Number(currentTargetValue) || currentDhikr.defaultTarget;
+
+  const handleTargetChange = async (val) => {
+    const cleaned = val.replace(/[^0-9]/g, '');
+    const validNum = cleaned === '' ? '' : parseInt(cleaned, 10);
+    const newTargets = { ...targets, [currentDhikr.id]: validNum };
+    setTargets(newTargets);
+    await AsyncStorage.setItem('@ayasofya_dhikr_targets', JSON.stringify(newTargets));
+  };
+
+  const handleTapIncrement = useCallback(() => {
+    setDailyTotal(d => d + 1);
+    setGrandTotal(g => g + 1);
+  }, []);
+
+  const togglePrayerPopup = async (val) => {
+    setPrayerPopupEnabled(val);
+    await AsyncStorage.setItem('@ayasofya_prayer_popup', String(val));
+  };
+
+  const toggleTargetVibration = async (val) => {
+    setTargetVibrationEnabled(val);
+    await AsyncStorage.setItem('@ayasofya_target_vib', String(val));
+  };
 
   const changeStyle = async (newStyle) => {
     setStyle(newStyle);
@@ -45,6 +89,52 @@ export function DualarScreen() {
 
   const fadeHeader = useRef(new Animated.Value(0)).current;
   const slideHeader = useRef(new Animated.Value(-20)).current;
+  const toastAnim = useRef(new Animated.Value(-200)).current;
+  const hideTimer = useRef(null);
+
+  const hideToast = useCallback(() => {
+    Animated.timing(toastAnim, { toValue: -200, duration: 400, useNativeDriver: true }).start();
+  }, [toastAnim]);
+
+  const onTargetReached = useCallback(() => {
+    if (!prayerPopupEnabled) return;
+    
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    
+    toastAnim.setValue(-200);
+    Animated.timing(toastAnim, { 
+      toValue: 50, 
+      duration: 600, 
+      easing: Easing.out(Easing.back(1.5)), 
+      useNativeDriver: true 
+    }).start();
+
+    hideTimer.current = setTimeout(() => {
+      hideToast();
+    }, 4000);
+  }, [prayerPopupEnabled, toastAnim, hideToast]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        return Math.abs(gestureState.dy) > 10;
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        if (gestureState.dy < 0) {
+          toastAnim.setValue(50 + gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dy < -20 || gestureState.vy < -0.5) {
+          if (hideTimer.current) clearTimeout(hideTimer.current);
+          hideToast();
+        } else {
+          Animated.spring(toastAnim, { toValue: 50, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -71,7 +161,7 @@ export function DualarScreen() {
             {TITLES[style] || 'Z\u0130K\u0130RMAT\u0130K'}
           </Animated.Text>
           
-          <View style={{ width: 40 }} /> 
+          <View style={{ width: 40 }} />
         </View>
 
         {/* Daily stats bar */}
@@ -87,8 +177,8 @@ export function DualarScreen() {
           </View>
         </View>
 
-        {style === 'classic' && <ClassicDhikr />}
-        {style === 'tasbih' && <TasbihDhikr />}
+        {style === 'classic' && <ClassicDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} />}
+        {style === 'tasbih' && <TasbihDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} />}
 
         <Modal
           visible={modalVisible}
@@ -115,9 +205,57 @@ export function DualarScreen() {
                   <Text style={s.optionDesc}>{t.dhikrClassicDesc || 'Sade mekanik zikirmatik'}</Text>
                 </View>
               </TouchableOpacity>
+              
+              <View style={s.targetSection}>
+                <Text style={s.modalTitle}>{t.dhikrTargetLabel || 'ZİKİR HEDEFİ'}</Text>
+                <Text style={s.targetHint}>{t[currentDhikr.id] || currentDhikr.label} {t.forWord || 'için'}</Text>
+                <TextInput
+                  style={s.targetInput}
+                  keyboardType="numeric"
+                  value={inputValue}
+                  onChangeText={handleTargetChange}
+                  onBlur={() => {
+                    if (!effectiveTarget || effectiveTarget < 1) handleTargetChange('33'); // minimum 33
+                  }}
+                  maxLength={5}
+                  returnKeyType="done"
+                  cursorColor={colors.accent}
+                />
+              </View>
+
+              <View style={s.togglesSection}>
+                <View style={s.toggleRow}>
+                  <Text style={s.toggleLabel}>{t.targetNotification || 'Hedefe Ulaşıldı Bildirimi'}</Text>
+                  <Switch
+                    value={prayerPopupEnabled}
+                    onValueChange={togglePrayerPopup}
+                    trackColor={{ false: '#333', true: colors.accentSoft }}
+                    thumbColor={prayerPopupEnabled ? colors.accent : '#888'}
+                  />
+                </View>
+                <View style={[s.toggleRow, { marginTop: 12 }]}>
+                  <Text style={s.toggleLabel}>{t.targetVibration || 'Hedefe Ulaşıldı Titreşimi'}</Text>
+                  <Switch
+                    value={targetVibrationEnabled}
+                    onValueChange={toggleTargetVibration}
+                    trackColor={{ false: '#333', true: colors.accentSoft }}
+                    thumbColor={targetVibrationEnabled ? colors.accent : '#888'}
+                  />
+                </View>
+              </View>
             </View>
           </Pressable>
         </Modal>
+
+        <Animated.View style={[s.toastContainer, { transform: [{ translateY: toastAnim }] }]} {...panResponder.panHandlers}>
+          <View style={s.toastIconWrapper}>
+            <Ionicons name="heart" size={24} color={colors.accent} />
+          </View>
+          <View style={s.toastTextCol}>
+            <Text style={s.toastArabic}>اللّٰهُمَّ تَقَبَّلْ مِنَّا</Text>
+            <Text style={s.toastMsg}>{t.dhikrAcceptedHint || 'Aşk ve niyetle çektin, kabul ola.'}</Text>
+          </View>
+        </Animated.View>
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -230,5 +368,88 @@ const createStyles = () => ({
     width: 1,
     height: 24,
     backgroundColor: colors.divider,
+  },
+  targetSection: {
+    marginTop: 24,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(200, 161, 90, 0.15)',
+    alignItems: 'center',
+  },
+  targetHint: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  targetInput: {
+    backgroundColor: 'rgba(200, 161, 90, 0.1)',
+    color: colors.accent,
+    fontSize: 24,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(200, 161, 90, 0.3)',
+    textAlign: 'center',
+    minWidth: 100,
+  },
+  togglesSection: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(200, 161, 90, 0.15)',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toggleLabel: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  toastContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(10,38,34,0.95)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.accentSoft,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    zIndex: 1000,
+  },
+  toastIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(200, 161, 90, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  toastTextCol: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  toastArabic: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  toastMsg: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

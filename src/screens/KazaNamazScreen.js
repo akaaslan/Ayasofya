@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CustomDialog } from '../components/CustomDialog';
 import { ScreenBackground } from '../components/ScreenBackground';
+import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import {
@@ -33,8 +34,7 @@ const PRAYERS = [
   { key: 'vitir',   label: 'Vitir',   icon: 'star-outline' },
 ];
 
-/* ── Counter Row Component ─────────────────────── */
-function CounterRow({ prayer, count, onIncrement, onDecrement }) {
+function CounterRow({ prayer, count, onIncrement, onDecrement, t }) {
   const styles = createStyles();
   return (
     <View style={styles.counterRow}>
@@ -42,7 +42,7 @@ function CounterRow({ prayer, count, onIncrement, onDecrement }) {
         <View style={styles.counterIconWrap}>
           <Ionicons name={prayer.icon} size={18} color={colors.accent} />
         </View>
-        <Text style={styles.counterLabel}>{prayer.label}</Text>
+        <Text style={styles.counterLabel}>{t[prayer.key] || prayer.label}</Text>
       </View>
 
       <View style={styles.counterControls}>
@@ -71,9 +71,9 @@ function CounterRow({ prayer, count, onIncrement, onDecrement }) {
   );
 }
 
-/* ── Main Screen ────────────────────────────────── */
 export function KazaNamazScreen() {
   useTheme();
+  const { t } = useI18n();
   const styles = createStyles();
   const navigation = useNavigation();
   const [counts, setCounts] = useState({});
@@ -83,8 +83,8 @@ export function KazaNamazScreen() {
   /* ── Dialog state ── */
   const [dialog, setDialog] = useState({ visible: false, icon: null, title: '', message: '', buttons: [] });
   const showDialog = useCallback((icon, title, message, buttons) => {
-    setDialog({ visible: true, icon, title, message, buttons: buttons || [{ text: 'Tamam' }] });
-  }, []);
+    setDialog({ visible: true, icon, title, message, buttons: buttons || [{ text: t.ok || 'Tamam' }] });
+  }, [t]);
   const hideDialog = useCallback(() => setDialog((d) => ({ ...d, visible: false })), []);
 
   /* ── Entrance animations ── */
@@ -137,12 +137,12 @@ export function KazaNamazScreen() {
   const handleReset = useCallback(() => {
     showDialog(
       'trash-outline',
-      'Sıfırla',
-      'Tüm kaza namazı sayaçlarını sıfırlamak istediğinize emin misiniz?',
+      t.resetKaza || 'Sıfırla',
+      t.resetKazaConfirm || 'Tüm kaza namazı sayaçlarını sıfırlamak istediğinize emin misiniz?',
       [
-        { text: 'İptal' },
+        { text: t.cancel || 'İptal' },
         {
-          text: 'Sıfırla',
+          text: t.resetKaza || 'Sıfırla',
           style: 'destructive',
           onPress: async () => {
             await resetAllKaza();
@@ -151,7 +151,7 @@ export function KazaNamazScreen() {
         },
       ],
     );
-  }, [showDialog]);
+  }, [showDialog, t]);
 
   return (
     <ScreenBackground>
@@ -166,8 +166,8 @@ export function KazaNamazScreen() {
               <Ionicons name="chevron-back" size={24} color={colors.accent} />
             </Pressable>
             <View style={styles.headerCenter}>
-              <Text style={styles.headerTitle}>KAZA NAMAZI</Text>
-              <Text style={styles.headerSubtitle}>Kılınmamış namaz takibi</Text>
+              <Text style={styles.headerTitle}>{t.kazaTitle || 'KAZA NAMAZI'}</Text>
+              <Text style={styles.headerSubtitle}>{t.kazaDesc || 'Kılınmamış namaz takibi'}</Text>
             </View>
             <View style={{ width: 40 }} />
           </Animated.View>
@@ -176,25 +176,24 @@ export function KazaNamazScreen() {
           <Animated.View style={[styles.infoCard, { opacity: fadeHeader, transform: [{ translateY: slideHeader }] }]}>
             <Ionicons name="information-circle" size={18} color={colors.accent} />
             <Text style={styles.infoText}>
-              Kılmadığınız namazları + butonuyla ekleyin.{'\n'}
-              Kaza olarak kıldıklarınızı - butonuyla düşün.
+              {t.kazaInfo || 'Kılmadığınız namazları + butonuyla ekleyin.\nKaza olarak kıldıklarınızı - butonuyla düşün.'}
             </Text>
           </Animated.View>
 
           {/* Total summary */}
           <Animated.View style={[styles.totalCard, { opacity: fadeSummary, transform: [{ translateY: slideSummary }] }]}>
-            <Text style={styles.totalLabel}>TOPLAM KAZA</Text>
+            <Text style={styles.totalLabel}>{t.kazaTotal || 'TOPLAM KAZA'}</Text>
             <Text style={[styles.totalCount, total === 0 && styles.totalCountZero]}>
               {total}
             </Text>
             <Text style={styles.totalSubtext}>
-              {total === 0 ? 'Tebrikler! Kaza namazınız yok.' : 'vakit namaz borcunuz var'}
+              {total === 0 ? (t.kazaZero || 'Tebrikler! Kaza namazınız yok.') : (t.kazaDebt || 'vakit namaz borcunuz var')}
             </Text>
           </Animated.View>
 
           {/* Prayer counters */}
           <Animated.View style={{ opacity: fadeContent, transform: [{ translateY: slideContent }] }}>
-            <Text style={styles.sectionTitle}>NAMAZ VAKİTLERİ</Text>
+            <Text style={styles.sectionTitle}>{t.prayerTimes || 'NAMAZ VAKİTLERİ'}</Text>
             {PRAYERS.map((prayer) => (
               <CounterRow
                 key={prayer.key}
@@ -202,6 +201,7 @@ export function KazaNamazScreen() {
                 count={counts[prayer.key] || 0}
                 onIncrement={() => handleIncrement(prayer.key)}
                 onDecrement={() => handleDecrement(prayer.key)}
+                t={t}
               />
             ))}
           </Animated.View>
@@ -213,20 +213,20 @@ export function KazaNamazScreen() {
               onPress={handleReset}
             >
               <Ionicons name="refresh" size={18} color={colors.textMuted} />
-              <Text style={styles.resetText}>Tümünü Sıfırla</Text>
+              <Text style={styles.resetText}>{t.resetAll || 'Tümünü Sıfırla'}</Text>
             </Pressable>
           </Animated.View>
 
           {/* Kaza Progress Chart (#11) */}
           {total > 0 && (
             <Animated.View style={[styles.chartCard, { opacity: fadeSummary, transform: [{ translateY: slideSummary }] }]}>
-              <Text style={styles.chartTitle}>Kaza Dağılımı</Text>
+              <Text style={styles.chartTitle}>{t.kazaChart || 'Kaza Dağılımı'}</Text>
               {PRAYERS.map((prayer) => {
                 const c = counts[prayer.key] || 0;
                 const pct = total > 0 ? (c / total) * 100 : 0;
                 return (
                   <View key={prayer.key} style={styles.chartRow}>
-                    <Text style={styles.chartLabel}>{prayer.label}</Text>
+                    <Text style={styles.chartLabel}>{t[prayer.key] || prayer.label}</Text>
                     <View style={styles.chartBarBg}>
                       <View style={[styles.chartBarFill, { width: `${pct}%` }]} />
                     </View>

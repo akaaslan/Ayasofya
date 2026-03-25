@@ -12,6 +12,7 @@ import {
   Vibration,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../../context/ThemeContext';
 import { useI18n } from '../../context/I18nContext';
@@ -19,16 +20,6 @@ import { colors } from '../../theme/colors';
 import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount } from '../../utils/dhikrStorage';
 import { getFontSize, getTapSoundEnabled } from '../../utils/preferences';
 import { playTapSound } from '../../utils/tapSound';
-import { CustomDialog } from '../CustomDialog';
-
-const DHIKRS = [
-  { id: 'subhanallah', label: 'Sübhanallah', arabic: 'سُبْحَانَ اللّٰهِ', target: 100 },
-  { id: 'elhamdulillah', label: 'Elhamdülillah', arabic: 'اَلْحَمْدُ لِلّٰهِ', target: 100 },
-  { id: 'allahuekber', label: 'Allahu Ekber', arabic: 'اَللّٰهُ أَكْبَرُ', target: 100 },
-  { id: 'lailaheillallah', label: 'Lâ İlâhe İllallah', arabic: 'لَا إِلٰهَ إِلَّا اللّٰهُ', target: 100 },
-  { id: 'estagfirullah', label: 'Estağfirullah', arabic: 'أَسْتَغْفِرُ اللّٰهَ', target: 100 },
-  { id: 'salavat', label: 'Salavat', arabic: 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ', target: 100 },
-];
 
 const RING_SIZE = 260;
 const TICK_COUNT = 33;
@@ -44,31 +35,29 @@ const TICKS = Array.from({ length: TICK_COUNT }, (_, i) => {
   };
 });
 
-export function ClassicDhikr() {
+export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, currentDhikr, dhikrs, onTargetReached, targetVibrationEnabled, onTap }) {
   useTheme();
   const { t } = useI18n();
   const s = createStyles();
-  const [selectedIdx, setSelectedIdx] = useState(0);
   const [count, setCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [allTotals, setAllTotals] = useState({});
-  const [completionVisible, setCompletionVisible] = useState(false);
   const [fontScale, setFontScale] = useState(1);
   const [tapSoundOn, setTapSoundOn] = useState(false);
-  const current = DHIKRS[selectedIdx];
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Load font size preference
-  useEffect(() => {
-    getFontSize().then(level => setFontScale([0.8, 1, 1.25][level] || 1));
-    getTapSoundEnabled().then(setTapSoundOn);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getFontSize().then(level => setFontScale([0.8, 1, 1.25][level] || 1));
+      getTapSoundEnabled().then(setTapSoundOn);
+    }, [])
+  );
 
   // Load dhikr totals
   useEffect(() => {
-    getDhikrTotal(current.id).then(t => setTotalCount(t));
+    getDhikrTotal(currentDhikr.id).then(t => setTotalCount(t));
     getDhikrData().then(data => setAllTotals(data.totals));
-  }, [current.id]);
+  }, [currentDhikr.id]);
 
 
 
@@ -98,8 +87,8 @@ export function ClassicDhikr() {
     return () => anim.stop();
   }, []);
 
-
-  const progress = Math.min(count / current.target, 1);
+  const cycleCount = count === 0 ? 0 : ((count - 1) % currentTarget) + 1;
+  const progress = currentTarget === 0 ? 0 : cycleCount / currentTarget;
   const filledTicks = Math.round(progress * TICK_COUNT);
 
   const triggerPulse = useCallback(() => {
@@ -115,21 +104,26 @@ export function ClassicDhikr() {
     if (tapSoundOn) playTapSound();
     setCount((c) => {
       const next = c + 1;
-      if (next === current.target) {
-        setTimeout(() => Vibration.vibrate([0, 40, 60, 40]), 100);
-        saveDhikrSession(current.id, current.target).catch(e => console.warn('Session save error:', e));
-        // Show prayer popup
-        setTimeout(() => setCompletionVisible(true), 400);
+      if (next > 0 && next % currentTarget === 0) {
+        if (targetVibrationEnabled) {
+          setTimeout(() => Vibration.vibrate([0, 40, 60, 40]), 100);
+        }
+        saveDhikrSession(currentDhikr.id, currentTarget).catch(e => console.warn('Session save error:', e));
+        if (onTargetReached) {
+          onTargetReached();
+        }
       }
       return next;
     });
     
     // Save +1 to database immediately for persistence
-    incrementDhikrCount(current.id).catch(e => console.warn('Dhikr increment error:', e));
+    incrementDhikrCount(currentDhikr.id).catch(e => console.warn('Dhikr increment error:', e));
 
     setTotalCount((t) => t + 1);
-    setAllTotals((prev) => ({ ...prev, [current.id]: (prev[current.id] || 0) + 1 }));
-  }, [current.target, current.id, triggerPulse, tapSoundOn]);
+    setAllTotals((prev) => ({ ...prev, [currentDhikr.id]: (prev[currentDhikr.id] || 0) + 1 }));
+
+    if (onTap) onTap();
+  }, [currentTarget, currentDhikr.id, triggerPulse, tapSoundOn, targetVibrationEnabled, onTargetReached, onTap]);
 
 
 
@@ -148,9 +142,9 @@ export function ClassicDhikr() {
   }, [t]);
 
   const selectDhikr = useCallback((idx) => {
-    setSelectedIdx(idx);
+    onSelectDhikr(idx);
     setCount(0);
-  }, []);
+  }, [onSelectDhikr]);
 
   return (
     <View style={s.wrapper}>
@@ -166,7 +160,7 @@ export function ClassicDhikr() {
             <View style={s.outerRing}>
               <View style={s.goldRing}>
                 <View style={s.innerRing}>
-                  <Text style={[s.arabicText, { fontSize: 18 * fontScale }]}>{current.arabic}</Text>
+                  <Text style={[s.arabicText, { fontSize: 18 * fontScale }]}>{currentDhikr.arabic}</Text>
                   <Text style={[s.countText, { fontSize: 56 * fontScale, lineHeight: 62 * fontScale }]}>{totalCount}</Text>
                   <Text style={s.tapHint}>{t.touchAndDhikr || 'DOKUN VE ZİKRET'}</Text>
                 </View>
@@ -182,7 +176,7 @@ export function ClassicDhikr() {
           </Pressable>
           <View style={s.totalBadge}>
             <Text style={s.totalLabel}>{t.progress || 'İLERLEME'}</Text>
-            <Text style={s.totalValue}>{count} / {current.target}</Text>
+            <Text style={s.totalValue}>{cycleCount} / {currentTarget}</Text>
           </View>
           <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
             <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
@@ -191,19 +185,10 @@ export function ClassicDhikr() {
         </Animated.View>
       </Animated.View>
 
-      <CustomDialog
-        visible={completionVisible}
-        icon="heart"
-        title={t.dhikrComplete || "Zikir Tamamlandı"}
-        message={t.dhikrCompleteMsg || `اللهم تقبل منا\n(Allahümme tekabbel minnâ)\n\nYa Rabbi, eksiklerimle beraber bu zikrimi katında kabul eyle, kalbime inşirah (ferahlık) ver.`}
-        buttons={[{ text: t.dhikrAccepted || 'Allah Kabul Etsin' }]}
-        onClose={() => setCompletionVisible(false)}
-      />
-
       <Animated.View style={[s.selectorSection, { opacity: fadeSelector, transform: [{ translateY: slideSelector }] }]}>
         <Text style={s.selectorTitle}>{t.selectDhikr || '✦  ZİKİR SEÇ  ✦'}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.selectorScroll}>
-          {DHIKRS.map((d, idx) => {
+          {dhikrs.map((d, idx) => {
             const active = idx === selectedIdx;
             return (
               <Pressable key={d.id} style={[s.chip, active && s.chipActive]} onPress={() => selectDhikr(idx)}>
