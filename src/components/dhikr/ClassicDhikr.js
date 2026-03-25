@@ -17,7 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { useI18n } from '../../context/I18nContext';
 import { colors } from '../../theme/colors';
-import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount } from '../../utils/dhikrStorage';
+import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount, resetDhikr } from '../../utils/dhikrStorage';
 import { getFontSize, getTapSoundEnabled } from '../../utils/preferences';
 import { playTapSound } from '../../utils/tapSound';
 
@@ -35,7 +35,7 @@ const TICKS = Array.from({ length: TICK_COUNT }, (_, i) => {
   };
 });
 
-export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, currentDhikr, dhikrs, onTargetReached, targetVibrationEnabled, onTap }) {
+export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, currentDhikr, dhikrs, onTargetReached, targetVibrationEnabled, onTap, onReset }) {
   useTheme();
   const { t } = useI18n();
   const s = createStyles();
@@ -130,16 +130,25 @@ export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, curren
   const handleReset = useCallback(() => {
     Alert.alert(t.reset, t.resetConfirm, [
       { text: t.cancel, style: 'cancel' },
-      { text: t.reset, style: 'destructive', onPress: () => setCount(0) },
+      { text: t.reset, style: 'destructive', onPress: () => {
+        setCount(0);
+        if (onReset) onReset();
+      }},
     ]);
-  }, [t]);
+  }, [t, onReset]);
 
   const handleResetAll = useCallback(() => {
     Alert.alert(t.resetAll, t.resetAllConfirm, [
       { text: t.cancel, style: 'cancel' },
-      { text: t.reset, style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); } },
+      { text: t.reset, style: 'destructive', onPress: async () => {
+        await resetDhikr(currentDhikr.id);
+        setCount(0);
+        setTotalCount(0);
+        setAllTotals(prev => ({ ...prev, [currentDhikr.id]: 0 }));
+        if (onReset) onReset();
+      }},
     ]);
-  }, [t]);
+  }, [t, currentDhikr.id, onReset]);
 
   const selectDhikr = useCallback((idx) => {
     onSelectDhikr(idx);

@@ -29,7 +29,7 @@ import Svg, {
 import { useTheme } from '../../context/ThemeContext';
 import { useI18n } from '../../context/I18nContext';
 import { colors } from '../../theme/colors';
-import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount } from '../../utils/dhikrStorage';
+import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount, resetDhikr } from '../../utils/dhikrStorage';
 import { getFontSize, getTapSoundEnabled } from '../../utils/preferences';
 import { playTapSound } from '../../utils/tapSound';
 
@@ -159,7 +159,7 @@ function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim
   );
 }
 
-export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, currentDhikr, dhikrs, onTargetReached, targetVibrationEnabled, onTap }) {
+export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, currentDhikr, dhikrs, onTargetReached, targetVibrationEnabled, onTap, onReset }) {
   useTheme();
   const { t } = useI18n();
   const s = createStyles();
@@ -260,16 +260,29 @@ export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, current
   const handleReset = useCallback(() => {
     Alert.alert(t.reset, t.resetConfirm, [
       { text: t.cancel, style: 'cancel' },
-      { text: t.reset, style: 'destructive', onPress: () => { setCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
+      { text: t.reset, style: 'destructive', onPress: () => { 
+        setCount(0); 
+        rotateTarget.current = 0; 
+        rotateAnim.setValue(0); 
+        if (onReset) onReset();
+      }},
     ]);
-  }, [t, rotateAnim, rotateTarget]);
+  }, [t, rotateAnim, rotateTarget, onReset]);
 
   const handleResetAll = useCallback(() => {
     Alert.alert(t.resetAll, t.resetAllConfirm, [
       { text: t.cancel, style: 'cancel' },
-      { text: t.reset, style: 'destructive', onPress: () => { setCount(0); setTotalCount(0); rotateTarget.current = 0; rotateAnim.setValue(0); } },
+      { text: t.reset, style: 'destructive', onPress: async () => {
+        await resetDhikr(currentDhikr.id);
+        setCount(0); 
+        setTotalCount(0); 
+        setAllTotals(prev => ({ ...prev, [currentDhikr.id]: 0 }));
+        rotateTarget.current = 0; 
+        rotateAnim.setValue(0); 
+        if (onReset) onReset();
+      }},
     ]);
-  }, [t, rotateAnim, rotateTarget]);
+  }, [t, rotateAnim, rotateTarget, currentDhikr.id, onReset]);
 
   const selectDhikr = useCallback((idx) => {
     onSelectDhikr(idx);

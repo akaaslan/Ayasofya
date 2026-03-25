@@ -147,3 +147,12 @@ export async function resetAllDhikr() {
   await db.runAsync('DELETE FROM dhikr_sessions;');
   await db.runAsync('DELETE FROM dhikr_daily;');
 }
+
+/**
+ * Reset data for a specific dhikr.
+ */
+export async function resetDhikr(dhikrId) {
+  const db = await getDB();
+  await db.runAsync('DELETE FROM dhikr_totals WHERE dhikrId = ?', [dhikrId]);
+  await db.runAsync('DELETE FROM dhikr_sessions WHERE dhikrId = ?', [dhikrId]);
+}

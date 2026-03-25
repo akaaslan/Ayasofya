@@ -143,7 +143,10 @@ export function DualarScreen() {
     ]).start();
   }, []);
 
-  const TITLES = { classic: (t.dhikrClassic).toUpperCase(), tasbih: (t.dhikrTasbih).toUpperCase() };
+  const handleResetRefresh = useCallback(() => {
+    getDailyTotal().then(setDailyTotal);
+    getGrandTotal().then(setGrandTotal);
+  }, []);
 
   return (
     <ScreenBackground>
@@ -177,8 +180,8 @@ export function DualarScreen() {
           </View>
         </View>
 
-        {style === 'classic' && <ClassicDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} />}
-        {style === 'tasbih' && <TasbihDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} />}
+        {style === 'classic' && <ClassicDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} onReset={handleResetRefresh} />}
+        {style === 'tasbih' && <TasbihDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} onReset={handleResetRefresh} />}
 
         <Modal
           visible={modalVisible}

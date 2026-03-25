@@ -353,14 +353,9 @@ export const en = {
   verse_5_text: '"Indeed, prayer has been decreed upon the believers a decree of specified times."',
   verse_5_source: 'An-Nisa, 4:103',
   verse_6_text: '"We have certainly created man in the best of stature."',
-  verse_6_source: 'At-Tin, 95:4',
-  mapError: 'Could not open map application.',
-  fastTrackerTitle: 'Fasting Tracker',
-  fullFastDaysDesc: '{days} full fast days',
-  sahurBtn: 'Suhoor',
-  iftarBtn: 'Iftar'
-,
-
-  // ── Offline Warning ──
-  offlineWarning: '⚡ Offline — Using cached data'
+  iftarBtn: 'Iftar',
+  all: 'All',
+ 
+   // ── Offline Warning ──
+   offlineWarning: '⚡ Offline — Using cached data'
 };
