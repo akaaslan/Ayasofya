@@ -12,21 +12,19 @@ import {
 
 import { colors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
 import { getAllUpcomingHolidays, getNextHoliday } from '../utils/holidays';
 
-/* ── Turkish month names ── */
-const MONTHS = [
-  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
-];
-
-function formatDate(d) {
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+function getMonthName(monthIndex, t) {
+  const defaultMonths = [
+    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
+  ];
+  return t[`month_${monthIndex + 1}`] || defaultMonths[monthIndex];
 }
 
-function formatCountdown(h) {
-  if (h.daysLeft > 0) return `${h.daysLeft} gün ${h.hoursLeft} saat kaldı`;
-  return `${h.hoursLeft} saat ${h.minutesLeft} dk kaldı`;
+function formatDate(d, t) {
+  return `${d.getDate()} ${getMonthName(d.getMonth(), t)} ${d.getFullYear()}`;
 }
 
 /**
@@ -35,6 +33,7 @@ function formatCountdown(h) {
  */
 export function HolidayBanner({ visible, onClose }) {
   useTheme();
+  const { t } = useI18n();
   const styles = createStyles();
   const [holiday, setHoliday] = useState(() => getNextHoliday());
   const [modalVisible, setModalVisible] = useState(false);
@@ -73,8 +72,12 @@ export function HolidayBanner({ visible, onClose }) {
 
   const countdownStr =
     holiday.daysLeft > 0
-      ? `${holiday.daysLeft} gün ${holiday.hoursLeft} saat`
-      : `${holiday.hoursLeft} saat ${holiday.minutesLeft} dk`;
+      ? (t.daysHoursLeft || '{days} gün {hours} saat kaldı')
+          .replace('{days}', holiday.daysLeft)
+          .replace('{hours}', holiday.hoursLeft)
+      : (t.hoursMinsLeft || '{hours} saat {mins} dk kaldı')
+          .replace('{hours}', holiday.hoursLeft)
+          .replace('{mins}', holiday.minutesLeft);
 
   return (
     <>
@@ -86,8 +89,8 @@ export function HolidayBanner({ visible, onClose }) {
         <View style={styles.content}>
           <Ionicons name="star" size={14} color={colors.accent} />
           <View style={styles.textWrap}>
-            <Text style={styles.name} numberOfLines={1}>{holiday.name}</Text>
-            <Text style={styles.countdown}>{countdownStr} kaldı</Text>
+            <Text style={styles.name} numberOfLines={1}>{t[holiday.nameKey] || holiday.defaultName}</Text>
+            <Text style={styles.countdown}>{countdownStr}</Text>
           </View>
         </View>
         <View style={styles.bannerRight}>
@@ -123,7 +126,7 @@ export function HolidayBanner({ visible, onClose }) {
               {/* Header */}
               <View style={styles.modalHeader}>
                 <Ionicons name="calendar" size={20} color={colors.accent} />
-                <Text style={styles.modalTitle}>Dini Günler</Text>
+                <Text style={styles.modalTitle}>{t.religiousDays || 'Dini Günler'}</Text>
                 <Pressable
                   style={({ pressed }) => [styles.modalCloseBtn, pressed && { opacity: 0.5 }]}
                   onPress={closeModal}
@@ -149,13 +152,15 @@ export function HolidayBanner({ visible, onClose }) {
                       <View style={[styles.holidayDot, isFirst && styles.holidayDotActive]} />
                       <View style={styles.holidayInfo}>
                         <Text style={[styles.holidayName, isFirst && styles.holidayNameActive]}>
-                          {h.name}
+                          {t[h.nameKey] || h.defaultName}
                         </Text>
-                        <Text style={styles.holidayDate}>{formatDate(h.date)}</Text>
+                        <Text style={styles.holidayDate}>{formatDate(h.date, t)}</Text>
                       </View>
                       <View style={styles.holidayBadge}>
                         <Text style={[styles.holidayDays, isFirst && styles.holidayDaysActive]}>
-                          {h.daysLeft > 0 ? `${h.daysLeft} gün` : 'Bugün!'}
+                          {h.daysLeft > 0 
+                            ? (t.daysLeft || '{days} gün').replace('{days}', h.daysLeft) 
+                            : (t.todayBang || 'Bugün!')}
                         </Text>
                       </View>
                     </View>

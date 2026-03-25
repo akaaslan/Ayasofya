@@ -8,16 +8,16 @@ import { gregorianToHijri } from './hijriDate';
 
 /* ── Holidays defined by Hijri month/day ─────────── */
 const HIJRI_HOLIDAYS = [
-  { name: 'Regaib Kandili',       month: 7, day: 1 },   // 1st Thurs of Recep (approx Recep 1)
-  { name: 'Miraç Kandili',        month: 7, day: 27 },  // 27 Recep
-  { name: 'Berat Kandili',        month: 8, day: 15 },  // 15 Şaban
-  { name: 'Ramazan Başlangıcı',   month: 9, day: 1 },   // 1 Ramazan
-  { name: 'Kadir Gecesi',         month: 9, day: 27 },  // 27 Ramazan
-  { name: 'Ramazan Bayramı',      month: 10, day: 1 },  // 1 Şevval
-  { name: 'Kurban Bayramı',       month: 12, day: 10 }, // 10 Zilhicce
-  { name: 'Hicri Yılbaşı',        month: 1, day: 1 },   // 1 Muharrem
-  { name: 'Aşure Günü',           month: 1, day: 10 },  // 10 Muharrem
-  { name: 'Mevlid Kandili',       month: 3, day: 12 },  // 12 Rebiülevvel
+  { nameKey: 'holiday_regaib', defaultName: 'Regaib Kandili',       month: 7, day: 1 },   // 1st Thurs of Recep (approx Recep 1)
+  { nameKey: 'holiday_mirac', defaultName: 'Miraç Kandili',        month: 7, day: 27 },  // 27 Recep
+  { nameKey: 'holiday_berat', defaultName: 'Berat Kandili',        month: 8, day: 15 },  // 15 Şaban
+  { nameKey: 'holiday_ramadan', defaultName: 'Ramazan Başlangıcı',   month: 9, day: 1 },   // 1 Ramazan
+  { nameKey: 'holiday_kadir', defaultName: 'Kadir Gecesi',         month: 9, day: 27 },  // 27 Ramazan
+  { nameKey: 'holiday_eid_fitr', defaultName: 'Ramazan Bayramı',      month: 10, day: 1 },  // 1 Şevval
+  { nameKey: 'holiday_eid_adha', defaultName: 'Kurban Bayramı',       month: 12, day: 10 }, // 10 Zilhicce
+  { nameKey: 'holiday_hijri', defaultName: 'Hicri Yılbaşı',        month: 1, day: 1 },   // 1 Muharrem
+  { nameKey: 'holiday_ashura', defaultName: 'Aşure Günü',           month: 1, day: 10 },  // 10 Muharrem
+  { nameKey: 'holiday_mawlid', defaultName: 'Mevlid Kandili',       month: 3, day: 12 },  // 12 Rebiülevvel
 ];
 
 /**
@@ -53,14 +53,14 @@ function buildHolidays(now) {
   for (const h of HIJRI_HOLIDAYS) {
     // Scan from start of year
     const d = hijriToGregorian(h.month, h.day, scanStart, 500);
-    if (d) holidays.push({ name: h.name, date: d });
+    if (d) holidays.push({ nameKey: h.nameKey, defaultName: h.defaultName, date: d });
 
     // Also scan from ~354 days later for next Hijri year occurrence
     const nextStart = new Date(scanStart);
     nextStart.setDate(nextStart.getDate() + 340);
     const d2 = hijriToGregorian(h.month, h.day, nextStart, 400);
     if (d2 && d2.getTime() !== d?.getTime()) {
-      holidays.push({ name: h.name, date: d2 });
+      holidays.push({ nameKey: h.nameKey, defaultName: h.defaultName, date: d2 });
     }
   }
 
@@ -91,7 +91,7 @@ export function getNextHoliday(now = new Date()) {
   for (const h of holidays) {
     if (h.date >= today) {
       const diff = computeDiff(h.date, now);
-      return { name: h.name, date: h.date, ...diff };
+      return { nameKey: h.nameKey, defaultName: h.defaultName, date: h.date, ...diff };
     }
   }
   return null;
@@ -103,8 +103,10 @@ export function getNextHoliday(now = new Date()) {
  */
 export function getAllUpcomingHolidays(now = new Date()) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const oneYearFromNow = new Date(today);
+  oneYearFromNow.setFullYear(today.getFullYear() + 1);
   const holidays = buildHolidays(now);
   return holidays
-    .filter((h) => h.date >= today)
-    .map((h) => ({ name: h.name, date: h.date, ...computeDiff(h.date, now) }));
+    .filter((h) => h.date >= today && h.date <= oneYearFromNow)
+    .map((h) => ({ nameKey: h.nameKey, defaultName: h.defaultName, date: h.date, ...computeDiff(h.date, now) }));
 }

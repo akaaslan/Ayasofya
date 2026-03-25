@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
 import {
   getTodayFasting,
   toggleSuhoor,
@@ -13,6 +14,7 @@ import {
 
 export function FastingTracker() {
   const { theme } = useTheme();
+  const { t } = useI18n();
   const [today, setToday] = useState({ suhoor: false, iftar: false });
   const [stats, setStats] = useState({ totalDays: 0, fullFastDays: 0 });
 
@@ -46,9 +48,9 @@ export function FastingTracker() {
     <View style={[styles.container, { backgroundColor: theme.panel, borderColor: theme.divider }]}>
       <View style={styles.header}>
         <Ionicons name="moon" size={18} color={theme.accent} />
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Oruç Takibi</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>{t.fastingTracker || 'Oruç Takibi'}</Text>
         <Text style={[styles.statsText, { color: theme.textMuted }]}>
-          {stats.fullFastDays} gün tam oruç
+          {t.fullFastDaysDesc ? t.fullFastDaysDesc.replace('{days}', stats.fullFastDays) : `${stats.fullFastDays} gün tam oruç`}
         </Text>
       </View>
 
@@ -67,7 +69,7 @@ export function FastingTracker() {
             color={today.suhoor ? theme.accent : theme.textMuted}
           />
           <Text style={[styles.btnText, { color: today.suhoor ? theme.accent : theme.textSecondary }]}>
-            Sahur
+            {t.sahurBtn || 'Sahur'}
           </Text>
         </Pressable>
 
@@ -85,7 +87,7 @@ export function FastingTracker() {
             color={today.iftar ? theme.accent : theme.textMuted}
           />
           <Text style={[styles.btnText, { color: today.iftar ? theme.accent : theme.textSecondary }]}>
-            İftar
+            {t.iftarBtn || 'İftar'}
           </Text>
         </Pressable>
       </View>

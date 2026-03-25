@@ -3,7 +3,7 @@
  * Generates a tiny WAV click on first use, caches it, and plays via expo-audio.
  */
 import { createAudioPlayer } from 'expo-audio';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const CLICK_PATH = FileSystem.cacheDirectory + 'tap_click.wav';
 let player = null;

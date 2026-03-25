@@ -3,9 +3,11 @@ import { Text, View } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { colors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
 
 export function OfflineIndicator() {
   useTheme();
+  const { t } = useI18n();
   const styles = createStyles();
   const [isOffline, setIsOffline] = useState(false);
 
@@ -20,7 +22,7 @@ export function OfflineIndicator() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>⚡ Çevrimdışı — Önbellekteki veriler kullanılıyor</Text>
+      <Text style={styles.text}>{t.offlineWarning || '⚡ Çevrimdışı — Önbellekteki veriler kullanılıyor'}</Text>
     </View>
   );
 }

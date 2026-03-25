@@ -50,16 +50,23 @@ const PRAYER_ICONS = {
   yatsi: 'moon',
 };
 
-/* ── Günün Ayeti ── */
-const DAILY_VERSES = [
-  { verse: '"Şüphesiz Allah, adaleti, iyiliği, yakınlara yardım etmeyi emreder..."', source: 'Nahl, 90' },
-  { verse: '"Şüphesiz her güçlükle bir kolaylık vardır."', source: 'İnşirah, 94:6' },
-  { verse: '"Allah sabredenleri sever."', source: 'Âl-i İmrân, 3:146' },
-  { verse: '"Rabbinizden mağfiret dileyin; O çok bağışlayıcıdır."', source: 'Nûh, 71:10' },
-  { verse: '"Kim Allah\'a güvenirse O, ona yeter."', source: 'Talâk, 65:3' },
-  { verse: '"Namaz müminler üzerine vakitli bir farzdır."', source: 'Nisâ, 4:103' },
-  { verse: '"Biz insanı en güzel biçimde yarattık."', source: 'Tîn, 95:4' },
-];
+function getDailyVerse(idx, t) {
+  const defaultVerses = [
+    { verse: '"Şüphesiz Allah, adaleti, iyiliği, yakınlara yardım etmeyi emreder..."', source: 'Nahl, 90' },
+    { verse: '"Şüphesiz her güçlükle bir kolaylık vardır."', source: 'İnşirah, 94:6' },
+    { verse: '"Allah sabredenleri sever."', source: 'Âl-i İmrân, 3:146' },
+    { verse: '"Rabbinizden mağfiret dileyin; O çok bağışlayıcıdır."', source: 'Nûh, 71:10' },
+    { verse: '"Kim Allah\'a güvenirse O, ona yeter."', source: 'Talâk, 65:3' },
+    { verse: '"Namaz müminler üzerine vakitli bir farzdır."', source: 'Nisâ, 4:103' },
+    { verse: '"Biz insanı en güzel biçimde yarattık."', source: 'Tîn, 95:4' },
+  ];
+  const verseTextKey = `verse_${idx}_text`;
+  const verseSourceKey = `verse_${idx}_source`;
+  return {
+    verse: t[verseTextKey] || defaultVerses[idx].verse,
+    source: t[verseSourceKey] || defaultVerses[idx].source
+  };
+}
 
 function getDayIndex(count) {
   const now = new Date();
@@ -140,14 +147,14 @@ export function HomeScreen() {
 
   const handleVerse = useCallback(() => {
     const idx = getDayIndex(7);
-    const v = DAILY_VERSES[idx];
+    const v = getDailyVerse(idx, t);
     showDialog('book', t.todaysVerse || 'Bugünün Ayeti', `${v.verse}\n\n— ${v.source}`, [{ text: t.ok || 'Tamam' }]);
   }, [showDialog, t]);
 
   const handleMosque = useCallback(() => {
     const url = `https://www.google.com/maps/search/cami+mosque/@${lat},${lng},14z`;
     Linking.openURL(url).catch(() => {
-      showDialog('business', t.error || 'Hata', 'Harita uygulaması açılamadı.', [{ text: t.ok || 'Tamam' }]);
+      showDialog('business', t.error || 'Hata', t.mapError || 'Harita uygulaması açılamadı.', [{ text: t.ok || 'Tamam' }]);
     });
   }, [lat, lng, showDialog, t]);
 

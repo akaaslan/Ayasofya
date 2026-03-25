@@ -239,7 +239,7 @@ export const DUA_CATEGORIES = [
   {
     id: 'ramazan',
     title: 'Ramazan Duaları',
-    icon: 'crescent-sharp',
+    icon: 'moon-sharp',
     duas: [
       {
         id: 'r1',
