@@ -17,7 +17,7 @@ import { DHIKRS } from '../constants/dhikrs';
 
 export function DualarScreen() {
   useTheme();
-  const { t } = useI18n();
+  const { t = {} } = useI18n() || {};
   const s = createStyles();
   const [style, setStyle] = useState('tasbih');
   const [modalVisible, setModalVisible] = useState(false);
@@ -148,6 +148,11 @@ export function DualarScreen() {
     getGrandTotal().then(setGrandTotal);
   }, []);
 
+  const TITLES = {
+    tasbih: t.dhikrTasbih,
+    classic: t.dhikrClassic,
+  };
+
   return (
     <ScreenBackground>
       <SafeAreaView style={s.safe}>
@@ -161,7 +166,7 @@ export function DualarScreen() {
           </TouchableOpacity>
 
           <Animated.Text style={[s.header, { opacity: fadeHeader, transform: [{ translateY: slideHeader }] }]}>
-            {TITLES[style] || 'Z\u0130K\u0130RMAT\u0130K'}
+            {TITLES[style] || 'ZİKİRMATİK'}
           </Animated.Text>
           
           <View style={{ width: 40 }} />

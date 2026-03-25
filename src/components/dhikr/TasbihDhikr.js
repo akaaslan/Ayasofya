@@ -180,7 +180,7 @@ export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, current
   );
 
   useEffect(() => {
-    getDhikrTotal(currentDhikr.id).then((t) => setTotalCount(t));
+    getDhikrTotal(currentDhikr.id).then((total) => setTotalCount(total));
     getDhikrData().then(data => setAllTotals(data.totals));
   }, [currentDhikr.id]);
 
@@ -249,7 +249,7 @@ export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, current
     // Save +1 to database immediately for persistence
     incrementDhikrCount(currentDhikr.id).catch(e => console.warn('Dhikr increment error:', e));
 
-    setTotalCount((t) => t + 1);
+    setTotalCount((prev) => prev + 1);
     setAllTotals((prev) => ({ ...prev, [currentDhikr.id]: (prev[currentDhikr.id] || 0) + 1 }));
     
     if (onTap) onTap();
@@ -303,22 +303,28 @@ export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, current
         <Text style={s.currentLabel}>{t[currentDhikr.id] || currentDhikr.label}</Text>
 
         <Animated.View style={[s.actions, { opacity: fadeActions, transform: [{ translateY: slideActions }] }]}>
-          <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleReset}>
-            <View style={s.actionCircle}>
-              <Ionicons name="refresh" size={18} color={colors.accent} />
-            </View>
-            <Text style={s.actionLabel}>{t.reset}</Text>
-          </Pressable>
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
+            <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleReset}>
+              <View style={s.actionCircle}>
+                <Ionicons name="refresh" size={18} color={colors.accent} />
+              </View>
+              <Text style={s.actionLabel}>{t.reset}</Text>
+            </Pressable>
+          </View>
+
           <View style={s.totalBadge}>
             <Text style={s.totalLabel}>{t.progress}</Text>
             <Text style={s.totalValue}>{cycleCount} / {currentTarget}</Text>
           </View>
-          <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
-            <View style={[s.actionCircle, s.actionCircleMuted]}>
-              <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
-            </View>
-            <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all}</Text>
-          </Pressable>
+
+          <View style={{ flex: 1, alignItems: 'flex-start' }}>
+            <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
+              <View style={[s.actionCircle, s.actionCircleMuted]}>
+                <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
+              </View>
+              <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all}</Text>
+            </Pressable>
+          </View>
         </Animated.View>
       </Animated.View>
 
@@ -344,8 +350,17 @@ const createStyles = () => ({
   wrapper: { flex: 1 },
   counterSection: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: -16 },
   tapArea: { alignItems: 'center', justifyContent: 'center' },
-  currentLabel: { color: colors.textSecondary, fontSize: 16, fontWeight: '600', letterSpacing: 1, marginTop: -8, marginBottom: 6 },
-  actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12, gap: 28 },
+  currentLabel: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginTop: -8,
+    marginBottom: 6,
+    textAlign: 'center',
+    width: '100%',
+  },
+  actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12, width: '100%', paddingHorizontal: 12 },
   actionBtn: { alignItems: 'center', padding: 8, gap: 6 },
   actionPressed: { opacity: 0.6 },
   actionCircle: {
@@ -357,6 +372,7 @@ const createStyles = () => ({
   totalBadge: {
     alignItems: 'center', backgroundColor: 'rgba(200,161,90,0.08)', borderRadius: 18,
     borderWidth: 1, borderColor: 'rgba(200,161,90,0.18)', paddingHorizontal: 26, paddingVertical: 12,
+    marginHorizontal: 12,
   },
   totalLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '700', letterSpacing: 2, marginBottom: 2 },
   totalValue: { color: colors.accent, fontSize: 24, fontWeight: '300', fontVariant: ['tabular-nums'] },

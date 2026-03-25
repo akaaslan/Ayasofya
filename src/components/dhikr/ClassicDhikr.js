@@ -55,7 +55,7 @@ export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, curren
 
   // Load dhikr totals
   useEffect(() => {
-    getDhikrTotal(currentDhikr.id).then(t => setTotalCount(t));
+    getDhikrTotal(currentDhikr.id).then(total => setTotalCount(total));
     getDhikrData().then(data => setAllTotals(data.totals));
   }, [currentDhikr.id]);
 
@@ -119,7 +119,7 @@ export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, curren
     // Save +1 to database immediately for persistence
     incrementDhikrCount(currentDhikr.id).catch(e => console.warn('Dhikr increment error:', e));
 
-    setTotalCount((t) => t + 1);
+    setTotalCount((prev) => prev + 1);
     setAllTotals((prev) => ({ ...prev, [currentDhikr.id]: (prev[currentDhikr.id] || 0) + 1 }));
 
     if (onTap) onTap();
@@ -179,18 +179,24 @@ export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, curren
         </Pressable>
 
         <Animated.View style={[s.actions, { opacity: fadeActions, transform: [{ translateY: slideActions }] }]}>
-          <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleReset}>
-            <Ionicons name="refresh" size={20} color={colors.accent} />
-            <Text style={s.actionLabel}>{t.reset}</Text>
-          </Pressable>
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
+            <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleReset}>
+              <Ionicons name="refresh" size={20} color={colors.accent} />
+              <Text style={s.actionLabel}>{t.reset}</Text>
+            </Pressable>
+          </View>
+          
           <View style={s.totalBadge}>
             <Text style={s.totalLabel}>{t.progress}</Text>
             <Text style={s.totalValue}>{cycleCount} / {currentTarget}</Text>
           </View>
-          <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
-            <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
-            <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all}</Text>
-          </Pressable>
+          
+          <View style={{ flex: 1, alignItems: 'flex-start' }}>
+            <Pressable style={({ pressed }) => [s.actionBtn, pressed && s.actionPressed]} onPress={handleResetAll}>
+              <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
+              <Text style={[s.actionLabel, { color: colors.textMuted }]}>{t.all}</Text>
+            </Pressable>
+          </View>
         </Animated.View>
       </Animated.View>
 
@@ -242,13 +248,14 @@ const createStyles = () => ({
   },
   targetText: { color: colors.textMuted, fontSize: 16, fontWeight: '400', marginTop: -2, marginBottom: 8, fontVariant: ['tabular-nums'] },
   tapHint: { color: colors.textMuted, fontSize: 8, fontWeight: '700', letterSpacing: 2.5 },
-  actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 28, gap: 32 },
+  actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 28, width: '100%', paddingHorizontal: 12 },
   actionBtn: { alignItems: 'center', padding: 10, gap: 4 },
   actionPressed: { opacity: 0.6 },
   actionLabel: { color: colors.accent, fontSize: 11, fontWeight: '600' },
   totalBadge: {
     alignItems: 'center', backgroundColor: 'rgba(200,161,90,0.08)', borderRadius: 16,
     borderWidth: 1, borderColor: 'rgba(200,161,90,0.15)', paddingHorizontal: 22, paddingVertical: 10,
+    marginHorizontal: 12,
   },
   totalLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '700', letterSpacing: 2, marginBottom: 2 },
   totalValue: { color: colors.accent, fontSize: 22, fontWeight: '300', fontVariant: ['tabular-nums'] },
