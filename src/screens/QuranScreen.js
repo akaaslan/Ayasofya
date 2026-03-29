@@ -17,8 +17,8 @@ import { ScreenBackground } from '../components/ScreenBackground';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { colors } from '../theme/colors';
-import { SURAHS } from '../data/surahData';
 import { getBookmark, setBookmark } from '../utils/quranBookmark';
+import { getSurahs, getSurahContent } from '../utils/quranApi';
 
 /* ── Component ─────────────────────────────────── */
 export function QuranScreen() {
@@ -28,6 +28,12 @@ export function QuranScreen() {
   const navigation = useNavigation();
   const [selectedSurah, setSelectedSurah] = useState(null);
   const [bookmarkId, setBookmarkId] = useState(null);
+  const [surahs, setSurahs] = useState([]);
+
+  /* ── Load data ── */
+  useEffect(() => {
+    getSurahs().then(setSurahs);
+  }, []);
 
   /* ── Load bookmark ── */
   useFocusEffect(
@@ -36,10 +42,14 @@ export function QuranScreen() {
     }, [])
   );
 
-  const handleSelectSurah = (item) => {
+  const handleSelectSurah = async (item) => {
+    // 1. Fetch full content if it is missing (list view only has name/id)
+    const fullContent = await getSurahContent(item.id);
+    const surahToDisplay = { ...item, ...fullContent };
+    
     setBookmark(item.id, item.name);
     setBookmarkId(item.id);
-    setSelectedSurah(item);
+    setSelectedSurah(surahToDisplay);
   };
 
   /* ── Entrance animations ── */
@@ -115,13 +125,13 @@ export function QuranScreen() {
             <Pressable
               style={styles.bookmarkBtn}
               onPress={() => {
-                const s = SURAHS.find((x) => x.id === bookmarkId);
+                const s = surahs.find((x) => x.id === bookmarkId);
                 if (s) handleSelectSurah(s);
               }}
             >
               <Ionicons name="bookmark" size={18} color={colors.accent} />
               <Text style={styles.bookmarkText}>
-                {t.continueReading} – {SURAHS.find((x) => x.id === bookmarkId)?.name}
+                {t.continueReading} – {surahs.find((x) => x.id === bookmarkId)?.name}
               </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.accent} />
             </Pressable>
@@ -136,7 +146,7 @@ export function QuranScreen() {
           ]}
         >
           <FlatList
-            data={SURAHS}
+            data={surahs}
             keyExtractor={(item) => String(item.id)}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
@@ -145,7 +155,7 @@ export function QuranScreen() {
                 style={({ pressed }) => [
                   styles.surahRow,
                   pressed && styles.surahRowPressed,
-                  index < SURAHS.length - 1 && styles.surahRowBorder,
+                  index < surahs.length - 1 && styles.surahRowBorder,
                   bookmarkId === item.id && styles.surahRowBookmarked,
                 ]}
                 onPress={() => handleSelectSurah(item)}
@@ -213,10 +223,26 @@ function SurahReader({ surah, onBack, isBookmarked, onBookmark, t }) {
         contentContainerStyle={styles.readerScroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Arabic text */}
-        <View style={styles.arabicCard}>
-          <Text style={styles.arabicText}>{surah.text}</Text>
-        </View>
+        {/* Detailed ayas list or single block? */}
+        {surah.ayas ? (
+          surah.ayas.map((a, i) => (
+            <View key={i} style={styles.ayaBlock}>
+              <View style={styles.ayaHeader}>
+                <View style={styles.ayaCircle}>
+                  <Text style={styles.ayaNum}>{a.aya_number}</Text>
+                </View>
+                <View style={styles.ayaLine} />
+              </View>
+              <Text style={styles.arabicText}>{a.text}</Text>
+              {/* Optional: if there's meaning associated with each individual aya, display it here */}
+            </View>
+          ))
+        ) : (
+          /* Backward compatibility for local fallback data */
+          <View style={styles.arabicCard}>
+            <Text style={styles.arabicText}>{surah.text}</Text>
+          </View>
+        )}
 
         {/* Divider */}
         <View style={styles.dividerRow}>
@@ -363,6 +389,43 @@ const createStyles = () => ({
     textAlign: 'right',
     fontWeight: '400',
     writingDirection: 'rtl',
+    marginBottom: 10,
+  },
+
+  /* Aya Block */
+  ayaBlock: {
+    backgroundColor: colors.panel,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    marginBottom: 16,
+  },
+  ayaHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    gap: 12,
+  },
+  ayaCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(200, 161, 90, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(200, 161, 90, 0.3)',
+  },
+  ayaNum: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.accent,
+  },
+  ayaLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(200, 161, 90, 0.1)',
   },
 
   /* Divider */

@@ -76,6 +76,42 @@ export async function getDB() {
         );
       `);
 
+      // Initialize detailed Quran structure
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS surahs (
+          id INTEGER,
+          language TEXT,
+          name TEXT,
+          aya_count INTEGER,
+          PRIMARY KEY (id, language)
+        );
+      `);
+
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS ayas (
+          id INTEGER PRIMARY KEY,
+          surah_id INTEGER,
+          aya_number INTEGER,
+          juz_number INTEGER,
+          page_number INTEGER,
+          text TEXT,
+          FOREIGN KEY (surah_id) REFERENCES surahs(id),
+          UNIQUE(surah_id, aya_number)
+        );
+      `);
+
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS tafsirs (
+          id INTEGER PRIMARY KEY,
+          aya_id INTEGER,
+          author TEXT,
+          language TEXT,
+          text TEXT,
+          FOREIGN KEY (aya_id) REFERENCES ayas(id),
+          UNIQUE(aya_id, author, language)
+        );
+      `);
+
       // Try adding hicri column for existing databases
       try {
         await db.execAsync(`ALTER TABLE prayer_times ADD COLUMN hicri TEXT;`);
