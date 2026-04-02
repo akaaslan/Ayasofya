@@ -6,18 +6,23 @@
  *   - ayas: { id, surah_id, aya_number, juz_number, page_number, text }
  *   - tafsirs: { id, aya_id, author, language, text }
  *
+ * API Endpoints:
+ *   GET /surahs?language=turkish
+ *   GET /surahs/:id/ayas?language=turkish&author_code=...
+ *   GET /reciters
+ *   GET /tafsirs?language=turkish
+ *   GET /languages
+ *
  * Strategy:
  *   1. Check SQLite DB for cached data
  *   2. If not found, fetch from API and save to SQLite
  *   3. Fallback to local data (src/data/surahData.js) if API fails
- *
- * API: http://localhost:8000/api/v1/quran/surahs?language=turkish
  */
 
 import { SURAHS as FALLBACK_SURAHS } from '../data/surahData';
 import { getDB } from './db';
 
-const API_BASE = 'http://192.168.1.4:8000/api/v1/quran';
+const API_BASE = 'http://192.168.1.25:8000/api/v1/quran';
 const FETCH_TIMEOUT = 8000; // 8 seconds
 
 // const API_BASE = 'https://ayasofya.santralsoftware.com/api/v1/quran';
@@ -50,18 +55,19 @@ async function fetchAndSaveSurahs(lang = 'turkish') {
 }
 
 /** 
- * Fetches ayas for a specific surah and language 
- * This assumes the API returns ayas nested inside the surah object or as a flat list
+ * Fetches ayas for a specific surah and language.
+ * Uses the /surahs/:id/ayas endpoint with optional author_code for tafsir.
  */
-async function fetchAndSaveAyas(surahId, lang = 'turkish') {
-  const url = `${API_BASE}/surahs/${surahId}?language=${lang}`;
+async function fetchAndSaveAyas(surahId, lang = 'turkish', authorCode = '') {
+  let url = `${API_BASE}/surahs/${surahId}/ayas?language=${lang}`;
+  if (authorCode) url += `&author_code=${encodeURIComponent(authorCode)}`;
+
   try {
     const res = await fetch(url, { method: "GET" });
     if (!res.ok) return null;
     const json = await res.json();
-    
+
     // Structure depends on your backend return.
-    // Let's assume: { ...surah, ayas: [...] } OR [ { aya_number, text, ... }, ... ]
     const ayas = json.ayas || json;
 
     if (!Array.isArray(ayas)) return null;
@@ -73,7 +79,7 @@ async function fetchAndSaveAyas(surahId, lang = 'turkish') {
          VALUES (?, ?, ?, ?, ?, ?)`,
         [a.id, surahId, a.aya_number, a.juz_number, a.page_number, a.text]
       );
-      
+
       // If tafsirs are included
       if (a.tafsirs && Array.isArray(a.tafsirs)) {
         for (const t of a.tafsirs) {
@@ -101,7 +107,7 @@ export async function getSurahs(lang = 'turkish') {
   let db;
   try {
     db = await getDB();
-  } catch(e) {
+  } catch (e) {
     return FALLBACK_SURAHS;
   }
 
@@ -127,24 +133,24 @@ export async function getSurahs(lang = 'turkish') {
 /**
  * Get full surah content (ayas + optional tafsir)
  */
-export async function getSurahContent(surahId, lang = 'turkish') {
+export async function getSurahContent(surahId, lang = 'turkish', authorCode = '') {
   let db;
   try {
     db = await getDB();
-  } catch(e) {
+  } catch (e) {
     return FALLBACK_SURAHS.find(s => s.id === surahId);
   }
 
   // 1️⃣ Cache check
   try {
     const ayas = await db.getAllAsync(
-      `SELECT * FROM ayas WHERE surah_id = ? ORDER BY aya_number ASC`, 
+      `SELECT * FROM ayas WHERE surah_id = ? ORDER BY aya_number ASC`,
       [surahId]
     );
     if (ayas && ayas.length > 0) {
       // Build a unified text from ayas for the current UI
       const wholeText = ayas.map(a => a.text).join(' ');
-      
+
       // Get tafsir (using first one found for language if available)
       const tafsirRow = await db.getFirstAsync(
         `SELECT text FROM tafsirs WHERE language = ? AND aya_id IN (SELECT id FROM ayas WHERE surah_id = ?) LIMIT 1`,
@@ -163,12 +169,60 @@ export async function getSurahContent(surahId, lang = 'turkish') {
   }
 
   // 2️⃣ API fetch
-  const fetched = await fetchAndSaveAyas(surahId, lang);
+  const fetched = await fetchAndSaveAyas(surahId, lang, authorCode);
   if (fetched) {
-     // Re-query to return consistent structure
-     return getSurahContent(surahId, lang);
+    // Re-query to return consistent structure
+    return getSurahContent(surahId, lang, authorCode);
   }
 
   // 3️⃣ Local fallback
   return FALLBACK_SURAHS.find(s => s.id === surahId);
+}
+
+/**
+ * Get available reciters.
+ */
+export async function getReciters() {
+  const url = `${API_BASE}/reciters`;
+  try {
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.reciters || json || [];
+  } catch (e) {
+    console.warn("getReciters failed:", e);
+    return [];
+  }
+}
+
+/**
+ * Get available tafsirs/translations for a language.
+ */
+export async function getTafsirs(lang = 'turkish') {
+  const url = `${API_BASE}/tafsirs?language=${lang}`;
+  try {
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.tafsirs || json || [];
+  } catch (e) {
+    console.warn("getTafsirs failed:", e);
+    return [];
+  }
+}
+
+/**
+ * Get available languages.
+ */
+export async function getLanguages() {
+  const url = `${API_BASE}/languages`;
+  try {
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.languages || json || [];
+  } catch (e) {
+    console.warn("getLanguages failed:", e);
+    return [];
+  }
 }

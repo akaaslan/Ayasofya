@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Amiri:wght@400;700&amp;family=Noto+Naskh+Arabic:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-dim": "#dddad1",
+              "surface-container": "#f1eee5",
+              "tertiary-fixed-dim": "#e9c176",
+              "secondary-fixed": "#cfe5ff",
+              "surface-tint": "#2a6953",
+              "on-tertiary": "#ffffff",
+              "on-secondary-container": "#395c7f",
+              "on-error-container": "#93000a",
+              "tertiary-container": "#563d00",
+              "on-background": "#1c1c17",
+              "inverse-primary": "#94d4b9",
+              "surface-container-highest": "#e5e2da",
+              "outline-variant": "#bfc9c2",
+              "primary-container": "#004b37",
+              "tertiary-fixed": "#ffdea5",
+              "surface-variant": "#e5e2da",
+              "on-primary-container": "#7cbaa0",
+              "on-surface": "#1c1c17",
+              "on-tertiary-fixed-variant": "#5d4201",
+              "error-container": "#ffdad6",
+              "secondary": "#3e6184",
+              "secondary-fixed-dim": "#a7caf1",
+              "on-error": "#ffffff",
+              "background": "#fcf9f0",
+              "primary-fixed": "#b0f0d4",
+              "inverse-surface": "#31312b",
+              "primary-fixed-dim": "#94d4b9",
+              "on-secondary-fixed": "#001d34",
+              "tertiary": "#3a2800",
+              "on-tertiary-fixed": "#261900",
+              "on-surface-variant": "#404944",
+              "surface-bright": "#fcf9f0",
+              "on-primary-fixed": "#002116",
+              "surface": "#fcf9f0",
+              "outline": "#707974",
+              "surface-container-low": "#f6f3ea",
+              "on-secondary-fixed-variant": "#25496b",
+              "on-secondary": "#ffffff",
+              "primary": "#003224",
+              "surface-container-high": "#ebe8df",
+              "on-primary-fixed-variant": "#0a513c",
+              "surface-container-lowest": "#ffffff",
+              "secondary-container": "#b2d5fd",
+              "on-primary": "#ffffff",
+              "inverse-on-surface": "#f4f1e8",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#cea860"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Newsreader"],
+              "label": ["Newsreader"],
+              "arabic": ["Noto Naskh Arabic", "Amiri", "serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-manuscript-pattern {
+            background-color: #003224;
+            background-image: radial-gradient(#004b37 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .mihrab-shape {
+            clip-path: ellipse(100% 100% at 50% 100%);
+        }
+        .gold-foil-gradient {
+            background: linear-gradient(45deg, #ffdea5, #cea860, #ffdea5);
+        }
+        .text-gold-gradient {
+            background: linear-gradient(to right, #ffdea5, #e9c176);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-tertiary-fixed selection:text-on-tertiary-fixed">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-[#fcf9f0] dark:bg-[#1c1c17] tonal-transition bg-gradient-to-b from-[#f6f3ea] to-transparent">
+<button class="material-symbols-outlined text-[#003224] dark:text-[#ffdea5] hover:bg-[#e5e2da] dark:hover:bg-[#3a2800]/20 transition-colors p-2 rounded-full active:scale-95 duration-150 ease-in-out">
+            menu
+        </button>
+<h1 class="font-['Noto_Serif'] text-lg font-bold tracking-tight text-[#003224] dark:text-[#ffdea5]">Kur'an-ı Kerim</h1>
+<button class="material-symbols-outlined text-[#003224] dark:text-[#ffdea5] hover:bg-[#e5e2da] dark:hover:bg-[#3a2800]/20 transition-colors p-2 rounded-full active:scale-95 duration-150 ease-in-out">
+            settings
+        </button>
+</header>
+<main class="pt-20 pb-32 px-4 max-w-2xl mx-auto min-h-screen bg-surface">
+<!-- Selection Area -->
+<section class="grid grid-cols-2 gap-3 mb-8">
+<div class="bg-primary-container p-3 rounded-xl border border-tertiary-fixed/20 shadow-sm transition-all hover:border-tertiary-fixed/40">
+<p class="text-[10px] font-label uppercase tracking-widest text-on-primary-container mb-1">Meâl (Tercüme Seçimi)</p>
+<div class="flex items-center justify-between">
+<span class="text-white text-sm font-medium">Diyanet Meali</span>
+<span class="material-symbols-outlined text-tertiary-fixed text-sm">unfold_more</span>
+</div>
+</div>
+<div class="bg-primary-container p-3 rounded-xl border border-tertiary-fixed/20 shadow-sm transition-all hover:border-tertiary-fixed/40">
+<p class="text-[10px] font-label uppercase tracking-widest text-on-primary-container mb-1">Kâri (Seslendiren Seçimi)</p>
+<div class="flex items-center justify-between">
+<span class="text-white text-sm font-medium truncate">Mishary Rashid Al-Afasy</span>
+<span class="material-symbols-outlined text-tertiary-fixed text-sm">unfold_more</span>
+</div>
+</div>
+</section>
+<!-- Surah Title Card -->
+<div class="relative overflow-hidden mb-10 rounded-2xl bg-manuscript-pattern p-10 text-center border border-tertiary-fixed/30 shadow-2xl">
+<!-- Decorative Pattern Overlay -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAgwIshkMP1JMqlZZJGlvN8bU7_tZkf_wIZoxH3UWj5WIAB2Z9c0A4SW9XuChp1nT10iKZWr2fzlfs6O7ovVhApLMxRW0XurjocQKA18nCfTihSstrZ9OMVvqPdC8Bb0wIJofzY3W8WinlxJ_l5X3iw2YW-I36o2V_PpBkaaYXpLS8Mka7pdIgY_OV9aCJYWthlKta-v9IoTCecGKFPcZ80Q_fn5fKvw3E6pb4JMhyvohCiOXuWKW55CgmsGzjZmhjUGWaiOJtw_wl8');"></div>
+<div class="relative z-10 flex flex-col items-center">
+<span class="material-symbols-outlined text-tertiary-fixed text-5xl mb-4" style="font-variation-settings: 'FILL' 1;">mosque</span>
+<h2 class="font-headline text-3xl font-bold text-tertiary-fixed mb-2 tracking-tight">Fâtiha Suresi</h2>
+<div class="h-px w-24 gold-foil-gradient mx-auto my-4 opacity-60"></div>
+<div class="text-4xl font-arabic text-tertiary-fixed/90 leading-relaxed mt-2" dir="rtl">
+                    بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+                </div>
+<p class="text-on-primary-container font-label text-sm italic mt-4 tracking-wide opacity-80">Mekke Devri • 7 Ayet</p>
+</div>
+</div>
+<!-- Aya List -->
+<div class="space-y-6">
+<!-- Aya Card 1 -->
+<div class="group relative bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 hover:border-tertiary-fixed/30 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="flex space-x-2">
+<button class="h-10 w-10 flex items-center justify-center rounded-full border border-tertiary-fixed/30 text-primary hover:bg-tertiary-fixed/20 transition-colors">
+<span class="material-symbols-outlined text-xl">play_arrow</span>
+</button>
+<button class="h-10 w-10 flex items-center justify-center rounded-full border border-outline-variant/30 text-secondary hover:bg-secondary-container/20 transition-colors">
+<span class="material-symbols-outlined text-xl">share</span>
+</button>
+</div>
+<div class="relative h-12 w-12 flex items-center justify-center">
+<span class="material-symbols-outlined absolute text-5xl text-tertiary-fixed/40">brightness_7</span>
+<span class="relative font-headline font-bold text-primary text-sm">1</span>
+</div>
+</div>
+<div class="space-y-6" dir="rtl">
+<p class="font-arabic text-3xl leading-[2.5] text-primary text-right font-medium">
+                        الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ
+                    </p>
+</div>
+<div class="mt-6 space-y-3 pt-6 border-t border-outline-variant/10" dir="ltr">
+<p class="font-body text-secondary italic text-sm leading-relaxed opacity-80">
+                        El hamdu lillahi rabbil 'alemin.
+                    </p>
+<p class="font-body text-on-surface text-base leading-relaxed font-medium">
+                        Hamd, âlemlerin rabbi olan Allah'a mahsustur.
+                    </p>
+</div>
+</div>
+<!-- Aya Card 2 -->
+<div class="group relative bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 hover:border-tertiary-fixed/30 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="flex space-x-2">
+<button class="h-10 w-10 flex items-center justify-center rounded-full border border-tertiary-fixed/30 text-primary hover:bg-tertiary-fixed/20 transition-colors">
+<span class="material-symbols-outlined text-xl">play_arrow</span>
+</button>
+<button class="h-10 w-10 flex items-center justify-center rounded-full border border-outline-variant/30 text-secondary hover:bg-secondary-container/20 transition-colors">
+<span class="material-symbols-outlined text-xl">share</span>
+</button>
+</div>
+<div class="relative h-12 w-12 flex items-center justify-center">
+<span class="material-symbols-outlined absolute text-5xl text-tertiary-fixed/40">brightness_7</span>
+<span class="relative font-headline font-bold text-primary text-sm">2</span>
+</div>
+</div>
+<div class="space-y-6" dir="rtl">
+<p class="font-arabic text-3xl leading-[2.5] text-primary text-right font-medium">
+                        الرَّحْمَنِ الرَّحِيمِ
+                    </p>
+</div>
+<div class="mt-6 space-y-3 pt-6 border-t border-outline-variant/10" dir="ltr">
+<p class="font-body text-secondary italic text-sm leading-relaxed opacity-80">
+                        Er rahmânir rahîm.
+                    </p>
+<p class="font-body text-on-surface text-base leading-relaxed font-medium">
+                        O, rahmândır ve rahîmdir.
+                    </p>
+</div>
+</div>
+<!-- Aya Card 3 -->
+<div class="group relative bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 hover:border-tertiary-fixed/30 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="flex space-x-2">
+<button class="h-10 w-10 flex items-center justify-center rounded-full border border-tertiary-fixed/30 text-primary hover:bg-tertiary-fixed/20 transition-colors">
+<span class="material-symbols-outlined text-xl">play_arrow</span>
+</button>
+<button class="h-10 w-10 flex items-center justify-center rounded-full border border-outline-variant/30 text-secondary hover:bg-secondary-container/20 transition-colors">
+<span class="material-symbols-outlined text-xl">share</span>
+</button>
+</div>
+<div class="relative h-12 w-12 flex items-center justify-center">
+<span class="material-symbols-outlined absolute text-5xl text-tertiary-fixed/40">brightness_7</span>
+<span class="relative font-headline font-bold text-primary text-sm">3</span>
+</div>
+</div>
+<div class="space-y-6" dir="rtl">
+<p class="font-arabic text-3xl leading-[2.5] text-primary text-right font-medium">
+                        مَالِكِ يَوْمِ الدِّينِ
+                    </p>
+</div>
+<div class="mt-6 space-y-3 pt-6 border-t border-outline-variant/10" dir="ltr">
+<p class="font-body text-secondary italic text-sm leading-relaxed opacity-80">
+                        Mâliki yevmid dîn.
+                    </p>
+<p class="font-body text-on-surface text-base leading-relaxed font-medium">
+                        Ceza gününün mâlikidir.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Pagination / Footer Detail -->
+<div class="mt-12 text-center pb-12">
+<div class="inline-flex items-center space-x-4 bg-surface-container px-6 py-3 rounded-full border border-outline-variant/20">
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:text-primary transition-colors">navigate_before</span>
+<span class="font-label text-xs uppercase tracking-widest text-primary font-bold">Sonraki Sure: Bakara</span>
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:text-primary transition-colors">navigate_next</span>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pt-3 pb-6 bg-[#fcf9f0]/90 dark:bg-[#1c1c17]/90 backdrop-blur-md border-t border-[#003224]/5 shadow-[0_-4px_20px_rgba(28,28,23,0.04)] rounded-t-[2rem]">
+<a class="flex flex-col items-center justify-center text-[#003224] dark:text-[#ffdea5] bg-[#ffdea5]/30 rounded-full px-4 py-1 tap-highlight-none active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-['Newsreader'] text-[11px] font-medium uppercase tracking-widest">Ana Sayfa</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3e6184] dark:text-[#e5e2da] hover:text-[#004b37] dark:hover:text-[#ffdea5] tap-highlight-none active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-['Newsreader'] text-[11px] font-medium uppercase tracking-widest">Kıble</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3e6184] dark:text-[#e5e2da] hover:text-[#004b37] dark:hover:text-[#ffdea5] tap-highlight-none active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">fingerprint</span>
+<span class="font-['Newsreader'] text-[11px] font-medium uppercase tracking-widest">Zikirmatik</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3e6184] dark:text-[#e5e2da] hover:text-[#004b37] dark:hover:text-[#ffdea5] tap-highlight-none active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['Newsreader'] text-[11px] font-medium uppercase tracking-widest">Ayarlar</span>
+</a>
+</nav>
+<!-- Subtle Texture Overlay for the whole page -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/old-map.png')]"></div>
+</body></html>
