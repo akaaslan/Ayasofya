@@ -189,22 +189,26 @@ export function QiblaScreen() {
 
   // ── 1. Get Qibla bearing ───────────────────────────────────────
   useEffect(() => {
+    let mounted = true;
     (async () => {
       try {
         const { status: perm } = await Location.requestForegroundPermissionsAsync();
+        if (!mounted) return;
         if (perm !== 'granted') {
           setQiblaDeg(Qibla(new Coordinates(DEFAULT_LAT, DEFAULT_LNG)));
           setStatus('denied');
         } else {
           const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+          if (!mounted) return;
           const { latitude: lat, longitude: lng } = loc.coords;
           setUserCoords({ lat, lng });
           setQiblaDeg(Qibla(new Coordinates(lat, lng)));
         }
       } catch {
-        setQiblaDeg(Qibla(new Coordinates(DEFAULT_LAT, DEFAULT_LNG)));
+        if (mounted) setQiblaDeg(Qibla(new Coordinates(DEFAULT_LAT, DEFAULT_LNG)));
       }
     })();
+    return () => { mounted = false; };
   }, []);
 
   // ── 2. Watch heading ───────────────────────────────────────────
@@ -285,9 +289,17 @@ export function QiblaScreen() {
           <Text style={s.title}>{t.qiblaTitle}</Text>
 
           {status === 'error' ? (
-            <Text style={s.errorText}>
-              {t.compassError}
-            </Text>
+            <View style={s.errorWrap}>
+              <Ionicons name="compass-outline" size={64} color={colors.textMuted} />
+              <Text style={s.errorText}>{t.compassError}</Text>
+              <Pressable
+                style={({ pressed }) => [s.btn, pressed && s.btnPressed, { marginTop: 16 }]}
+                onPress={handleRecalibrate}
+              >
+                <Ionicons name="refresh" size={16} color={colors.accent} />
+                <Text style={s.btnText}>{t.recalibrate}</Text>
+              </Pressable>
+            </View>
           ) : (
             <>
               {/* Degree info bar */}
@@ -444,12 +456,17 @@ const createStyles = () => ({
     fontSize: 11,
     flex: 1,
   },
+  errorWrap: {
+    alignItems: 'center',
+    marginTop: 60,
+    paddingHorizontal: 20,
+  },
   errorText: {
     color: '#e57373',
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 24,
-    marginTop: 60,
+    marginTop: 16,
   },
   compassWrap: {
     width: COMPASS_SIZE,

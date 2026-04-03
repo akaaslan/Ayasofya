@@ -25,10 +25,10 @@ export class ErrorBoundary extends React.Component {
       return (
         <View style={s.container}>
           <Ionicons name="alert-circle-outline" size={56} color="#c8a15a" />
-          <Text style={s.title}>{t.error}</Text>
-          <Text style={s.message}>{t.error}</Text>
+          <Text style={s.title}>Bir hata oluştu</Text>
+          <Text style={s.message}>Uygulama beklenmeyen bir hata ile karşılaştı.</Text>
           <Pressable style={s.btn} onPress={this.handleRetry}>
-            <Text style={s.btnText}>{t.retry}</Text>
+            <Text style={s.btnText}>Tekrar Dene</Text>
           </Pressable>
         </View>
       );

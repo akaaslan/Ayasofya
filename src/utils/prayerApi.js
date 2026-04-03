@@ -52,12 +52,17 @@ function parseDbRow(row, baseDate, tz) {
 
 /* ── API Fetch & Storage ── */
 
-let activeFetch = null; // { promise, lat, lng }
+let activeFetch = null; // { promise, lat, lng, ts }
+const ACTIVE_FETCH_TTL = 15000; // stale after 15s – prevents permanent block
 
 async function fetchAndSaveToDb(lat, lng) {
-  if (activeFetch && activeFetch.lat === lat && activeFetch.lng === lng) {
+  // Reuse in-flight request for same coords if still fresh
+  if (activeFetch && activeFetch.lat === lat && activeFetch.lng === lng
+      && (Date.now() - activeFetch.ts) < ACTIVE_FETCH_TTL) {
     return activeFetch.promise;
   }
+  // Clear stale entry
+  activeFetch = null;
 
   const promise = (async () => {
     const url = `${API_BASE}?lat=${lat.toFixed(2)}&lon=${lng.toFixed(2)}`;
@@ -95,10 +100,10 @@ async function fetchAndSaveToDb(lat, lng) {
         );
       }
       
-      // Cleanup old dates from cache
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const oldDateStr = dateToDbFormat(weekAgo);
+      // Cleanup old dates from cache (keep 30 days for offline use)
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      const oldDateStr = dateToDbFormat(cutoff);
       await db.runAsync(`DELETE FROM prayer_times WHERE date < ?`, [oldDateStr]);
 
     } catch (err) {
@@ -107,7 +112,7 @@ async function fetchAndSaveToDb(lat, lng) {
     }
   })();
 
-  activeFetch = { promise, lat, lng };
+  activeFetch = { promise, lat, lng, ts: Date.now() };
 
   try {
     await promise;

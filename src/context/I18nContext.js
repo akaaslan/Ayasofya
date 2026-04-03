@@ -1,55 +1,71 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
-import am from '../i18n/am.json';
-import ar from '../i18n/ar-SA.json';
-import az from '../i18n/az.json';
-import ber from '../i18n/ber.json';
-import bg from '../i18n/bg.json';
-import bn from '../i18n/bn.json';
-import bs from '../i18n/bs.json';
-import cs from '../i18n/cs.json';
-import de from '../i18n/de.json';
-import dv from '../i18n/dv.json';
-import en from '../i18n/en.json';
-import es from '../i18n/es.json';
-import fa from '../i18n/fa.json';
-import fr from '../i18n/fr.json';
-import ha from '../i18n/ha.json';
-import hi from '../i18n/hi.json';
-import id from '../i18n/id.json';
-import it from '../i18n/it.json';
-import ja from '../i18n/ja.json';
-import ko from '../i18n/ko.json';
-import ml from '../i18n/ml.json';
-import nl from '../i18n/nl.json';
-import ms from '../i18n/ms.json';
-import no from '../i18n/no.json';
-import pl from '../i18n/pl.json';
-import ps from '../i18n/ps.json';
-import pt from '../i18n/pt.json';
-import ro from '../i18n/ro.json';
-import ru from '../i18n/ru.json';
-import sd from '../i18n/sd.json';
-import so from '../i18n/so.json';
-import sq from '../i18n/sq.json';
-import sv from '../i18n/sv.json';
-import sw from '../i18n/sw.json';
-import ta from '../i18n/ta.json';
-import tg from '../i18n/tg.json';
-import th from '../i18n/th.json';
+// Only Turkish loaded eagerly (default language); everything else lazy-loaded on demand
 import tr from '../i18n/tr.json';
-import tt from '../i18n/tt.json';
-import ug from '../i18n/ug.json';
-import ur from '../i18n/ur.json';
-import uz from '../i18n/uz.json';
-import zh from '../i18n/zh.json';
 
 const STORAGE_KEY = '@ayasofya_language';
 
-const LANGUAGES = {
-  am, ar, az, ber, bg, bn, bs, cs, de, dv, en, es, fa, fr, ha, hi, id, it, ja, ko, ml, ms, no, nl, pl, ps, pt, ro, ru, sd, so, sq, sv, sw, ta, tg, th, tr, tt, ug, ur, uz, zh
+/** Lazy loaders — Metro resolves require() at build time but the JSON is only parsed on call */
+const LANG_LOADERS = {
+  am:  () => require('../i18n/am.json'),
+  ar:  () => require('../i18n/ar-SA.json'),
+  az:  () => require('../i18n/az.json'),
+  ber: () => require('../i18n/ber.json'),
+  bg:  () => require('../i18n/bg.json'),
+  bn:  () => require('../i18n/bn.json'),
+  bs:  () => require('../i18n/bs.json'),
+  cs:  () => require('../i18n/cs.json'),
+  de:  () => require('../i18n/de.json'),
+  dv:  () => require('../i18n/dv.json'),
+  en:  () => require('../i18n/en.json'),
+  es:  () => require('../i18n/es.json'),
+  fa:  () => require('../i18n/fa.json'),
+  fr:  () => require('../i18n/fr.json'),
+  ha:  () => require('../i18n/ha.json'),
+  hi:  () => require('../i18n/hi.json'),
+  id:  () => require('../i18n/id.json'),
+  it:  () => require('../i18n/it.json'),
+  ja:  () => require('../i18n/ja.json'),
+  ko:  () => require('../i18n/ko.json'),
+  ml:  () => require('../i18n/ml.json'),
+  ms:  () => require('../i18n/ms.json'),
+  nl:  () => require('../i18n/nl.json'),
+  no:  () => require('../i18n/no.json'),
+  pl:  () => require('../i18n/pl.json'),
+  ps:  () => require('../i18n/ps.json'),
+  pt:  () => require('../i18n/pt.json'),
+  ro:  () => require('../i18n/ro.json'),
+  ru:  () => require('../i18n/ru.json'),
+  sd:  () => require('../i18n/sd.json'),
+  so:  () => require('../i18n/so.json'),
+  sq:  () => require('../i18n/sq.json'),
+  sv:  () => require('../i18n/sv.json'),
+  sw:  () => require('../i18n/sw.json'),
+  ta:  () => require('../i18n/ta.json'),
+  tg:  () => require('../i18n/tg.json'),
+  th:  () => require('../i18n/th.json'),
+  tr:  () => tr,
+  tt:  () => require('../i18n/tt.json'),
+  ug:  () => require('../i18n/ug.json'),
+  ur:  () => require('../i18n/ur.json'),
+  uz:  () => require('../i18n/uz.json'),
+  zh:  () => require('../i18n/zh.json'),
 };
+
+/** Cache already-loaded language objects so require() is called only once per lang */
+const _langCache = { tr };
+
+function loadLang(code) {
+  if (_langCache[code]) return _langCache[code];
+  const loader = LANG_LOADERS[code];
+  if (!loader) return tr;
+  const data = loader();
+  _langCache[code] = data;
+  return data;
+}
+
+const VALID_CODES = Object.keys(LANG_LOADERS);
 
 export const LANGUAGE_LIST = [
   { code: 'tr', label: 'Türkçe', flag: '🇹🇷' },
@@ -101,26 +117,30 @@ const I18nContext = createContext();
 
 export function I18nProvider({ children }) {
   const [lang, setLang] = useState('tr');
+  const [translations, setTranslations] = useState(tr);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((v) => {
-      if (v && LANGUAGES[v]) setLang(v);
+      if (v && VALID_CODES.includes(v)) {
+        setLang(v);
+        setTranslations(loadLang(v));
+      }
       setReady(true);
     });
   }, []);
 
   const changeLanguage = useCallback(async (code) => {
-    if (LANGUAGES[code]) {
+    if (VALID_CODES.includes(code)) {
+      const data = loadLang(code);
       setLang(code);
+      setTranslations(data);
       await AsyncStorage.setItem(STORAGE_KEY, code);
     }
   }, []);
 
-  const t = LANGUAGES[lang] || tr;
-
   return (
-    <I18nContext.Provider value={{ t, lang, changeLanguage, ready }}>
+    <I18nContext.Provider value={{ t: translations, lang, changeLanguage, ready }}>
       {children}
     </I18nContext.Provider>
   );

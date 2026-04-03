@@ -30,7 +30,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useI18n } from '../../context/I18nContext';
 import { colors } from '../../theme/colors';
 import { getDhikrTotal, getGrandTotal, saveDhikrSession, getDhikrData, incrementDhikrCount, resetDhikr } from '../../utils/dhikrStorage';
-import { getFontSize, getTapSoundEnabled } from '../../utils/preferences';
+import { getHapticEnabled, getTapSoundEnabled } from '../../utils/preferences';
 import { playTapSound } from '../../utils/tapSound';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
@@ -160,28 +160,30 @@ function TasbihRingSvg({ count, totalCount, target, arabic, progress, rotateAnim
 }
 
 export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, currentDhikr, dhikrs, onTargetReached, targetVibrationEnabled, onTap, onReset }) {
-  useTheme();
+  const { fontScale } = useTheme();
   const { t } = useI18n();
   const s = createStyles();
   const [count, setCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [allTotals, setAllTotals] = useState({});
-  const [fontScale, setFontScale] = useState(1);
   const [tapSoundOn, setTapSoundOn] = useState(false);
+  const [hapticOn, setHapticOn] = useState(true);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const rotateTarget = useRef(0);
 
   useFocusEffect(
     useCallback(() => {
-      getFontSize().then(level => setFontScale([0.8, 1, 1.25][level] || 1));
       getTapSoundEnabled().then(setTapSoundOn);
+      getHapticEnabled().then(setHapticOn);
     }, [])
   );
 
   useEffect(() => {
-    getDhikrTotal(currentDhikr.id).then((total) => setTotalCount(total));
-    getDhikrData().then(data => setAllTotals(data.totals));
+    let active = true;
+    getDhikrTotal(currentDhikr.id).then((total) => { if (active) setTotalCount(total); });
+    getDhikrData().then(data => { if (active) setAllTotals(data.totals); });
+    return () => { active = false; };
   }, [currentDhikr.id]);
 
   const fadeRing = useRef(new Animated.Value(0)).current;
@@ -230,7 +232,7 @@ export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, current
 
   const handleTap = useCallback(() => {
     triggerPulse();
-    Haptics.selectionAsync();
+    if (hapticOn) Haptics.selectionAsync();
     if (tapSoundOn) playTapSound();
     setCount((c) => {
       const next = c + 1;
@@ -253,7 +255,7 @@ export function TasbihDhikr({ selectedIdx, onSelectDhikr, currentTarget, current
     setAllTotals((prev) => ({ ...prev, [currentDhikr.id]: (prev[currentDhikr.id] || 0) + 1 }));
     
     if (onTap) onTap();
-  }, [currentTarget, currentDhikr.id, triggerPulse, tapSoundOn, targetVibrationEnabled, onTargetReached, onTap]);
+  }, [currentTarget, currentDhikr.id, triggerPulse, tapSoundOn, hapticOn, targetVibrationEnabled, onTargetReached, onTap]);
 
 
 

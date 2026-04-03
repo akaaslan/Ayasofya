@@ -133,7 +133,7 @@ export async function getSurahs(lang = 'turkish') {
 /**
  * Get full surah content (ayas + optional tafsir)
  */
-export async function getSurahContent(surahId, lang = 'turkish', authorCode = '') {
+export async function getSurahContent(surahId, lang = 'turkish', authorCode = '', _retry = false) {
   let db;
   try {
     db = await getDB();
@@ -170,9 +170,9 @@ export async function getSurahContent(surahId, lang = 'turkish', authorCode = ''
 
   // 2️⃣ API fetch
   const fetched = await fetchAndSaveAyas(surahId, lang, authorCode);
-  if (fetched) {
-    // Re-query to return consistent structure
-    return getSurahContent(surahId, lang, authorCode);
+  if (fetched && !_retry) {
+    // Re-query once to return consistent structure (prevent infinite recursion)
+    return getSurahContent(surahId, lang, authorCode, true);
   }
 
   // 3️⃣ Local fallback
@@ -180,15 +180,42 @@ export async function getSurahContent(surahId, lang = 'turkish', authorCode = ''
 }
 
 /**
- * Get available reciters.
+ * Get available reciters (cached in SQLite key_value_store).
  */
 export async function getReciters() {
+  // Try cache first
+  try {
+    const db = await getDB();
+    const row = await db.getFirstAsync(`SELECT value FROM key_value_store WHERE key = 'reciters'`);
+    if (row) {
+      const cached = JSON.parse(row.value);
+      if (cached.length > 0) {
+        // Refresh in background
+        fetchRecitersFromApi().catch(() => {});
+        return cached;
+      }
+    }
+  } catch {}
+
+  return fetchRecitersFromApi();
+}
+
+async function fetchRecitersFromApi() {
   const url = `${API_BASE}/reciters`;
   try {
     const res = await fetch(url, { method: "GET" });
     if (!res.ok) return [];
     const json = await res.json();
-    return json.reciters || json || [];
+    const list = json.reciters || json || [];
+    // Cache
+    try {
+      const db = await getDB();
+      await db.runAsync(
+        `INSERT OR REPLACE INTO key_value_store (key, value) VALUES (?, ?)`,
+        ['reciters', JSON.stringify(list)]
+      );
+    } catch {}
+    return list;
   } catch (e) {
     console.warn("getReciters failed:", e);
     return [];
@@ -199,12 +226,38 @@ export async function getReciters() {
  * Get available tafsirs/translations for a language.
  */
 export async function getTafsirs(lang = 'turkish') {
+  const cacheKey = `tafsirs_${lang}`;
+  // Try cache first
+  try {
+    const db = await getDB();
+    const row = await db.getFirstAsync(`SELECT value FROM key_value_store WHERE key = ?`, [cacheKey]);
+    if (row) {
+      const cached = JSON.parse(row.value);
+      if (cached.length > 0) {
+        fetchTafsirsFromApi(lang).catch(() => {});
+        return cached;
+      }
+    }
+  } catch {}
+
+  return fetchTafsirsFromApi(lang);
+}
+
+async function fetchTafsirsFromApi(lang = 'turkish') {
   const url = `${API_BASE}/tafsirs?language=${lang}`;
   try {
     const res = await fetch(url, { method: "GET" });
     if (!res.ok) return [];
     const json = await res.json();
-    return json.tafsirs || json || [];
+    const list = json.tafsirs || json || [];
+    try {
+      const db = await getDB();
+      await db.runAsync(
+        `INSERT OR REPLACE INTO key_value_store (key, value) VALUES (?, ?)`,
+        [`tafsirs_${lang}`, JSON.stringify(list)]
+      );
+    } catch {}
+    return list;
   } catch (e) {
     console.warn("getTafsirs failed:", e);
     return [];

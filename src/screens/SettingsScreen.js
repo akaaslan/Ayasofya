@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
 import {
   FlatList,
   Modal,
@@ -36,7 +35,6 @@ import { useRamadan } from '../context/RamadanContext';
 import {
   getHapticEnabled, setHapticEnabled,
   getTapSoundEnabled, setTapSoundEnabled,
-  getFontSize, setFontSize,
   getKazaReminderEnabled, setKazaReminderEnabled,
 } from '../utils/preferences';
 import { exportBackup, importBackup } from '../utils/backup';
@@ -44,8 +42,8 @@ import { exportBackup, importBackup } from '../utils/backup';
 export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) {
   const { lat, lng, tz, city, district, loading: locLoading, refresh, setManualCity } = useLocationContext();
   const { t, lang, changeLanguage } = useI18n();
-  const { theme, themeKey, changeTheme } = useTheme();
-  const styles = createStyles();
+  const { theme, themeKey, changeTheme, fontSizeLevel, changeFontSize, fontScale } = useTheme();
+  const styles = createStyles(fontScale);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -64,17 +62,13 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
 
   const [hapticEnabled, setHaptic] = useState(true);
   const [tapSoundEnabled, setTapSound] = useState(false);
-  const [fontSizeLevel, setFontSizeLevel] = useState(1);
   const [kazaReminder, setKazaReminder] = useState(false);
   
-  useFocusEffect(
-    useCallback(() => {
-      getHapticEnabled().then(setHaptic);
-      getTapSoundEnabled().then(setTapSound);
-      getFontSize().then(setFontSizeLevel);
-      getKazaReminderEnabled().then(setKazaReminder);
-    }, [])
-  );
+  useEffect(() => {
+    getHapticEnabled().then(setHaptic);
+    getTapSoundEnabled().then(setTapSound);
+    getKazaReminderEnabled().then(setKazaReminder);
+  }, []);
 
   /* ── Load notification prefs ── */
   useEffect(() => {
@@ -445,10 +439,10 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               </View>
             </View>
             <View style={styles.rowRight}>
-              <Pressable onPress={() => { const v = Math.max(0, fontSizeLevel - 1); setFontSizeLevel(v); setFontSize(v); }} style={styles.stepBtn}>
+              <Pressable onPress={() => { const v = Math.max(0, fontSizeLevel - 1); changeFontSize(v); }} style={styles.stepBtn}>
                 <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '700' }}>A</Text>
               </Pressable>
-              <Pressable onPress={() => { const v = Math.min(2, fontSizeLevel + 1); setFontSizeLevel(v); setFontSize(v); }} style={styles.stepBtn}>
+              <Pressable onPress={() => { const v = Math.min(2, fontSizeLevel + 1); changeFontSize(v); }} style={styles.stepBtn}>
                 <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '700' }}>A</Text>
               </Pressable>
             </View>
@@ -628,7 +622,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
   );
 }
 
-const createStyles = () => ({
+const createStyles = (fs = 1) => ({
   safe: { flex: 1 },
   scroll: {
     paddingHorizontal: 18,
@@ -636,7 +630,7 @@ const createStyles = () => ({
   },
   header: {
     color: colors.textPrimary,
-    fontSize: 18,
+    fontSize: 18 * fs,
     fontWeight: '700',
     letterSpacing: 3,
     textAlign: 'center',
@@ -678,16 +672,16 @@ const createStyles = () => ({
   },
   rowLabel: {
     color: colors.textPrimary,
-    fontSize: 15,
+    fontSize: 15 * fs,
   },
   rowValue: {
     color: colors.accent,
-    fontSize: 14,
+    fontSize: 14 * fs,
     fontWeight: '600',
   },
   rowHint: {
     color: colors.textMuted,
-    fontSize: 12,
+    fontSize: 12 * fs,
   },
 
   /* Ramadan indicator */
@@ -703,12 +697,12 @@ const createStyles = () => ({
     marginBottom: 8,
   },
   ramadanIndicatorIcon: {
-    fontSize: 16,
+    fontSize: 16 * fs,
     color: colors.accent,
   },
   ramadanIndicatorText: {
     color: colors.accent,
-    fontSize: 13,
+    fontSize: 13 * fs,
     fontWeight: '600',
   },
 
@@ -749,7 +743,7 @@ const createStyles = () => ({
   },
   subRowLabel: {
     color: colors.textSecondary,
-    fontSize: 13,
+    fontSize: 13 * fs,
   },
   subRowHint: {
     color: colors.textMuted,
@@ -773,7 +767,7 @@ const createStyles = () => ({
   },
   modalTitle: {
     color: colors.textPrimary,
-    fontSize: 17,
+    fontSize: 17 * fs,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 14,
@@ -796,7 +790,7 @@ const createStyles = () => ({
   },
   cityText: {
     color: colors.textPrimary,
-    fontSize: 15,
+    fontSize: 15 * fs,
   },
   cityTextActive: {
     color: colors.accent,
@@ -812,7 +806,7 @@ const createStyles = () => ({
   },
   modalCloseText: {
     color: colors.accent,
-    fontSize: 15,
+    fontSize: 15 * fs,
     fontWeight: '600',
   },
 
@@ -838,7 +832,7 @@ const createStyles = () => ({
   },
   ramadanToggleLabel: {
     color: colors.textSecondary,
-    fontSize: 13,
+    fontSize: 13 * fs,
     fontWeight: '600',
   },
   ramadanToggleLabelActive: {

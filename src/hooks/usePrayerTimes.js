@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 import {
   calculatePrayerTimes,
@@ -15,6 +16,7 @@ import { getPrayerTimes } from '../utils/prayerApi';
  *   2. Immediately fire async API fetch → replace prayers with API data
  *   3. Every second → only update countdown / progress (no re-fetch)
  *   4. At midnight → re-fetch for new day
+ *   5. On AppState resume → re-fetch if date changed
  *
  * Returns `prayerSource`: 'api' | 'cache' | 'local'
  */
@@ -31,6 +33,10 @@ export function usePrayerTimes(lat, lng, timezone) {
   const lastDateKeyRef = useRef('');
   const prayersRef = useRef([]);
   const tomorrowPrayersRef = useRef([]);
+  const fetchingRef = useRef(false); // prevent concurrent fetches (midnight dedup)
+
+  /* ── Memoized next-prayer cache ── */
+  const lastNextRef = useRef({ index: -1, key: '', remainingMs: 0 });
 
   /* ── Sync compute (instant, for fallback + initial render) ── */
   const computeSync = useCallback(
@@ -46,6 +52,9 @@ export function usePrayerTimes(lat, lng, timezone) {
 
   /* ── Async fetch: cache → API → local fallback ── */
   const loadPrayers = useCallback(async () => {
+    if (fetchingRef.current) return; // prevent double-fetch at midnight
+    fetchingRef.current = true;
+
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -67,12 +76,14 @@ export function usePrayerTimes(lat, lng, timezone) {
       prayersRef.current = local;
       setPrayers(local);
       setPrayerSource('local');
+    } finally {
+      fetchingRef.current = false;
     }
 
     lastDateKeyRef.current = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
   }, [lat, lng, timezone, computeSync]);
 
-  /* ── Initial load: sync render + async upgrade ── */
+  /* ── Clear stale prayers when location changes, then fetch ── */
   useEffect(() => {
     let cancelled = false;
 
@@ -80,16 +91,32 @@ export function usePrayerTimes(lat, lng, timezone) {
     const now = new Date();
     const syncPrayers = computeSync(now);
     prayersRef.current = syncPrayers;
+    tomorrowPrayersRef.current = [];
     setPrayers(syncPrayers);
+    setPrayerSource('local');
+    lastNextRef.current = { index: -1, key: '', remainingMs: 0 };
 
     // Fire async fetch to upgrade
     loadPrayers().then(() => {
       if (cancelled) return;
-      // state already set inside loadPrayers
     });
 
     return () => { cancelled = true; };
   }, [computeSync, loadPrayers]);
+
+  /* ── App resume → refresh if stale ── */
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        const now = new Date();
+        const dateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+        if (lastDateKeyRef.current && dateKey !== lastDateKeyRef.current) {
+          loadPrayers();
+        }
+      }
+    });
+    return () => sub.remove();
+  }, [loadPrayers]);
 
   /* ── 1-second countdown tick ── */
   useEffect(() => {
@@ -97,7 +124,7 @@ export function usePrayerTimes(lat, lng, timezone) {
       const now = new Date();
       setCurrentTime(now);
 
-      // Midnight rollover → re-fetch
+      // Midnight rollover → re-fetch (deduplicated via fetchingRef)
       const dateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
       if (lastDateKeyRef.current && dateKey !== lastDateKeyRef.current) {
         loadPrayers();
@@ -106,15 +133,33 @@ export function usePrayerTimes(lat, lng, timezone) {
       const todayPrayers = prayersRef.current;
       if (!todayPrayers.length) return;
 
-      let next = getNextPrayer(todayPrayers, now);
+      // Memoized: skip full scan if same prayer is still next
+      const cached = lastNextRef.current;
+      let next;
+      const nowMs = now.getTime();
+
+      if (cached.index >= 0 && cached.remainingMs > 2000) {
+        // Quick check — is the cached prayer still in the future?
+        const prayerArr = cached.fromTomorrow ? tomorrowPrayersRef.current : todayPrayers;
+        const p = prayerArr[cached.index];
+        if (p && p.date.getTime() > nowMs) {
+          next = { prayer: p, index: cached.index, remainingMs: p.date.getTime() - nowMs };
+        }
+      }
 
       if (!next) {
-        // All today's prayers passed → use tomorrow's
-        const tmrw = tomorrowPrayersRef.current;
-        if (tmrw.length) {
-          next = getNextPrayer(tmrw, now);
-          if (next) {
-            next = { ...next, prayer: tmrw[next.index] };
+        next = getNextPrayer(todayPrayers, now);
+        if (next) {
+          lastNextRef.current = { index: next.index, key: next.prayer.key, remainingMs: next.remainingMs, fromTomorrow: false };
+        } else {
+          // All today's prayers passed → use tomorrow's
+          const tmrw = tomorrowPrayersRef.current;
+          if (tmrw.length) {
+            next = getNextPrayer(tmrw, now);
+            if (next) {
+              next = { ...next, prayer: tmrw[next.index] };
+              lastNextRef.current = { index: next.index, key: next.prayer.key, remainingMs: next.remainingMs, fromTomorrow: true };
+            }
           }
         }
       }
@@ -130,19 +175,16 @@ export function usePrayerTimes(lat, lng, timezone) {
         let prevTime;
         if (prevIdx >= 0) {
           prevTime = next.prayer === tomorrowPrayersRef.current[0] 
-            ? todayPrayers[todayPrayers.length - 1].date.getTime() // Last prayer of today (Isha)
+            ? todayPrayers[todayPrayers.length - 1].date.getTime()
             : todayPrayers[prevIdx].date.getTime();
         } else {
-          // If we are at index 0 of today's prayers (looking forward to Today's Imsak), 
-          // the previous prayer was Yesterday's Isha.
-          // Since we don't have yesterday's Isha, we can just use midnight as a fallback
           const midnight = new Date(now);
           midnight.setHours(0, 0, 0, 0);
           prevTime = midnight.getTime();
         }
         const nextTime = next.prayer.date.getTime();
         const total = nextTime - prevTime;
-        const elapsed = now.getTime() - prevTime;
+        const elapsed = nowMs - prevTime;
         setProgress(total > 0 ? Math.min(Math.max(elapsed / total, 0), 1) : 0);
       } else {
         setCountdown('00:00:00');

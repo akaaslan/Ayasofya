@@ -8,6 +8,7 @@
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 let player = null;
+let notifPlayer = null;
 
 /**
  * Configure audio mode for background playback.
@@ -76,7 +77,7 @@ export function isEzanPlaying() {
 export async function playNotificationSound() {
   try {
     await configureAudio();
-    const notifPlayer = createAudioPlayer(
+    notifPlayer = createAudioPlayer(
       'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3'
     );
     notifPlayer.volume = 0.8;

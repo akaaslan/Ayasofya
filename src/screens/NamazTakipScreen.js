@@ -157,9 +157,9 @@ function WeekBar({ pct, isToday, dayLabel, dayNum }) {
 
 /* ── Component ─────────────────────────────────── */
 export function NamazTakipScreen() {
-  useTheme();
+  const { fontScale } = useTheme();
   const { t, lang } = useI18n();
-  const styles = createStyles();
+  const styles = createStyles(fontScale);
   const navigation = useNavigation();
   const [dayData, setDayData] = useState({});
   const [streak, setStreak] = useState(0);
@@ -210,16 +210,20 @@ export function NamazTakipScreen() {
 
   /* ── Data loading ── */
   const loadData = useCallback(async () => {
-    const [day, s, week, mStats] = await Promise.all([
-      getDayTracking(selectedDate),
-      getStreak(),
-      getWeeklyStats(),
-      getMonthlyStats(selectedDate.getFullYear(), selectedDate.getMonth()),
-    ]);
-    setDayData(day);
-    setStreak(s);
-    setWeekStats(week);
-    setMonthStats(mStats);
+    try {
+      const [day, s, week, mStats] = await Promise.all([
+        getDayTracking(selectedDate),
+        getStreak(),
+        getWeeklyStats(),
+        getMonthlyStats(selectedDate.getFullYear(), selectedDate.getMonth()),
+      ]);
+      setDayData(day);
+      setStreak(s);
+      setWeekStats(week);
+      setMonthStats(mStats);
+    } catch (e) {
+      console.warn('NamazTakip loadData error:', e);
+    }
   }, [selectedDate]);
 
   useEffect(() => {
@@ -426,7 +430,7 @@ export function NamazTakipScreen() {
 }
 
 /* ── Styles ─────────────────────────────────────── */
-const createStyles = () => ({
+const createStyles = (fs = 1) => ({
   safe: { flex: 1 },
   scroll: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 30 },
 
@@ -445,13 +449,13 @@ const createStyles = () => ({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 26,
+    fontSize: 26 * fs,
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.3,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 13 * fs,
     color: colors.textSecondary,
     marginTop: 4,
   },
@@ -471,19 +475,19 @@ const createStyles = () => ({
   streakLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   streakInfo: {},
   streakNum: {
-    fontSize: 28,
+    fontSize: 28 * fs,
     fontWeight: '800',
     color: colors.accent,
     lineHeight: 32,
   },
   streakLabel: {
-    fontSize: 12,
+    fontSize: 12 * fs,
     color: colors.textSecondary,
     marginTop: -2,
   },
   streakRight: { alignItems: 'center' },
   todayProgress: {
-    fontSize: 22,
+    fontSize: 22 * fs,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -517,7 +521,7 @@ const createStyles = () => ({
     borderColor: colors.divider,
   },
   listTitle: {
-    fontSize: 15,
+    fontSize: 15 * fs,
     fontWeight: '700',
     color: colors.textPrimary,
     marginBottom: 14,
@@ -537,7 +541,7 @@ const createStyles = () => ({
   },
   prayerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   prayerLabel: {
-    fontSize: 16,
+    fontSize: 16 * fs,
     color: colors.textPrimary,
     fontWeight: '500',
   },
@@ -615,11 +619,11 @@ const createStyles = () => ({
     paddingTop: 12,
   },
   weekTotalLabel: {
-    fontSize: 13,
+    fontSize: 13 * fs,
     color: colors.textSecondary,
   },
   weekTotalNum: {
-    fontSize: 16,
+    fontSize: 16 * fs,
     fontWeight: '700',
     color: colors.accent,
   },
@@ -645,7 +649,7 @@ const createStyles = () => ({
   },
   dateNavLabel: {
     color: colors.textPrimary,
-    fontSize: 14,
+    fontSize: 14 * fs,
     fontWeight: '600',
   },
 
@@ -659,7 +663,7 @@ const createStyles = () => ({
     alignItems: 'center',
   },
   monthStatNum: {
-    fontSize: 24,
+    fontSize: 24 * fs,
     fontWeight: '700',
     color: colors.textPrimary,
   },

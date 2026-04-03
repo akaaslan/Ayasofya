@@ -19,7 +19,7 @@ const PRAYER_ICONS = {
  * Shows icon, label, time. Highlighted when `active`.
  */
 export function PrayerTimeRow({ prayerKey, label, time, active, onPress }) {
-  useTheme();
+  const { fontScale } = useTheme();
   const styles = createStyles();
   const iconName = PRAYER_ICONS[prayerKey] || 'ellipse-outline';
 
@@ -40,12 +40,12 @@ export function PrayerTimeRow({ prayerKey, label, time, active, onPress }) {
           size={18}
           color={active ? '#f8d287' : colors.textSecondary}
         />
-        <Text style={[styles.label, active && styles.activeText]}>{label}</Text>
+        <Text style={[styles.label, active && styles.activeText, { fontSize: 18 * fontScale }]}>{label}</Text>
       </View>
       {active && (
         <Ionicons name="notifications" size={14} color={colors.accent} style={{ marginRight: 4 }} />
       )}
-      <Text style={[styles.time, active && styles.activeTime]}>{time}</Text>
+      <Text style={[styles.time, active && styles.activeTime, { fontSize: (active ? 20 : 18) * fontScale }]}>{time}</Text>
     </Pressable>
   );
 }

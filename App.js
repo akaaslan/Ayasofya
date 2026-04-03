@@ -5,32 +5,28 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { ToastProvider } from './src/components/Toast';
 import { I18nProvider } from './src/context/I18nContext';
-import { LocationContext } from './src/context/LocationContext';
+import { LocationProvider } from './src/context/LocationContext';
 import { RamadanProvider, useRamadan } from './src/context/RamadanContext';
 import { ThemeProvider } from './src/context/ThemeContext';
-import { useLocation } from './src/hooks/useLocation';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { OnboardingScreen, isOnboardingDone } from './src/screens/OnboardingScreen';
-import { setupNotificationChannel, requestNotificationPermission } from './src/utils/notifications';
+import { setupNotificationChannel, requestNotificationPermission, setupNotificationResponseListener } from './src/utils/notifications';
 
-/* Bridge that reads Ramadan state and passes it to ThemeProvider */
-function ThemedApp({ children }) {
+/* Bridge: reads Ramadan context and passes to ThemeProvider (must be child of RamadanProvider) */
+function RamadanThemeBridge({ children }) {
   const { ramadan } = useRamadan();
-  return (
-    <ThemeProvider ramadanActive={ramadan.isRamadan}>
-      {children}
-    </ThemeProvider>
-  );
+  return <ThemeProvider ramadanActive={ramadan.isRamadan}>{children}</ThemeProvider>;
 }
 
 export default function App() {
-  const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(null);
 
   useEffect(() => {
     setupNotificationChannel();
     requestNotificationPermission();
+    setupNotificationResponseListener();
     isOnboardingDone().then((done) => setShowOnboarding(!done));
   }, []);
 
@@ -38,7 +34,6 @@ export default function App() {
     setShowOnboarding(false);
   }, []);
 
-  // Show splash-colored loading screen while checking onboarding state
   if (showOnboarding === null) {
     return (
       <View style={{ flex: 1, backgroundColor: '#061e1a', alignItems: 'center', justifyContent: 'center' }}>
@@ -52,19 +47,21 @@ export default function App() {
       <SafeAreaProvider>
         <ErrorBoundary>
           <RamadanProvider>
-            <ThemedApp>
+            <RamadanThemeBridge>
               <I18nProvider>
-                {showOnboarding ? (
-                  <OnboardingScreen onComplete={handleOnboardingComplete} />
-                ) : (
-                  <LocationContext.Provider value={location}>
-                    <NavigationContainer>
-                      <AppNavigator />
-                    </NavigationContainer>
-                  </LocationContext.Provider>
-                )}
+                <ToastProvider>
+                  {showOnboarding ? (
+                    <OnboardingScreen onComplete={handleOnboardingComplete} />
+                  ) : (
+                    <LocationProvider>
+                      <NavigationContainer>
+                        <AppNavigator />
+                      </NavigationContainer>
+                    </LocationProvider>
+                  )}
+                </ToastProvider>
               </I18nProvider>
-            </ThemedApp>
+            </RamadanThemeBridge>
           </RamadanProvider>
         </ErrorBoundary>
       </SafeAreaProvider>

@@ -65,11 +65,11 @@ function getDayIndex(count) {
 }
 
 export function HomeScreen() {
-  useTheme();
+  const { fontScale } = useTheme();
   const { t } = useI18n();
-  const styles = createStyles();
+  const styles = createStyles(fontScale);
   const navigation = useNavigation();
-  const { lat, lng, tz, city, district } = useLocationContext();
+  const { lat, lng, tz, city, district, error: locError } = useLocationContext();
   const clock = useCurrentTime();
   const prayerData = usePrayerTimes(lat, lng, tz);
   const prayers = prayerData?.prayers ?? [];
@@ -141,6 +141,10 @@ export function HomeScreen() {
   }, [showDialog, t]);
 
   const handleMosque = useCallback(() => {
+    if (!lat || !lng) {
+      showDialog('location-outline', t.error, t.locationRequired || 'Konum bilgisi gerekli', [{ text: t.ok }]);
+      return;
+    }
     const url = `https://www.google.com/maps/search/cami+mosque/@${lat},${lng},14z`;
     Linking.openURL(url).catch(() => {
       showDialog('business', t.error, t.mapError, [{ text: t.ok }]);
@@ -321,12 +325,29 @@ export function HomeScreen() {
             <View style={styles.locationRow}>
               <Ionicons name="location" size={14} color={colors.accent} />
               <Text style={styles.locationText}>{locationDisplay}</Text>
+              {prayerSource === 'local' && (
+                <View style={[styles.apiBadge, { backgroundColor: 'rgba(200,161,90,0.10)' }]}>
+                  <Text style={[styles.apiBadgeText, { color: colors.textMuted }]}>{t.offline || 'Çevrimdışı'}</Text>
+                </View>
+              )}
               {prayerSource !== 'local' && (
                 <View style={styles.apiBadge}>
                   <Text style={styles.apiBadgeText}>API</Text>
                 </View>
               )}
             </View>
+
+            {/* Location error banner */}
+            {locError && (
+              <View style={styles.errorBanner}>
+                <Ionicons name="warning-outline" size={14} color="#e87498" />
+                <Text style={styles.errorBannerText}>
+                  {locError === 'permission_denied'
+                    ? (t.locationPermDenied || 'Konum izni verilmedi — varsayılan İstanbul kullanılıyor')
+                    : (t.locationError || 'Konum alınamadı — varsayılan İstanbul kullanılıyor')}
+                </Text>
+              </View>
+            )}
 
             {/* Row 1: Namaz Takip & Kur'an — primary action cards */}
             <View style={styles.cardRow}>
@@ -444,7 +465,7 @@ export function HomeScreen() {
   );
 }
 
-const createStyles = () => ({
+const createStyles = (fs = 1) => ({
   safeArea: { flex: 1 },
   scrollView: { flex: 1 },
   scrollContent: { flexGrow: 1 },
@@ -472,7 +493,7 @@ const createStyles = () => ({
   dropdownBtnPressed: { opacity: 0.7 },
   dropdownBtnText: {
     color: colors.textPrimary,
-    fontSize: 17,
+    fontSize: 17 * fs,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -483,7 +504,7 @@ const createStyles = () => ({
   },
   nextBadgeText: {
     color: colors.textMuted,
-    fontSize: 13,
+    fontSize: 13 * fs,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
@@ -513,7 +534,7 @@ const createStyles = () => ({
   },
   dropdownLabel: {
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: 14 * fs,
     fontWeight: '500',
   },
   dropdownLabelActive: {
@@ -522,7 +543,7 @@ const createStyles = () => ({
   },
   dropdownTime: {
     color: colors.textMuted,
-    fontSize: 14,
+    fontSize: 14 * fs,
     fontVariant: ['tabular-nums'],
     fontWeight: '500',
   },
@@ -556,18 +577,18 @@ const createStyles = () => ({
     marginBottom: 12,
   },
   ramadanIcon: {
-    fontSize: 18,
+    fontSize: 18 * fs,
     color: colors.accent,
   },
   ramadanTitle: {
     color: colors.accent,
-    fontSize: 15,
+    fontSize: 15 * fs,
     fontWeight: '700',
     flex: 1,
   },
   ramadanDay: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 12 * fs,
     fontWeight: '600',
   },
   ramadanCounters: {
@@ -590,7 +611,7 @@ const createStyles = () => ({
   },
   ramadanCounterValue: {
     color: colors.accent,
-    fontSize: 20,
+    fontSize: 20 * fs,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
@@ -611,7 +632,7 @@ const createStyles = () => ({
   },
   locationText: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 12 * fs,
     fontWeight: '500',
   },
   apiBadge: {
@@ -627,6 +648,24 @@ const createStyles = () => ({
     fontSize: 9,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(232, 116, 152, 0.10)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 116, 152, 0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 6,
+    gap: 8,
+  },
+  errorBannerText: {
+    color: '#e87498',
+    fontSize: 11,
+    fontWeight: '500',
+    flex: 1,
   },
   imageCard: {
     flex: 1,
@@ -653,7 +692,7 @@ const createStyles = () => ({
   },
   imageCardLabel: {
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 16 * fs,
     fontWeight: '700',
     lineHeight: 22,
   },
@@ -708,12 +747,12 @@ const createStyles = () => ({
   },
   mosqueTitle: {
     color: colors.textPrimary,
-    fontSize: 15,
+    fontSize: 15 * fs,
     fontWeight: '700',
     marginBottom: 2,
   },
   mosqueSubtitle: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 12 * fs,
   },
 });

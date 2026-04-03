@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import { useLocation } from '../hooks/useLocation';
 
 /**
  * LocationContext — shares GPS location state across all screens.
@@ -16,6 +17,15 @@ export const LocationContext = createContext({
   refresh: () => {},
   setManualCity: () => {},
 });
+
+export function LocationProvider({ children }) {
+  const location = useLocation();
+  return (
+    <LocationContext.Provider value={location}>
+      {children}
+    </LocationContext.Provider>
+  );
+}
 
 export function useLocationContext() {
   return useContext(LocationContext);

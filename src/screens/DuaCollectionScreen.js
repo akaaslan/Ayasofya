@@ -41,14 +41,14 @@ function DuaItem({ dua, isFavorite, onToggleFavorite, t }) {
     text += `\n\n— ${dua.source}`;
     text += '\n\n📿 Ayasofya Uygulaması';
     await Share.share({ message: text });
-  }, [dua]);
+  }, [dua, t]);
 
   return (
     <Pressable style={styles.duaCard} onPress={toggle}>
       <View style={styles.duaTitleRow}>
         <Text style={styles.duaTitle}>{dua.title}</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Pressable onPress={() => onToggleFavorite(dua.id)} hitSlop={8}>
+          <Pressable onPress={() => onToggleFavorite(dua.id)} hitSlop={12}>
             <Ionicons
               name={isFavorite ? 'heart' : 'heart-outline'}
               size={18}
@@ -83,7 +83,7 @@ function DuaItem({ dua, isFavorite, onToggleFavorite, t }) {
 
           <View style={styles.duaActions}>
             <Text style={styles.duaSource}>— {dua.source}</Text>
-            <Pressable onPress={handleShare} style={styles.shareBtn}>
+            <Pressable onPress={handleShare} style={styles.shareBtn} hitSlop={8}>
               <Ionicons name="share-outline" size={16} color={colors.accent} />
               <Text style={styles.shareText}>{t.share}</Text>
             </Pressable>
@@ -172,9 +172,9 @@ function getDailyDua() {
 }
 
 export function DuaCollectionScreen() {
-  useTheme();
+  const { fontScale } = useTheme();
   const { t } = useI18n();
-  const styles = createStyles();
+  const styles = createStyles(fontScale);
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFavOnly, setShowFavOnly] = useState(false);
@@ -323,7 +323,7 @@ export function DuaCollectionScreen() {
 }
 
 /* ── Styles ─────────────────────────────────────── */
-const createStyles = () => ({
+const createStyles = (fs = 1) => ({
   safe: { flex: 1 },
 
   /* Header */
@@ -348,7 +348,7 @@ const createStyles = () => ({
   },
   headerTitle: {
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 16 * fs,
     fontWeight: '700',
     letterSpacing: 3,
   },
@@ -393,7 +393,7 @@ const createStyles = () => ({
   },
   categoryTitle: {
     color: colors.textPrimary,
-    fontSize: 15,
+    fontSize: 15 * fs,
     fontWeight: '700',
   },
   categoryCount: {
@@ -424,7 +424,7 @@ const createStyles = () => ({
   },
   duaTitle: {
     color: colors.textPrimary,
-    fontSize: 14,
+    fontSize: 14 * fs,
     fontWeight: '600',
   },
 
@@ -435,7 +435,7 @@ const createStyles = () => ({
   },
   duaArabic: {
     color: colors.accent,
-    fontSize: 18,
+    fontSize: 18 * fs,
     textAlign: 'right',
     lineHeight: 32,
     backgroundColor: 'rgba(200, 161, 90, 0.05)',
@@ -454,13 +454,13 @@ const createStyles = () => ({
   },
   duaTransliteration: {
     color: colors.textSecondary,
-    fontSize: 13,
+    fontSize: 13 * fs,
     lineHeight: 20,
     fontStyle: 'italic',
   },
   duaMeaning: {
     color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 13 * fs,
     lineHeight: 20,
   },
   duaSource: {
@@ -505,7 +505,7 @@ const createStyles = () => ({
   searchInput: {
     flex: 1,
     color: colors.textPrimary,
-    fontSize: 14,
+    fontSize: 14 * fs,
     padding: 0,
   },
 
@@ -525,7 +525,7 @@ const createStyles = () => ({
   },
   dailyTitle: {
     color: colors.accent,
-    fontSize: 14,
+    fontSize: 14 * fs,
     fontWeight: '700',
     flex: 1,
   },
@@ -539,6 +539,6 @@ const createStyles = () => ({
   },
   emptyText: {
     color: colors.textMuted,
-    fontSize: 14,
+    fontSize: 14 * fs,
   },
 });

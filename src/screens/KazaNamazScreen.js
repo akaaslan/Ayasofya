@@ -22,7 +22,9 @@ import {
   getTotalKaza,
   incrementKaza,
   resetAllKaza,
+  restoreKazaCounts,
 } from '../utils/kazaTracking';
+import { showToast } from '../components/Toast';
 
 /* ── Prayer info ─────────────────────────────────── */
 const PRAYERS = [
@@ -72,9 +74,9 @@ function CounterRow({ prayer, count, onIncrement, onDecrement, t }) {
 }
 
 export function KazaNamazScreen() {
-  useTheme();
+  const { fontScale } = useTheme();
   const { t } = useI18n();
-  const styles = createStyles();
+  const styles = createStyles(fontScale);
   const navigation = useNavigation();
   const [counts, setCounts] = useState({});
   const [total, setTotal] = useState(0);
@@ -114,9 +116,13 @@ export function KazaNamazScreen() {
 
   /* ── Load data ── */
   const loadData = useCallback(async () => {
-    const [c, t] = await Promise.all([getKazaCounts(), getTotalKaza()]);
-    setCounts(c);
-    setTotal(t);
+    try {
+      const [c, t] = await Promise.all([getKazaCounts(), getTotalKaza()]);
+      setCounts(c);
+      setTotal(t);
+    } catch (e) {
+      console.warn('KazaNamaz loadData error:', e);
+    }
   }, []);
 
   useEffect(() => {
@@ -145,8 +151,20 @@ export function KazaNamazScreen() {
           text: t.resetKaza,
           style: 'destructive',
           onPress: async () => {
+            const snapshot = await getKazaCounts();
             await resetAllKaza();
             setRefreshKey((k) => k + 1);
+            showToast(t.resetKaza || 'Sıfırlandı', {
+              icon: 'trash-outline',
+              duration: 5000,
+              action: {
+                label: t.undo || 'Geri Al',
+                onPress: async () => {
+                  await restoreKazaCounts(snapshot);
+                  setRefreshKey((k) => k + 1);
+                },
+              },
+            });
           },
         },
       ],
@@ -255,7 +273,7 @@ export function KazaNamazScreen() {
 }
 
 /* ── Styles ─────────────────────────────────────── */
-const createStyles = () => ({
+const createStyles = (fs = 1) => ({
   safe: { flex: 1 },
   scroll: {
     paddingHorizontal: 18,
@@ -283,7 +301,7 @@ const createStyles = () => ({
   },
   headerTitle: {
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 16 * fs,
     fontWeight: '700',
     letterSpacing: 3,
   },
@@ -306,7 +324,7 @@ const createStyles = () => ({
   infoText: {
     flex: 1,
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 12 * fs,
     lineHeight: 18,
   },
 
@@ -329,7 +347,7 @@ const createStyles = () => ({
   },
   totalCount: {
     color: colors.accent,
-    fontSize: 48,
+    fontSize: 48 * fs,
     fontWeight: '200',
     fontVariant: ['tabular-nums'],
   },
@@ -338,7 +356,7 @@ const createStyles = () => ({
   },
   totalSubtext: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 12 * fs,
     marginTop: 4,
   },
 
@@ -378,7 +396,7 @@ const createStyles = () => ({
   },
   counterLabel: {
     color: colors.textPrimary,
-    fontSize: 15,
+    fontSize: 15 * fs,
     fontWeight: '600',
   },
   counterControls: {
@@ -387,9 +405,9 @@ const createStyles = () => ({
     gap: 8,
   },
   counterBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(200, 161, 90, 0.10)',
     borderWidth: 1,
     borderColor: 'rgba(200, 161, 90, 0.20)',
@@ -405,7 +423,7 @@ const createStyles = () => ({
   },
   countText: {
     color: colors.accent,
-    fontSize: 22,
+    fontSize: 22 * fs,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
@@ -428,7 +446,7 @@ const createStyles = () => ({
   },
   resetText: {
     color: colors.textMuted,
-    fontSize: 13,
+    fontSize: 13 * fs,
     fontWeight: '600',
   },
 
@@ -443,7 +461,7 @@ const createStyles = () => ({
   },
   chartTitle: {
     color: colors.textPrimary,
-    fontSize: 15,
+    fontSize: 15 * fs,
     fontWeight: '700',
     marginBottom: 14,
   },
@@ -455,7 +473,7 @@ const createStyles = () => ({
   },
   chartLabel: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 12 * fs,
     width: 50,
   },
   chartBarBg: {
@@ -472,7 +490,7 @@ const createStyles = () => ({
   },
   chartCount: {
     color: colors.textMuted,
-    fontSize: 12,
+    fontSize: 12 * fs,
     width: 30,
     textAlign: 'right',
     fontVariant: ['tabular-nums'],

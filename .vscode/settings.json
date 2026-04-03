@@ -1,4 +1,8 @@
 {
+  "search.exclude": { "**/node_modules": true },
+  "files.exclude": { "**/node_modules": true },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "js/ts.implicitProjectConfig.checkJs": false,
   "i18n-ally.localesPaths": ["src/i18n"],
   "i18n-ally.sourceLanguage": "tr",
   "i18n-ally.displayLanguage": "tr",

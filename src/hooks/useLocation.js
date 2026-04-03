@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 // Istanbul defaults
 const DEFAULT = { lat: 41.0082, lng: 28.9784, tz: 3, city: 'İstanbul', country: 'Türkiye' };
 
+/** In-memory reverse-geocode cache keyed by rounded lat/lng */
+const _geoCache = {};
+
 /* ── Turkish city database (major cities + coords + timezone) ── */
 const CITIES = [
   { name: 'İstanbul',  lat: 41.0082, lng: 28.9784, tz: 3 },
@@ -79,20 +82,25 @@ export function useLocation() {
       });
       const { latitude, longitude } = loc.coords;
 
-      // Reverse geocode for exact city, county, and district
+      // Reverse geocode for exact city, county, and district (cached per lat/lng)
       let cityName = '';
       let districtName = '';
       let countryName = '';
+      const geoKey = `${latitude.toFixed(3)}_${longitude.toFixed(3)}`;
 
       try {
-        const [geo] = await Location.reverseGeocodeAsync({ latitude, longitude });
-        if (geo) {
-          cityName = geo.subregion || geo.city || geo.region || '';
-          districtName = geo.district || '';
-          countryName = geo.country || '';
-
-          // Don't duplicate city name
-          if (districtName === cityName) districtName = '';
+        if (_geoCache[geoKey]) {
+          // Use cached result
+          ({ cityName, districtName, countryName } = _geoCache[geoKey]);
+        } else {
+          const [geo] = await Location.reverseGeocodeAsync({ latitude, longitude });
+          if (geo) {
+            cityName = geo.subregion || geo.city || geo.region || '';
+            districtName = geo.district || '';
+            countryName = geo.country || '';
+            if (districtName === cityName) districtName = '';
+            _geoCache[geoKey] = { cityName, districtName, countryName };
+          }
         }
       } catch {
         // Reverse geocoding might fail — not critical

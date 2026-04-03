@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
 import {
   Animated,
   Easing,
@@ -23,9 +23,9 @@ import { getSurahs, getSurahContent, getReciters, getTafsirs } from '../utils/qu
 
 /* ── Component ─────────────────────────────────── */
 export function QuranScreen() {
-  useTheme();
+  const { fontScale } = useTheme();
   const { t, lang } = useI18n();
-  const styles = createStyles();
+  const styles = createStyles(fontScale);
   const navigation = useNavigation();
 
   // Core Data
@@ -42,18 +42,15 @@ export function QuranScreen() {
 
   /* ── Load baseline data ── */
   useEffect(() => {
-    // Load surahs
-    getSurahs(lang === 'tr' ? 'turkish' : 'english').then(setSurahs);
-    // Load reciters
+    getSurahs(lang === 'tr' ? 'turkish' : 'english').then(setSurahs).catch(() => {});
     getReciters().then((data) => {
       setReciters(data);
       if (data.length > 0) setSelectedReciter(data[0]);
-    });
-    // Load tafsirs
+    }).catch(() => {});
     getTafsirs(lang === 'tr' ? 'turkish' : 'english').then((data) => {
       setTafsirs(data);
       if (data.length > 0) setSelectedTafsir(data[0]);
-    });
+    }).catch(() => {});
   }, [lang]);
 
   /* ── Load bookmark ── */
@@ -64,14 +61,16 @@ export function QuranScreen() {
   );
 
   const handleSelectSurah = async (item) => {
-    // Fetch full content including ayas and tafsir
-    const authorCode = selectedTafsir?.author_code || '';
-    const fullContent = await getSurahContent(item.id, lang === 'tr' ? 'turkish' : 'english', authorCode);
-    const surahToDisplay = { ...item, ...fullContent };
-    
-    setBookmark(item.id, item.name);
-    setBookmarkId(item.id);
-    setSelectedSurah(surahToDisplay);
+    try {
+      const authorCode = selectedTafsir?.author_code || '';
+      const fullContent = await getSurahContent(item.id, lang === 'tr' ? 'turkish' : 'english', authorCode);
+      const surahToDisplay = { ...item, ...fullContent };
+      setBookmark(item.id, item.name);
+      setBookmarkId(item.id);
+      setSelectedSurah(surahToDisplay);
+    } catch (e) {
+      console.warn('Failed to load surah:', e);
+    }
   };
 
   const handleNextSurah = async () => {
@@ -113,6 +112,40 @@ export function QuranScreen() {
   const renderSelectionModal = () => {
     if (!modalType) return null;
     
+    if (modalType === 'settings') {
+      return (
+        <Modal visible={true} transparent animationType="fade" onRequestClose={() => setModalType(null)}>
+          <View style={styles.modalOverlay}>
+            <Pressable style={styles.modalBackdrop} onPress={() => setModalType(null)} />
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{t.settings || 'Ayarlar'}</Text>
+                <Pressable onPress={() => setModalType(null)}>
+                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                </Pressable>
+              </View>
+              <Pressable style={styles.settingsRow} onPress={() => setModalType('tafsir')}>
+                <Ionicons name="book-outline" size={20} color={colors.accent} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.modalRowText}>{t.mealSelection || 'Meâl Seçimi'}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{selectedTafsir?.author || selectedTafsir?.name || '—'}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </Pressable>
+              <Pressable style={styles.settingsRow} onPress={() => setModalType('reciter')}>
+                <Ionicons name="mic-outline" size={20} color={colors.accent} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.modalRowText}>{t.reciterSelection || 'Kâri Seçimi'}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{selectedReciter?.name || '—'}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      );
+    }
+
     const isTafsir = modalType === 'tafsir';
     const data = isTafsir ? tafsirs : reciters;
     const currentSelected = isTafsir ? selectedTafsir?.id : selectedReciter?.id;
@@ -205,7 +238,7 @@ export function QuranScreen() {
             <View style={styles.headerCenter}>
               <Text style={styles.title}>{t.quranSubtitle || "Kur'an-ı Kerim"}</Text>
             </View>
-            <Pressable style={styles.hSettingsBtn}>
+            <Pressable style={styles.hSettingsBtn} onPress={() => setModalType('settings')}>
               <Ionicons name="settings-outline" size={22} color={colors.accent} />
             </Pressable>
           </View>
@@ -262,8 +295,14 @@ export function QuranScreen() {
           <FlatList
             data={surahs}
             keyExtractor={(item) => String(item.id)}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={surahs.length === 0 ? styles.listEmpty : styles.listContent}
             showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyWrap}>
+                <Ionicons name="book-outline" size={48} color={colors.textMuted} />
+                <Text style={styles.emptyText}>{t.loading || 'Yükleniyor...'}</Text>
+              </View>
+            }
             renderItem={({ item, index }) => (
               <Pressable
                 style={({ pressed }) => [
@@ -295,6 +334,36 @@ export function QuranScreen() {
   );
 }
 
+/* ── Memoized Aya Card ── */
+const AyaCard = memo(function AyaCard({ aya, fallbackMeaning, styles }) {
+  const meaningText = aya.tafsirs && aya.tafsirs.length > 0 ? aya.tafsirs[0].text : null;
+  return (
+    <View style={styles.ayaCard}>
+      <View style={styles.ayaCardHeader}>
+        <View style={styles.ayaActions}>
+          <Pressable style={styles.iconBtn}>
+            <Ionicons name="play" size={16} color={colors.accent} />
+          </Pressable>
+          <Pressable style={styles.iconBtnSecondary}>
+            <Ionicons name="share-outline" size={16} color={colors.textSecondary} />
+          </Pressable>
+        </View>
+        <View style={styles.ayaBadge}>
+          <Ionicons name="sunny" size={42} color="rgba(200, 161, 90, 0.2)" style={styles.ayaBadgeBg} />
+          <Text style={styles.ayaBadgeNum}>{aya.aya_number}</Text>
+        </View>
+      </View>
+      <Text style={styles.arabicText}>{aya.text}</Text>
+      {aya.transliteration && (
+        <Text style={styles.transliterationText}>{aya.transliteration}</Text>
+      )}
+      <View style={styles.meaningSection}>
+        <Text style={styles.meaningText}>{meaningText || fallbackMeaning}</Text>
+      </View>
+    </View>
+  );
+});
+
 /* ── Surah Reading Sub-component ──────────────── */
 function SurahReader({ surah, onBack, isBookmarked, onBookmark, t, onNext, onPrev }) {
   const styles = createStyles();
@@ -308,7 +377,40 @@ function SurahReader({ surah, onBack, isBookmarked, onBookmark, t, onNext, onPre
     ]).start();
   }, []);
 
-  const mekkeOrMedine = surah.id < 50 ? t.mekke || "Mekke Devri" : t.medine || "Medine Devri"; // Crude fallback, ideally comes from API
+  const mekkeOrMedine = surah.id < 50 ? t.mekke || "Mekke Devri" : t.medine || "Medine Devri";
+
+  const renderAya = useCallback(({ item }) => (
+    <AyaCard aya={item} fallbackMeaning={surah.meaning} styles={styles} />
+  ), [surah.meaning, styles]);
+
+  const keyExtractor = useCallback((item, index) => String(item.aya_number ?? index), []);
+
+  const ListHeader = (
+    <>
+      {/* Title Card (Ornate) */}
+      <View style={styles.titleCard}>
+        <Ionicons name="moon" size={32} color={colors.accent} style={styles.titleCardIcon} />
+        <Text style={styles.surahHeadline}>{surah.name} Suresi</Text>
+        <View style={styles.ornateDivider} />
+        <Text style={styles.bismillahArabic}>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</Text>
+        <Text style={styles.surahMeta}>{mekkeOrMedine} • {surah.ayahCount} {t.ayahCountLabel}</Text>
+      </View>
+    </>
+  );
+
+  const ListFooter = (
+    <View style={styles.paginationFooter}>
+      <Pressable style={styles.paginationPill} onPress={onPrev}>
+        <Ionicons name="chevron-back" size={16} color={colors.textSecondary} />
+        <Text style={styles.paginationText}>{t.prevSurah || 'Önceki'}</Text>
+      </Pressable>
+      <View style={{ width: 10 }} />
+      <Pressable style={styles.paginationPill} onPress={onNext}>
+        <Text style={styles.paginationText}>{t.nextSurah || 'Sonraki'}</Text>
+        <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+      </Pressable>
+    </View>
+  );
   
   return (
     <Animated.View
@@ -328,87 +430,44 @@ function SurahReader({ surah, onBack, isBookmarked, onBookmark, t, onNext, onPre
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={styles.readerScroll} showsVerticalScrollIndicator={false}>
-        
-        {/* Title Card (Ornate) */}
-        <View style={styles.titleCard}>
-          <Ionicons name="moon" size={32} color={colors.accent} style={styles.titleCardIcon} />
-          <Text style={styles.surahHeadline}>{surah.name} Suresi</Text>
-          <View style={styles.ornateDivider} />
-          <Text style={styles.bismillahArabic}>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</Text>
-          <Text style={styles.surahMeta}>{mekkeOrMedine} • {surah.ayahCount} {t.ayahCountLabel}</Text>
-        </View>
-
-        {/* Aya List */}
-        {surah.ayas ? (
-          surah.ayas.map((a, i) => {
-            // Find tafsir meaning from the aya object if available. 
-            // In API we fetched everything, currently quranApi.js builds a single meaning,
-            // but let's assume we have `a.tafsirs` or fallback
-            // For now, if quranApi doesn't attach meaning to aya, we'll try to find it
-            const meaningText = a.tafsirs && a.tafsirs.length > 0 ? a.tafsirs[0].text : null;
-            
-            return (
-              <View key={i} style={styles.ayaCard}>
-                <View style={styles.ayaCardHeader}>
-                  <View style={styles.ayaActions}>
-                    <Pressable style={styles.iconBtn}>
-                      <Ionicons name="play" size={16} color={colors.accent} />
-                    </Pressable>
-                    <Pressable style={styles.iconBtnSecondary}>
-                      <Ionicons name="share-outline" size={16} color={colors.textSecondary} />
-                    </Pressable>
-                  </View>
-                  <View style={styles.ayaBadge}>
-                    <Ionicons name="sunny" size={42} color="rgba(200, 161, 90, 0.2)" style={styles.ayaBadgeBg} />
-                    <Text style={styles.ayaBadgeNum}>{a.aya_number}</Text>
-                  </View>
-                </View>
-                
-                <Text style={styles.arabicText}>{a.text}</Text>
-                
-                {/* Optional Transliteration */}
-                {a.transliteration && (
-                  <Text style={styles.transliterationText}>{a.transliteration}</Text>
-                )}
-                
-                {/* Meaning */}
-                <View style={styles.meaningSection}>
-                  <Text style={styles.meaningText}>{meaningText || surah.meaning}</Text>
-                </View>
+      {surah.ayas ? (
+        <FlatList
+          data={surah.ayas}
+          renderItem={renderAya}
+          keyExtractor={keyExtractor}
+          ListHeaderComponent={ListHeader}
+          ListFooterComponent={ListFooter}
+          contentContainerStyle={styles.readerScroll}
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={8}
+          maxToRenderPerBatch={6}
+          windowSize={5}
+          removeClippedSubviews
+        />
+      ) : (
+        <FlatList
+          data={[{ id: 'fallback' }]}
+          renderItem={() => (
+            <View style={styles.ayaCard}>
+              <Text style={styles.arabicText}>{surah.text}</Text>
+              <View style={styles.meaningSection}>
+                <Text style={styles.meaningText}>{surah.meaning}</Text>
               </View>
-            );
-          })
-        ) : (
-          /* Backward compatibility for local fallback data */
-          <View style={styles.ayaCard}>
-            <Text style={styles.arabicText}>{surah.text}</Text>
-            <View style={styles.meaningSection}>
-              <Text style={styles.meaningText}>{surah.meaning}</Text>
             </View>
-          </View>
-        )}
-
-        {/* Pagination Footer */}
-        <View style={styles.paginationFooter}>
-          <Pressable style={styles.paginationPill} onPress={onPrev}>
-            <Ionicons name="chevron-back" size={16} color={colors.textSecondary} />
-            <Text style={styles.paginationText}>{t.prevSurah || 'Önceki'}</Text>
-          </Pressable>
-          <View style={{ width: 10 }} />
-          <Pressable style={styles.paginationPill} onPress={onNext}>
-            <Text style={styles.paginationText}>{t.nextSurah || 'Sonraki'}</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-          </Pressable>
-        </View>
-
-      </ScrollView>
+          )}
+          keyExtractor={() => 'fallback'}
+          ListHeaderComponent={ListHeader}
+          ListFooterComponent={ListFooter}
+          contentContainerStyle={styles.readerScroll}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </Animated.View>
   );
 }
 
 /* ── Styles ─────────────────────────────────────── */
-const createStyles = () => ({
+const createStyles = (fs = 1) => ({
   safe: { flex: 1 },
 
   /* Header */
@@ -437,7 +496,7 @@ const createStyles = () => ({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 20,
+    fontSize: 20 * fs,
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.3,
@@ -472,7 +531,7 @@ const createStyles = () => ({
   },
   selectionValue: {
     color: colors.white,
-    fontSize: 13,
+    fontSize: 13 * fs,
     fontWeight: '500',
     flex: 1,
     marginRight: 8,
@@ -493,7 +552,7 @@ const createStyles = () => ({
   },
   bookmarkText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 13 * fs,
     fontWeight: '600',
     color: colors.accent,
   },
@@ -501,6 +560,9 @@ const createStyles = () => ({
   /* List */
   listWrap: { flex: 1 },
   listContent: { paddingHorizontal: 16, paddingBottom: 100 },
+  listEmpty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyWrap: { alignItems: 'center', paddingTop: 60, gap: 12 },
+  emptyText: { color: colors.textMuted, fontSize: 14 * fs },
 
   /* Surah row */
   surahRow: {
@@ -528,23 +590,23 @@ const createStyles = () => ({
     position: 'absolute',
   },
   surahNum: {
-    fontSize: 12,
+    fontSize: 12 * fs,
     fontWeight: '700',
     color: colors.accent,
   },
   surahInfo: { flex: 1 },
   surahName: {
-    fontSize: 16,
+    fontSize: 16 * fs,
     fontWeight: '600',
     color: colors.textPrimary,
   },
   surahAyah: {
-    fontSize: 12,
+    fontSize: 12 * fs,
     color: colors.textMuted,
     marginTop: 2,
   },
   surahArabic: {
-    fontSize: 20,
+    fontSize: 20 * fs,
     color: colors.accent,
     fontWeight: '500',
     marginRight: 6,
@@ -578,7 +640,7 @@ const createStyles = () => ({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 18 * fs,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -594,12 +656,19 @@ const createStyles = () => ({
     backgroundColor: 'rgba(200, 161, 90, 0.05)',
   },
   modalRowText: {
-    fontSize: 15,
+    fontSize: 15 * fs,
     color: colors.textPrimary,
   },
   modalRowTextSelected: {
     color: colors.accent,
     fontWeight: '600',
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.divider,
   },
 
   /* Reader */
@@ -613,7 +682,7 @@ const createStyles = () => ({
   },
   rBackBtn: { padding: 4 },
   rTitle: {
-    fontSize: 18,
+    fontSize: 18 * fs,
     fontWeight: '600',
     color: colors.textPrimary,
   },
@@ -641,7 +710,7 @@ const createStyles = () => ({
     marginBottom: 12,
   },
   surahHeadline: {
-    fontSize: 26,
+    fontSize: 26 * fs,
     fontWeight: '700',
     color: colors.accent,
     marginBottom: 8,
@@ -654,13 +723,13 @@ const createStyles = () => ({
     opacity: 0.6,
   },
   bismillahArabic: {
-    fontSize: 28,
+    fontSize: 28 * fs,
     color: 'rgba(200, 161, 90, 0.9)',
     lineHeight: 44,
     marginBottom: 12,
   },
   surahMeta: {
-    fontSize: 12,
+    fontSize: 12 * fs,
     color: 'rgba(124, 186, 160, 0.8)',
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -714,19 +783,19 @@ const createStyles = () => ({
     position: 'absolute',
   },
   ayaBadgeNum: {
-    fontSize: 13,
+    fontSize: 13 * fs,
     fontWeight: '700',
     color: colors.accent,
   },
   arabicText: {
-    fontSize: 28,
+    fontSize: 28 * fs,
     lineHeight: 48,
     color: colors.textPrimary,
     textAlign: 'right',
     marginBottom: 20,
   },
   transliterationText: {
-    fontSize: 13,
+    fontSize: 13 * fs,
     fontStyle: 'italic',
     color: colors.textSecondary,
     marginBottom: 8,
@@ -738,7 +807,7 @@ const createStyles = () => ({
     borderTopColor: 'rgba(200, 161, 90, 0.1)',
   },
   meaningText: {
-    fontSize: 15,
+    fontSize: 15 * fs,
     lineHeight: 24,
     color: colors.textPrimary,
     fontWeight: '500',
@@ -763,7 +832,7 @@ const createStyles = () => ({
     gap: 6,
   },
   paginationText: {
-    fontSize: 12,
+    fontSize: 12 * fs,
     fontWeight: '600',
     color: colors.accent,
     textTransform: 'uppercase',

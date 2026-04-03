@@ -91,4 +91,19 @@ export async function resetAllKaza() {
   return { ...DEFAULT_DATA };
 }
 
+/**
+ * Restore kaza counts from a snapshot (for undo).
+ */
+export async function restoreKazaCounts(snapshot) {
+  const db = await getDB();
+  for (const key of PRAYER_TYPES) {
+    if (snapshot[key] > 0) {
+      await db.runAsync(
+        `INSERT INTO kaza (prayerKey, count) VALUES (?, ?) ON CONFLICT(prayerKey) DO UPDATE SET count = excluded.count`,
+        [key, snapshot[key]]
+      );
+    }
+  }
+}
+
 export { PRAYER_TYPES };

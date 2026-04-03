@@ -21,6 +21,8 @@ const DEFAULT_PREFS = {
   },
 };
 
+const VALID_PRAYER_KEYS = ['imsak', 'gunes', 'ogle', 'ikindi', 'aksam', 'yatsi'];
+
 /**
  * Load notification preferences.
  */
@@ -29,7 +31,16 @@ export async function getNotificationPrefs() {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (raw) {
       const saved = JSON.parse(raw);
-      return { ...DEFAULT_PREFS, ...saved, prayers: { ...DEFAULT_PREFS.prayers, ...saved.prayers } };
+      // Merge with defaults and strip unknown prayer keys
+      const mergedPrayers = { ...DEFAULT_PREFS.prayers };
+      if (saved.prayers) {
+        for (const key of VALID_PRAYER_KEYS) {
+          if (typeof saved.prayers[key] === 'boolean') {
+            mergedPrayers[key] = saved.prayers[key];
+          }
+        }
+      }
+      return { ...DEFAULT_PREFS, ...saved, prayers: mergedPrayers };
     }
     return { ...DEFAULT_PREFS };
   } catch {

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 import { _syncColors } from '../theme/colors';
+import { getFontSize, setFontSize as saveFontSize } from '../utils/preferences';
 
 const STORAGE_KEY = '@ayasofya_theme';
 
@@ -106,23 +107,23 @@ const navy = {
   white: '#ffffff',
 };
 
-const light = {
-  key: 'light',
-  backgroundTop: '#f5f0e8',
-  backgroundBottom: '#ebe5dc',
-  backgroundCard: '#ffffff',
-  panel: '#faf7f2',
-  panelMuted: '#f0ece4',
-  textPrimary: '#1a1a1a',
-  textSecondary: '#555555',
-  textMuted: '#888888',
-  accent: '#b08830',
-  accentSoft: '#c8a858',
-  accentGlow: '#a07820',
-  navInactive: '#999999',
-  divider: 'rgba(0, 0, 0, 0.08)',
-  ringBase: 'rgba(176, 136, 48, 0.20)',
-  activeRow: 'rgba(176, 136, 48, 0.10)',
+const midnight = {
+  key: 'midnight',
+  backgroundTop: '#0d0d1a',
+  backgroundBottom: '#06060f',
+  backgroundCard: '#161628',
+  panel: '#121222',
+  panelMuted: '#1a1a30',
+  textPrimary: '#e8e8f0',
+  textSecondary: '#9898b8',
+  textMuted: '#606080',
+  accent: '#8a9eff',
+  accentSoft: '#5060b0',
+  accentGlow: '#9ab0ff',
+  navInactive: '#7070a0',
+  divider: 'rgba(138, 158, 255, 0.18)',
+  ringBase: 'rgba(138, 158, 255, 0.20)',
+  activeRow: 'rgba(70, 80, 140, 0.25)',
   white: '#ffffff',
 };
 
@@ -146,7 +147,7 @@ const ramadan = {
   white: '#ffffff',
 };
 
-export const PALETTES = { emerald, turquoise, purple, burgundy, navy, light, ramadan };
+export const PALETTES = { emerald, turquoise, purple, burgundy, navy, midnight, ramadan };
 
 export const THEME_LIST = [
   { key: 'emerald', label: 'Zümrüt', color: '#061e1a' },
@@ -154,7 +155,7 @@ export const THEME_LIST = [
   { key: 'purple', label: 'Mor', color: '#1a1028' },
   { key: 'burgundy', label: 'Bordo', color: '#1e0a14' },
   { key: 'navy', label: 'Lacivert', color: '#0a1428' },
-  { key: 'light', label: 'Açık', color: '#f5f0e8' },
+  { key: 'midnight', label: 'Gece', color: '#0d0d1a' },
 ];
 
 const ThemeContext = createContext();
@@ -162,10 +163,17 @@ const ThemeContext = createContext();
 export function ThemeProvider({ children, ramadanActive = false }) {
   const [themeKey, setThemeKey] = useState('emerald');
   const [ready, setReady] = useState(false);
+  const [fontSizeLevel, setFontSizeLevel] = useState(1);
+
+  const fontScale = [0.85, 1, 1.2][fontSizeLevel] || 1;
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((v) => {
+    Promise.all([
+      AsyncStorage.getItem(STORAGE_KEY),
+      getFontSize(),
+    ]).then(([v, fs]) => {
       if (v && PALETTES[v]) setThemeKey(v);
+      setFontSizeLevel(fs);
       setReady(true);
     });
   }, []);
@@ -177,6 +185,11 @@ export function ThemeProvider({ children, ramadanActive = false }) {
     }
   }, []);
 
+  const changeFontSize = useCallback(async (level) => {
+    setFontSizeLevel(level);
+    await saveFontSize(level);
+  }, []);
+
   // Override with ramadan palette when Ramadan mode is active
   const effectiveTheme = ramadanActive ? ramadan : (PALETTES[themeKey] || emerald);
 
@@ -184,7 +197,7 @@ export function ThemeProvider({ children, ramadanActive = false }) {
   _syncColors(effectiveTheme);
 
   return (
-    <ThemeContext.Provider value={{ theme: effectiveTheme, themeKey, changeTheme, ready, ramadanActive }}>
+    <ThemeContext.Provider value={{ theme: effectiveTheme, themeKey, changeTheme, ready, ramadanActive, fontScale, fontSizeLevel, changeFontSize }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -66,9 +66,9 @@ function EsmaCard({ item, index }) {
 
 /* ── Main Screen ────────────────────────────────── */
 export function EsmaScreen() {
-  useTheme();
+  const { fontScale } = useTheme();
   const { t } = useI18n();
-  const styles = createStyles();
+  const styles = createStyles(fontScale);
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
 
@@ -129,7 +129,7 @@ export function EsmaScreen() {
             returnKeyType="search"
           />
           {search.length > 0 && (
-            <Pressable onPress={() => setSearch('')}>
+            <Pressable onPress={() => setSearch('')} hitSlop={10}>
               <Ionicons name="close-circle" size={18} color={colors.textMuted} />
             </Pressable>
           )}
@@ -159,7 +159,7 @@ export function EsmaScreen() {
 }
 
 /* ── Styles ─────────────────────────────────────── */
-const createStyles = () => ({
+const createStyles = (fs = 1) => ({
   safe: { flex: 1 },
 
   /* Header */
@@ -184,7 +184,7 @@ const createStyles = () => ({
   },
   headerTitle: {
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 16 * fs,
     fontWeight: '700',
     letterSpacing: 3,
   },
@@ -212,7 +212,7 @@ const createStyles = () => ({
   searchInput: {
     flex: 1,
     color: colors.textPrimary,
-    fontSize: 14,
+    fontSize: 14 * fs,
     padding: 0,
   },
 
@@ -266,14 +266,14 @@ const createStyles = () => ({
   },
   arabicText: {
     color: colors.accent,
-    fontSize: 22,
+    fontSize: 22 * fs,
     textAlign: 'center',
     lineHeight: 34,
     marginTop: 4,
   },
   nameText: {
     color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 13 * fs,
     fontWeight: '600',
     textAlign: 'center',
   },

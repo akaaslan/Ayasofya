@@ -16,9 +16,9 @@ import { getDailyTotal, getGrandTotal } from '../utils/dhikrStorage';
 import { DHIKRS } from '../constants/dhikrs';
 
 export function DualarScreen() {
-  useTheme();
+  const { fontScale } = useTheme();
   const { t = {} } = useI18n() || {};
-  const s = createStyles();
+  const s = createStyles(fontScale);
   const [style, setStyle] = useState('tasbih');
   const [modalVisible, setModalVisible] = useState(false);
   const [dailyTotal, setDailyTotal] = useState(0);
@@ -223,7 +223,7 @@ export function DualarScreen() {
                   value={inputValue}
                   onChangeText={handleTargetChange}
                   onBlur={() => {
-                    if (!effectiveTarget || effectiveTarget < 1) handleTargetChange('33'); // minimum 33
+                    if (currentTargetValue === '' || currentTargetValue === 0) handleTargetChange(String(currentDhikr.defaultTarget));
                   }}
                   maxLength={5}
                   returnKeyType="done"
@@ -269,7 +269,7 @@ export function DualarScreen() {
   );
 }
 
-const createStyles = () => ({
+const createStyles = (fs = 1) => ({
   safe: { flex: 1 },
   headerContainer: {
     flexDirection: 'row',
@@ -281,7 +281,7 @@ const createStyles = () => ({
   },
   header: {
     color: colors.textPrimary,
-    fontSize: 14,
+    fontSize: 14 * fs,
     fontWeight: '700',
     letterSpacing: 4,
     textAlign: 'center',
@@ -314,7 +314,7 @@ const createStyles = () => ({
   },
   modalTitle: {
     color: colors.accent,
-    fontSize: 12,
+    fontSize: 12 * fs,
     fontWeight: '800',
     letterSpacing: 3,
     textAlign: 'center',
@@ -339,7 +339,7 @@ const createStyles = () => ({
   },
   optionLabel: {
     color: colors.textSecondary,
-    fontSize: 16,
+    fontSize: 16 * fs,
     fontWeight: '700',
   },
   optionLabelActive: {
@@ -347,7 +347,7 @@ const createStyles = () => ({
   },
   optionDesc: {
     color: colors.textMuted,
-    fontSize: 12,
+    fontSize: 12 * fs,
     marginTop: 2,
   },
   statsBar: {
@@ -362,7 +362,7 @@ const createStyles = () => ({
   },
   statNum: {
     color: colors.accent,
-    fontSize: 16,
+    fontSize: 16 * fs,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
@@ -386,13 +386,13 @@ const createStyles = () => ({
   },
   targetHint: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 12 * fs,
     marginBottom: 12,
   },
   targetInput: {
     backgroundColor: 'rgba(200, 161, 90, 0.1)',
     color: colors.accent,
-    fontSize: 24,
+    fontSize: 24 * fs,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
     paddingVertical: 10,
@@ -416,7 +416,7 @@ const createStyles = () => ({
   },
   toggleLabel: {
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: 14 * fs,
   },
   toastContainer: {
     position: 'absolute',
@@ -451,13 +451,13 @@ const createStyles = () => ({
   },
   toastArabic: {
     color: colors.accent,
-    fontSize: 16,
+    fontSize: 16 * fs,
     fontWeight: '600',
     marginBottom: 4,
   },
   toastMsg: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 12 * fs,
     lineHeight: 18,
   },
 });

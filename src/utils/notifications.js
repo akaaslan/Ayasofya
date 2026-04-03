@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getPrayerTimes } from '../utils/prayerApi';
+import { setDayPrayer } from '../utils/prayerTracking';
 
 /* ── Configure notification handler ── */
 try {
@@ -13,6 +14,36 @@ try {
   });
 } catch {
   // Expo Go may not support this
+}
+
+/* ── Notification action category for prayer tracking ── */
+try {
+  Notifications.setNotificationCategoryAsync('prayer_tracking', [
+    { identifier: 'PRAYED_YES', buttonTitle: '✅ Evet', options: { opensAppToForeground: false } },
+    { identifier: 'PRAYED_NO', buttonTitle: '❌ Hayır', options: { opensAppToForeground: false } },
+  ]);
+} catch {
+  // Expo Go may not support this
+}
+
+/* ── Handle notification action responses ── */
+let _responseListener = null;
+
+export function setupNotificationResponseListener() {
+  if (_responseListener) return;
+  _responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
+    const { actionIdentifier, notification } = response;
+    const data = notification?.request?.content?.data;
+    if (!data || data.type !== 'kaza_reminder') return;
+
+    const prayerKey = data.prayerKey;
+    if (!prayerKey) return;
+
+    if (actionIdentifier === 'PRAYED_YES') {
+      setDayPrayer(prayerKey, true, new Date()).catch(() => {});
+    }
+    // PRAYED_NO = do nothing (leave unchecked)
+  });
 }
 
 /** Turkish prayer names for notification text */
@@ -61,11 +92,14 @@ export async function schedulePrayerNotifications(lat, lng, tz, enabledPrayers =
     const hasPermission = await requestNotificationPermission();
     if (!hasPermission) return false;
 
+  // Cancel old notifications before scheduling new ones
+  try { await Notifications.cancelAllScheduledNotificationsAsync(); } catch {}
+
   const now = new Date();
   const scheduled = [];
 
-  // Schedule for today and tomorrow to ensure coverage
-  for (let dayOffset = 0; dayOffset <= 1; dayOffset++) {
+  // Schedule only for today; tomorrow's will be scheduled at midnight or next app open
+  for (let dayOffset = 0; dayOffset <= 0; dayOffset++) {
     const targetDate = new Date(now);
     targetDate.setDate(targetDate.getDate() + dayOffset);
 
@@ -138,20 +172,6 @@ export async function schedulePrayerNotifications(lat, lng, tz, enabledPrayers =
         }
       }
     }
-  }
-
-  // Only cancel old notifications AFTER new ones are successfully scheduled
-  // Get all currently scheduled, remove any that are NOT in our new batch
-  try {
-    const existing = await Notifications.getAllScheduledNotificationsAsync();
-    const newIdSet = new Set(scheduled);
-    for (const n of existing) {
-      if (!newIdSet.has(n.identifier)) {
-        await Notifications.cancelScheduledNotificationAsync(n.identifier);
-      }
-    }
-  } catch {
-    // fallback: if selective cancel fails, do bulk cancel + keep new ones
   }
 
   return true;
@@ -242,8 +262,9 @@ export async function scheduleKazaReminders(lat, lng, tz) {
           const id = await Notifications.scheduleNotificationAsync({
             content: {
               title: `🤲 ${KAZA_PRAYER_MAP[prayer.key]} namazını kıldınız mı?`,
-              body: 'Namaz takibinizi güncelleyin.',
+              body: 'Evet veya Hayır ile cevaplayın.',
               sound: true,
+              categoryIdentifier: 'prayer_tracking',
               data: { type: 'kaza_reminder', prayerKey: prayer.key },
               priority: Notifications.AndroidNotificationPriority.DEFAULT,
               ...(Platform.OS === 'android' && {

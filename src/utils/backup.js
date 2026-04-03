@@ -3,6 +3,7 @@ import { shareAsync } from 'expo-sharing';
 import { getDB } from './db';
 
 const BACKUP_TABLES = ['prayer_tracking', 'kaza', 'dhikr_totals', 'dhikr_sessions', 'dhikr_daily'];
+const VALID_TABLES = new Set(BACKUP_TABLES);
 
 /**
  * Export all prayer/kaza/dhikr data as JSON and share via system share sheet.
@@ -12,7 +13,8 @@ export async function exportBackup() {
   const backup = {};
 
   for (const table of BACKUP_TABLES) {
-    const rows = await db.getAllAsync(`SELECT * FROM ${table}`);
+    if (!VALID_TABLES.has(table)) continue;
+    const rows = await db.getAllAsync(`SELECT * FROM "${table}"`);
     backup[table] = rows;
   }
 

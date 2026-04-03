@@ -61,10 +61,10 @@ export async function playTapSound() {
   try {
     await ensureFile();
     if (player) {
-      player.seekTo(0);
+      player.currentTime = 0;
       player.play();
     } else {
-      player = createAudioPlayer(CLICK_PATH);
+      player = createAudioPlayer({ uri: CLICK_PATH });
       player.volume = 0.6;
       player.play();
     }
