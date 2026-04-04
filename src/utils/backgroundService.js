@@ -14,7 +14,7 @@ import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { getNotificationPrefs } from './notificationPrefs';
-import { schedulePrayerNotifications, scheduleKazaReminders } from './notifications';
+import { schedulePrayerNotifications } from './notifications';
 import { prefetchPrayerTimes } from './prayerApi';
 
 const TASK_NAME = 'AYASOFYA_PRAYER_BG_TASK';
@@ -60,7 +60,8 @@ TaskManager.defineTask(TASK_NAME, async () => {
         prefs.prayers,
         prefs.preNotification,
       );
-      await scheduleKazaReminders(loc.lat, loc.lng, loc.tz);
+      // Kaza reminders and end-of-day summary are scheduled
+      // inside schedulePrayerNotifications if enabled in preferences
     }
 
     // Keep prayer time cache warm

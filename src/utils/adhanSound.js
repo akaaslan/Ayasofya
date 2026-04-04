@@ -1,14 +1,12 @@
 /**
  * Ezan / Adhan sound playback utility.
  * Uses expo-audio for audio playback.
- *
- * NOTE: For a custom ezan audio, place the file in assets/ and import it.
- * Example: const EZAN_AUDIO = require('../../assets/ezan.mp3');
+ * Reads selected adhan from adhanPrefs (AsyncStorage).
  */
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { getSelectedAdhan } from './adhanPrefs';
 
 let player = null;
-let notifPlayer = null;
 
 /**
  * Configure audio mode for background playback.
@@ -26,10 +24,10 @@ export async function configureAudio() {
 }
 
 /**
- * Play ezan sound from a bundled asset or URL.
- * If no custom asset is provided, falls back to a brief notification-style sound.
+ * Play ezan sound. Uses the user-selected adhan from preferences,
+ * or a custom source if provided.
  *
- * @param {object|string} source - require('path') or 'https://...'
+ * @param {string|null} source - Override URL (uses preference if null)
  * @param {number} volume - 0.0 to 1.0
  */
 export async function playEzan(source = null, volume = 1.0) {
@@ -37,8 +35,16 @@ export async function playEzan(source = null, volume = 1.0) {
     await stopEzan();
     await configureAudio();
 
-    const audioSource = source || 'https://cdn.aladhan.com/audio/adhans/1.mp3';
-    player = createAudioPlayer(audioSource);
+    let audioSource = source;
+    if (!audioSource) {
+      const adhan = await getSelectedAdhan();
+      audioSource = adhan.url;
+    }
+
+    // Use { uri } object format for remote URLs
+    const src = typeof audioSource === 'string' ? { uri: audioSource } : audioSource;
+
+    player = createAudioPlayer(src, { downloadFirst: true });
     player.volume = volume;
     player.play();
 
@@ -72,16 +78,11 @@ export function isEzanPlaying() {
 }
 
 /**
- * Play a short notification-style sound (for prayer time alert).
+ * Play adhan sound for notification (uses selected adhan preference).
  */
 export async function playNotificationSound() {
   try {
-    await configureAudio();
-    notifPlayer = createAudioPlayer(
-      'https://cdn.aladhan.com/audio/adhans/1.mp3'
-    );
-    notifPlayer.volume = 0.8;
-    notifPlayer.play();
+    await playEzan(null, 0.8);
   } catch (e) {
     console.warn('Notification sound error:', e.message);
   }

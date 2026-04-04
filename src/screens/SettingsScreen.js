@@ -23,9 +23,13 @@ import { useTheme, THEME_LIST } from '../context/ThemeContext';
 import { CITY_LIST } from '../hooks/useLocation';
 import { colors } from '../theme/colors';
 import { playEzan, stopEzan, isEzanPlaying } from '../utils/adhanSound';
+import { ADHAN_LIST, DEFAULT_ADHAN_ID } from '../data/adhanData';
+import { getSelectedAdhanId, setSelectedAdhanId } from '../utils/adhanPrefs';
 import {
   cancelAllPrayerNotifications,
   schedulePrayerNotifications,
+  scheduleKazaReminders,
+  scheduleEndOfDaySummary,
 } from '../utils/notifications';
 import {
   getNotificationPrefs,
@@ -51,6 +55,8 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
   const [langModalVisible, setLangModalVisible] = useState(false);
   const [ezanPlaying, setEzanPlaying] = useState(false);
   const [preNotification, setPreNotification] = useState(false);
+  const [adhanModalVisible, setAdhanModalVisible] = useState(false);
+  const [selectedAdhanId, setSelectedAdhan] = useState(DEFAULT_ADHAN_ID);
 
   /* ── Per-prayer notification toggles ── */
   const [prayerToggles, setPrayerToggles] = useState({
@@ -68,6 +74,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
     getHapticEnabled().then(setHaptic);
     getTapSoundEnabled().then(setTapSound);
     getKazaReminderEnabled().then(setKazaReminder);
+    getSelectedAdhanId().then(setSelectedAdhan);
   }, []);
 
   /* ── Load notification prefs ── */
@@ -137,10 +144,25 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
         showDialog('volume-mute', t.commonError, t.backupExportFail);
         setEzanPlaying(false);
       }
-      // Auto-reset after some time
       setTimeout(() => setEzanPlaying(false), 30000);
     }
   }, [ezanPlaying, showDialog]);
+
+  const handleSelectAdhan = useCallback(async (id) => {
+    await stopEzan();
+    setEzanPlaying(false);
+    setSelectedAdhan(id);
+    await setSelectedAdhanId(id);
+    setAdhanModalVisible(false);
+    // Preview the selected adhan
+    setEzanPlaying(true);
+    const adhan = ADHAN_LIST.find(a => a.id === id);
+    if (adhan) {
+      const ok = await playEzan(adhan.url);
+      if (!ok) setEzanPlaying(false);
+      else setTimeout(() => { stopEzan(); setEzanPlaying(false); }, 15000);
+    }
+  }, []);
 
   const handleAbout = useCallback(() => {
     showDialog('information-circle', 'Ayasofya', 'Sürüm 1.0.0\n\nİslami namaz vakitleri uygulaması.\n\n• GPS ile hassas namaz vakitleri\n• Esma-ül Hüsna\n• Dua koleksiyonu\n• Ramazan modu\n• Kaza namazı takibi\n• Ezan sesi');
@@ -373,6 +395,23 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
 
           <Pressable
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            onPress={() => setAdhanModalVisible(true)}
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="musical-notes-outline" size={20} color={colors.accent} />
+              <View>
+                <Text style={styles.rowLabel}>{t.selectAdhan || 'Ezan Sesi Seç'}</Text>
+                <Text style={styles.subRowHint}>
+                  {ADHAN_LIST.find(a => a.id === selectedAdhanId)?.name || 'Mishary Rashid Al-Afasy'}
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             onPress={handleTestEzan}
             accessibilityRole="button"
           >
@@ -459,7 +498,14 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
             </View>
             <AnimatedSwitch
               value={kazaReminder}
-              onValueChange={(v) => { setKazaReminder(v); setKazaReminderEnabled(v); }}
+              onValueChange={(v) => {
+                setKazaReminder(v);
+                setKazaReminderEnabled(v);
+                if (v && lat && lng) {
+                  scheduleKazaReminders(lat, lng, tz);
+                  scheduleEndOfDaySummary();
+                }
+              }}
               trackColor={{ false: '#333', true: colors.accentSoft }}
               thumbColor={kazaReminder ? colors.accent : '#888'}
             />
@@ -604,6 +650,56 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               onPress={() => setLangModalVisible(false)}
             >
               <Text style={styles.modalCloseText}>{t.commonCancel}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Adhan Selector Modal */}
+      <Modal
+        visible={adhanModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAdhanModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t.selectAdhan || 'Ezan Sesi Seç'}</Text>
+            <FlatList
+              data={ADHAN_LIST}
+              keyExtractor={(item) => item.id}
+              style={styles.cityList}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.cityRow,
+                    item.id === selectedAdhanId && styles.cityRowActive,
+                    pressed && styles.rowPressed,
+                  ]}
+                  onPress={() => handleSelectAdhan(item.id)}
+                >
+                  <View>
+                    <Text
+                      style={[
+                        styles.cityText,
+                        item.id === selectedAdhanId && styles.cityTextActive,
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                    <Text style={styles.subRowHint}>{item.origin}</Text>
+                  </View>
+                  {item.id === selectedAdhanId && (
+                    <Ionicons name="checkmark" size={18} color={colors.accent} />
+                  )}
+                </Pressable>
+              )}
+            />
+            <Pressable
+              style={styles.modalCloseBtn}
+              onPress={() => setAdhanModalVisible(false)}
+            >
+              <Text style={styles.modalCloseText}>{t.cancel || 'İptal'}</Text>
             </Pressable>
           </View>
         </View>
