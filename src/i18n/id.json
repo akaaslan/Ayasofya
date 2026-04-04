@@ -294,6 +294,7 @@
   "theme_purple": "Purple",
   "theme_burgundy": "Burgundy",
   "theme_navy": "Navy",
+  "theme_midnight": "Malam",
   "theme_light": "Light",
   "verse_0_text": "\"Sesungguhnya Allah menyuruh (kamu) berlaku adil dan berbuat kebajikan, memberi bantuan kepada kerabat...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "noFavDua": "Anda belum menambahkan doa favorit",
   "results": "hasil",
   "targetNotification": "Notifikasi Target",
-  "targetVibration": "Getaran Target"
+  "targetVibration": "Getaran Target",
+  "dhikrHistory": "RIWAYAT DZIKIR",
+  "dhikrHistoryEmpty": "Belum ada sesi dzikir yang selesai",
+  "dhikrCycles": "siklus"
 }

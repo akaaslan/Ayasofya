@@ -294,6 +294,7 @@
   "theme_purple": "Lila",
   "theme_burgundy": "Burgundy",
   "theme_navy": "Marinblå",
+  "theme_midnight": "Natt",
   "theme_light": "Ljus",
   "verse_0_text": "”Sannerligen föreskriver Allah rättvisa, godhet och att ge till släktingar...”",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Återställd",
   "featureNotAdded": "Denna funktion har inte lagts till än.",
   "commonCancel": "Avbryt",
-  "offlineWarning": "⚡ Offline — använder lagrad data"
+  "offlineWarning": "⚡ Offline — använder lagrad data",
+  "dhikrHistory": "DHIKR-HISTORIK",
+  "dhikrHistoryEmpty": "Inga slutförda dhikr-sessioner ännu",
+  "dhikrCycles": "cykler"
 }

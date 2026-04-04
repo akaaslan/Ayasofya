@@ -294,6 +294,7 @@
   "theme_purple": "紫色",
   "theme_burgundy": "酒红",
   "theme_navy": "藏青",
+  "theme_midnight": "夜幕",
   "theme_light": "明亮",
   "verse_0_text": "“真主的确命人行公平、行仁爱、施济亲戚……”",
   "verse_0_source": "蜜蜂章，90",
@@ -335,5 +336,8 @@
   "backupRestored": "恢复成功",
   "featureNotAdded": "此功能尚未添加。",
   "commonCancel": "取消",
-  "offlineWarning": "⚡ 离线模式 — 正在使用缓存数据"
+  "offlineWarning": "⚡ 离线模式 — 正在使用缓存数据",
+  "dhikrHistory": "诵念记录",
+  "dhikrHistoryEmpty": "尚无已完成的诵念记录",
+  "dhikrCycles": "轮"
 }

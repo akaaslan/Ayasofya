@@ -294,6 +294,7 @@
   "theme_purple": "Ademmam",
   "theme_burgundy": "Bordu",
   "theme_navy": "Anili",
+  "theme_midnight": "Iḍ",
   "theme_light": "Aceɛlal",
   "verse_0_text": "\"Allāh iweṣṣa s lḥeqq, l'iḥsan, d usemmet i lqariwn...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Uɣalen-d",
   "featureNotAdded": "Taffuɣt-agi ur d-terni ara.",
   "commonCancel": "Ssefk",
-  "offlineWarning": "⚡ Berra n uzeṭṭa — iseffka n daxel i yellan"
+  "offlineWarning": "⚡ Berra n uzeṭṭa — iseffka n daxel i yellan",
+  "dhikrHistory": "AMEZRUY N UDHEKKER",
+  "dhikrHistoryEmpty": "Ulac dhekker yettwaselken ar tura",
+  "dhikrCycles": "tamrilt"
 }

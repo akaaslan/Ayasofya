@@ -240,6 +240,7 @@
   "theme_purple": "Purple",
   "theme_burgundy": "Burgundy",
   "theme_navy": "Navy",
+  "theme_midnight": "Midnight",
   "theme_light": "Light",
   "ramadanDay": "Ramadan — Day {day} / {total}",
   "ramadanManual": "Ramadan (Manual)",
@@ -335,5 +336,8 @@
   "noFavDua": "You haven't added any favorite supplications yet",
   "results": "results",
   "targetNotification": "Target Notification",
-  "targetVibration": "Target Vibration"
+  "targetVibration": "Target Vibration",
+  "dhikrHistory": "DHIKR HISTORY",
+  "dhikrHistoryEmpty": "No completed dhikr sessions yet",
+  "dhikrCycles": "cycles"
 }

@@ -41,11 +41,18 @@ async function fetchAndSaveSurahs(lang = 'turkish') {
     if (!Array.isArray(list)) return null;
 
     const db = await getDB();
-    for (const s of list) {
-      await db.runAsync(
-        `INSERT OR REPLACE INTO surahs (id, language, name, aya_count) VALUES (?, ?, ?, ?)`,
-        [s.id, lang, s.name, s.aya_count || s.ayahCount]
-      );
+    await db.execAsync('BEGIN TRANSACTION');
+    try {
+      for (const s of list) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO surahs (id, language, name, aya_count) VALUES (?, ?, ?, ?)`,
+          [s.id, lang, s.name, s.aya_count || s.ayahCount]
+        );
+      }
+      await db.execAsync('COMMIT');
+    } catch (txErr) {
+      await db.execAsync('ROLLBACK');
+      throw txErr;
     }
     return list;
   } catch (e) {
@@ -73,23 +80,30 @@ async function fetchAndSaveAyas(surahId, lang = 'turkish', authorCode = '') {
     if (!Array.isArray(ayas)) return null;
 
     const db = await getDB();
-    for (const a of ayas) {
-      await db.runAsync(
-        `INSERT OR REPLACE INTO ayas (id, surah_id, aya_number, juz_number, page_number, text) 
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [a.id, surahId, a.aya_number, a.juz_number, a.page_number, a.text]
-      );
+    await db.execAsync('BEGIN TRANSACTION');
+    try {
+      for (const a of ayas) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO ayas (id, surah_id, aya_number, juz_number, page_number, text) 
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [a.id, surahId, a.aya_number, a.juz_number, a.page_number, a.text]
+        );
 
-      // If tafsirs are included
-      if (a.tafsirs && Array.isArray(a.tafsirs)) {
-        for (const t of a.tafsirs) {
-          await db.runAsync(
-            `INSERT OR REPLACE INTO tafsirs (id, aya_id, author, language, text) 
-             VALUES (?, ?, ?, ?, ?)`,
-            [t.id, a.id, t.author, lang, t.text]
-          );
+        // If tafsirs are included
+        if (a.tafsirs && Array.isArray(a.tafsirs)) {
+          for (const t of a.tafsirs) {
+            await db.runAsync(
+              `INSERT OR REPLACE INTO tafsirs (id, aya_id, author, language, text) 
+               VALUES (?, ?, ?, ?, ?)`,
+              [t.id, a.id, t.author, lang, t.text]
+            );
+          }
         }
       }
+      await db.execAsync('COMMIT');
+    } catch (txErr) {
+      await db.execAsync('ROLLBACK');
+      throw txErr;
     }
     return ayas;
   } catch (e) {

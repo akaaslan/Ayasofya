@@ -294,6 +294,7 @@
   "theme_purple": "Fialová",
   "theme_burgundy": "Bordo",
   "theme_navy": "Námořnická modř",
+  "theme_midnight": "Noční",
   "theme_light": "Světlá",
   "verse_0_text": "„Alláh vskutku přikazuje spravedlnost, dobré skutky a pomoc příbuzným...“",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Obnoveno",
   "featureNotAdded": "Tato funkce nebyla dosud přidána.",
   "commonCancel": "Zrušit",
-  "offlineWarning": "⚡ Offline — používají se data z mezipaměti"
+  "offlineWarning": "⚡ Offline — používají se data z mezipaměti",
+  "dhikrHistory": "HISTORIE DHIKRU",
+  "dhikrHistoryEmpty": "Zatím žádné dokončené dhikr relace",
+  "dhikrCycles": "cyklus"
 }

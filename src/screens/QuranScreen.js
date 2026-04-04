@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
 import {
   Animated,
+  BackHandler,
   Easing,
   FlatList,
   Modal,
@@ -59,6 +60,16 @@ export function QuranScreen() {
       getBookmark().then((b) => setBookmarkId(b?.surahId ?? null));
     }, [])
   );
+
+  /* ── Android back: return to surah list instead of home ── */
+  useEffect(() => {
+    if (!selectedSurah) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setSelectedSurah(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [selectedSurah]);
 
   const handleSelectSurah = async (item) => {
     try {
@@ -294,9 +305,14 @@ export function QuranScreen() {
         >
           <FlatList
             data={surahs}
-            keyExtractor={(item) => String(item.id)}
+            keyExtractor={surahKeyExtractor}
             contentContainerStyle={surahs.length === 0 ? styles.listEmpty : styles.listContent}
             showsVerticalScrollIndicator={false}
+            initialNumToRender={15}
+            maxToRenderPerBatch={10}
+            windowSize={7}
+            removeClippedSubviews
+            getItemLayout={surahGetItemLayout}
             ListEmptyComponent={
               <View style={styles.emptyWrap}>
                 <Ionicons name="book-outline" size={48} color={colors.textMuted} />
@@ -304,26 +320,15 @@ export function QuranScreen() {
               </View>
             }
             renderItem={({ item, index }) => (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.surahRow,
-                  pressed && styles.surahRowPressed,
-                  index < surahs.length - 1 && styles.surahRowBorder,
-                  bookmarkId === item.id && styles.surahRowBookmarked,
-                ]}
-                onPress={() => handleSelectSurah(item)}
-              >
-                <View style={styles.surahNumBadge}>
-                  <Ionicons name="sunny" size={32} color="rgba(200, 161, 90, 0.15)" style={styles.surahNumBg} />
-                  <Text style={styles.surahNum}>{item.id}</Text>
-                </View>
-                <View style={styles.surahInfo}>
-                  <Text style={styles.surahName}>{item.name}</Text>
-                  <Text style={styles.surahAyah}>{item.ayahCount} {t.ayahCountLabel}</Text>
-                </View>
-                <Text style={styles.surahArabic}>{item.arabic}</Text>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-              </Pressable>
+              <SurahRowItem
+                item={item}
+                index={index}
+                total={surahs.length}
+                isBookmarked={bookmarkId === item.id}
+                onPress={handleSelectSurah}
+                styles={styles}
+                t={t}
+              />
             )}
           />
         </Animated.View>
@@ -333,6 +338,42 @@ export function QuranScreen() {
     </ScreenBackground>
   );
 }
+
+/* ── Surah row height for getItemLayout ── */
+const SURAH_ROW_HEIGHT = 60; // paddingVertical 14*2 + content ~32
+
+const surahKeyExtractor = (item) => String(item.id);
+const surahGetItemLayout = (_, index) => ({
+  length: SURAH_ROW_HEIGHT,
+  offset: SURAH_ROW_HEIGHT * index,
+  index,
+});
+
+/* ── Memoized Surah Row ── */
+const SurahRowItem = memo(function SurahRowItem({ item, index, total, isBookmarked, onPress, styles, t }) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.surahRow,
+        pressed && styles.surahRowPressed,
+        index < total - 1 && styles.surahRowBorder,
+        isBookmarked && styles.surahRowBookmarked,
+      ]}
+      onPress={() => onPress(item)}
+    >
+      <View style={styles.surahNumBadge}>
+        <Ionicons name="sunny" size={32} color="rgba(200, 161, 90, 0.15)" style={styles.surahNumBg} />
+        <Text style={styles.surahNum}>{item.id}</Text>
+      </View>
+      <View style={styles.surahInfo}>
+        <Text style={styles.surahName}>{item.name}</Text>
+        <Text style={styles.surahAyah}>{item.ayahCount} {t.ayahCountLabel}</Text>
+      </View>
+      <Text style={styles.surahArabic}>{item.arabic}</Text>
+      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+    </Pressable>
+  );
+});
 
 /* ── Memoized Aya Card ── */
 const AyaCard = memo(function AyaCard({ aya, fallbackMeaning, styles }) {

@@ -156,3 +156,11 @@ export async function resetDhikr(dhikrId) {
   await db.runAsync('DELETE FROM dhikr_totals WHERE dhikrId = ?', [dhikrId]);
   await db.runAsync('DELETE FROM dhikr_sessions WHERE dhikrId = ?', [dhikrId]);
 }
+
+/**
+ * Get completed dhikr sessions, newest first.
+ */
+export async function getDhikrSessions() {
+  const db = await getDB();
+  return db.getAllAsync('SELECT dhikrId, count, date FROM dhikr_sessions ORDER BY id DESC');
+}

@@ -294,6 +294,7 @@
   "theme_purple": "Zambarau",
   "theme_burgundy": "Burgundy",
   "theme_navy": "Bluu ya Bahari",
+  "theme_midnight": "Usiku",
   "theme_light": "Nyeupe",
   "verse_0_text": "\"Hakika Mwenyezi Mungu anaamrisha uadilifu, na hisani, na kuwapa jamaa...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Imejeshwa",
   "featureNotAdded": "Kipengele hiki bado hakijaongezwa.",
   "commonCancel": "Ghairi",
-  "offlineWarning": "⚡ Nje ya mtandao — data iliyohifadhiwa inatumika"
+  "offlineWarning": "⚡ Nje ya mtandao — data iliyohifadhiwa inatumika",
+  "dhikrHistory": "HISTORIA YA DHIKRI",
+  "dhikrHistoryEmpty": "Bado hakuna vikao vya dhikri vilivyokamilika",
+  "dhikrCycles": "mizunguko"
 }

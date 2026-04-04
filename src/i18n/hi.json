@@ -294,6 +294,7 @@
   "theme_purple": "बैंगनी",
   "theme_burgundy": "बरगंडी",
   "theme_navy": "नेवी ब्लू",
+  "theme_midnight": "रात्रि",
   "theme_light": "उज्ज्वल",
   "verse_0_text": "\"निश्चय ही अल्लाह न्याय, भलाई और रिश्तेदारों की मदद करने का आदेश देता है...\"",
   "verse_0_source": "नहल, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "रिस्टोर पूरा हुआ",
   "featureNotAdded": "यह सुविधा अभी तक नहीं जोड़ी गई है।",
   "commonCancel": "रद्द करें",
-  "offlineWarning": "⚡ ऑफ़लाइन — कैश डेटा का उपयोग किया जा रहा है"
+  "offlineWarning": "⚡ ऑफ़लाइन — कैश डेटा का उपयोग किया जा रहा है",
+  "dhikrHistory": "जकर इतहस",
+  "dhikrHistoryEmpty": "अभ तक कई परण जकर सतर नह",
+  "dhikrCycles": "चकर"
 }

@@ -294,6 +294,7 @@
   "theme_purple": "Binafsha",
   "theme_burgundy": "To'q Qizil",
   "theme_navy": "To'q Kök",
+  "theme_midnight": "Kéche",
   "theme_light": "Yoruq",
   "verse_0_text": "\"Heqiqeten, Alloh adaletke, éhsan qilishqa we yeqinlargha yaxshiliq qilishqa buyruydu...\"",
   "verse_0_source": "Nehl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Tiklendi",
   "featureNotAdded": "Uşu iqtiwar hali qoshilmidi.",
   "commonCancel": "Bikar qilish",
-  "offlineWarning": "⚡ Tor yox — kesh uchurliri ishlitiliwatidu"
+  "offlineWarning": "⚡ Tor yox — kesh uchurliri ishlitiliwatidu",
+  "dhikrHistory": "زىكىر تارىخى",
+  "dhikrHistoryEmpty": "تېخى تاماملانغان زىكىر يوق",
+  "dhikrCycles": "دەۋر"
 }

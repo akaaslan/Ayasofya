@@ -294,6 +294,7 @@
   "theme_purple": "ڄامني",
   "theme_burgundy": "ڳاڙهو",
   "theme_navy": "گهرو نيرو",
+  "theme_midnight": "رات",
   "theme_light": "روشن",
   "verse_0_text": "”بيشڪ الله تعاليٰ انصاف، احسان ۽ مائٽن کي ڏيڻ جو حڪم فرمائي ٿو...“",
   "verse_0_source": "النحل، 90",
@@ -335,5 +336,8 @@
   "backupRestored": "بحال ٿي ويو",
   "featureNotAdded": "هي فيچر اڃا شامل ناهي ڪيو ويو.",
   "commonCancel": "منسوخ",
-  "offlineWarning": "⚡ آف لائن — محفوظ ٿيل ڊيٽا استعمال ٿي رهي آهي"
+  "offlineWarning": "⚡ آف لائن — محفوظ ٿيل ڊيٽا استعمال ٿي رهي آهي",
+  "dhikrHistory": "ذڪر جي تاريخ",
+  "dhikrHistoryEmpty": "اڃا تائين ڪو بہ مڪمل ٿيل ذڪر ناهي",
+  "dhikrCycles": "دور"
 }

@@ -117,14 +117,14 @@ export function HolidayBanner({ visible, onClose }) {
     sheetY.setValue(SCREEN_H);
     lastY.current = SNAP_60;
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 280, useNativeDriver: false }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 280, useNativeDriver: true }),
       Animated.spring(sheetY,  { toValue: SNAP_60, damping: 24, stiffness: 220, useNativeDriver: false }),
     ]).start();
   }, [fadeAnim, sheetY]);
 
   const closeModal = useCallback(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: false }),
+      Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
       Animated.timing(sheetY,  { toValue: SCREEN_H, duration: 260, easing: Easing.in(Easing.quad), useNativeDriver: false }),
     ]).start(() => setModalVisible(false));
   }, [fadeAnim, sheetY]);
@@ -280,9 +280,9 @@ const createStyles = () => ({
   banner: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(8, 30, 26, 0.92)',
+    backgroundColor: colors.panel,
     borderWidth: 1,
-    borderColor: 'rgba(200, 161, 90, 0.18)',
+    borderColor: colors.divider,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.3,
@@ -336,11 +336,11 @@ const createStyles = () => ({
   sheet: {
     position: 'absolute',
     top: 0, left: 0, right: 0,
-    backgroundColor: '#0a2e28',
+    backgroundColor: colors.backgroundCard,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(200, 161, 90, 0.15)',
+    borderColor: colors.divider,
     borderBottomWidth: 0,
     overflow: 'hidden',
   },
@@ -348,7 +348,7 @@ const createStyles = () => ({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(200, 161, 90, 0.3)',
+    backgroundColor: colors.accentSoft,
     alignSelf: 'center',
     marginTop: 10,
     marginBottom: 2,
@@ -360,7 +360,7 @@ const createStyles = () => ({
     paddingTop: 16,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(200, 161, 90, 0.10)',
+    borderBottomColor: colors.divider,
     gap: 10,
   },
   modalTitle: {
@@ -374,7 +374,7 @@ const createStyles = () => ({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(200, 161, 90, 0.08)',
+    backgroundColor: colors.ringBase,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -390,11 +390,11 @@ const createStyles = () => ({
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(200, 161, 90, 0.08)',
+    borderBottomColor: colors.divider,
     gap: 12,
   },
   rowFirst: {
-    backgroundColor: 'rgba(200, 161, 90, 0.06)',
+    backgroundColor: colors.activeRow,
     borderRadius: 12,
     marginHorizontal: -8,
     paddingHorizontal: 8,
@@ -429,7 +429,7 @@ const createStyles = () => ({
     marginTop: 2,
   },
   badge: {
-    backgroundColor: 'rgba(200, 161, 90, 0.10)',
+    backgroundColor: colors.ringBase,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 4,

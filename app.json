@@ -47,7 +47,9 @@
         }
       ],
       "expo-audio",
-      ["expo-font", { "fonts": ["./assets/fonts/ionicons.ttf"] }]
+      ["expo-font", { "fonts": ["./assets/fonts/ionicons.ttf"] }],
+      "expo-task-manager",
+      "expo-background-fetch"
     ]
   }
 }

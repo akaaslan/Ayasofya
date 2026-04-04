@@ -294,6 +294,7 @@
   "theme_purple": "Fiolet",
   "theme_burgundy": "Bordo",
   "theme_navy": "Granat",
+  "theme_midnight": "Nocny",
   "theme_light": "Jasny",
   "verse_0_text": "„Zaprawdę, Allah nakazuje sprawiedliwość, czynienie dobra i wspieranie bliskich...”",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Przywrócono",
   "featureNotAdded": "Ta funkcja nie została jeszcze dodana.",
   "commonCancel": "Anuluj",
-  "offlineWarning": "⚡ Offline — używane są dane z pamięci podręcznej"
+  "offlineWarning": "⚡ Offline — używane są dane z pamięci podręcznej",
+  "dhikrHistory": "HISTORIA DHIKRU",
+  "dhikrHistoryEmpty": "Brak ukończonych sesji dhikru",
+  "dhikrCycles": "cykle"
 }

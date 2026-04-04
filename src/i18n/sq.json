@@ -294,6 +294,7 @@
   "theme_purple": "Vjollcë",
   "theme_burgundy": "Bordo",
   "theme_navy": "Marinë",
+  "theme_midnight": "Natën",
   "theme_light": "E hapur",
   "verse_0_text": "\"Vërtet, Allahu urdhëron drejtësi, bamirësi dhe ndihmë për të afërmit...\"",
   "verse_0_source": "Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "U Rikthye",
   "featureNotAdded": "Kjo veçori nuk është shtuar ende.",
   "commonCancel": "Anulo",
-  "offlineWarning": "⚡ Jashtë linje — Duke përdorur të dhënat e ruajtura"
+  "offlineWarning": "⚡ Jashtë linje — Duke përdorur të dhënat e ruajtura",
+  "dhikrHistory": "HISTORIKU I DHIKRIT",
+  "dhikrHistoryEmpty": "Ende nuk ka seanca dhikri të përfunduara",
+  "dhikrCycles": "cikle"
 }

@@ -137,10 +137,10 @@ const createStyles = () => ({
   card: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#0d3630',
+    backgroundColor: colors.backgroundCard,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: 'rgba(200, 161, 90, 0.18)',
+    borderColor: colors.divider,
     padding: 24,
     alignItems: 'center',
     // shadow
@@ -154,7 +154,7 @@ const createStyles = () => ({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(200, 161, 90, 0.10)',
+    backgroundColor: colors.ringBase,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
@@ -187,14 +187,14 @@ const createStyles = () => ({
     justifyContent: 'center',
   },
   btnPrimary: {
-    backgroundColor: 'rgba(200, 161, 90, 0.18)',
+    backgroundColor: colors.ringBase,
     borderWidth: 1,
-    borderColor: 'rgba(200, 161, 90, 0.30)',
+    borderColor: colors.divider,
   },
   btnCancel: {
-    backgroundColor: 'rgba(107, 128, 112, 0.12)',
+    backgroundColor: colors.panelMuted,
     borderWidth: 1,
-    borderColor: 'rgba(107, 128, 112, 0.20)',
+    borderColor: colors.divider,
   },
   btnDestructive: {
     backgroundColor: 'rgba(200, 80, 80, 0.12)',

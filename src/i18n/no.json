@@ -294,6 +294,7 @@
   "theme_purple": "Lilla",
   "theme_burgundy": "Burgunder",
   "theme_navy": "Marineblå",
+  "theme_midnight": "Natt",
   "theme_light": "Lys",
   "verse_0_text": "\"Sannelig, Allah påbyr rettferdighet, godhet og hjelp til de nære...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Gjenopprettet",
   "featureNotAdded": "Denne funksjonen er ikke lagt til ennå.",
   "commonCancel": "Avbryt",
-  "offlineWarning": "⚡ Frakoblet — bruker lagrede data"
+  "offlineWarning": "⚡ Frakoblet — bruker lagrede data",
+  "dhikrHistory": "DHIKR-HISTORIKK",
+  "dhikrHistoryEmpty": "Ingen fullførte dhikr-økter ennå",
+  "dhikrCycles": "sykluser"
 }

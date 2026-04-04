@@ -294,6 +294,7 @@
   "theme_purple": "ሐምራዊ",
   "theme_burgundy": "ቡርገንዲ",
   "theme_navy": "ኔቪ ብሉ",
+  "theme_midnight": "ሌሊት",
   "theme_light": "ደማቅ",
   "verse_0_text": "\"አላህ በፍትህ፣ በበጎ ስራ እና ለቅርብ ዘመዶች በመርዳት ያዛል...\"",
   "verse_0_source": "ነህል፣ 90",
@@ -335,5 +336,8 @@
   "backupRestored": "ተመልሷል",
   "featureNotAdded": "ይህ አገልግሎት ገና አልተጨመረም።",
   "commonCancel": "ሰርዝ",
-  "offlineWarning": "⚡ ከመስመር ውጭ — በስልኩ ውስጥ ያለው መረጃ ጥቅም ላይ እየዋለ ነው"
+  "offlineWarning": "⚡ ከመስመር ውጭ — በስልኩ ውስጥ ያለው መረጃ ጥቅም ላይ እየዋለ ነው",
+  "dhikrHistory": "የዚክር ታሪክ",
+  "dhikrHistoryEmpty": "እስካሁን ምንም የተጠናቀቀ ዚክር የለም",
+  "dhikrCycles": "ዑደት"
 }

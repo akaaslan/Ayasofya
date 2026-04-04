@@ -294,6 +294,7 @@
   "theme_purple": "Purple",
   "theme_burgundy": "Burgundy",
   "theme_navy": "Navy",
+  "theme_midnight": "Noche",
   "theme_light": "Light",
   "verse_0_text": "\"Ciertamente, Allah ordena la justicia, hacer el bien y dar a los parientes...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "noFavDua": "Aún no has añadido ninguna súplica a tus favoritos",
   "results": "resultados",
   "targetNotification": "Notificación de objetivo",
-  "targetVibration": "Vibración de objetivo"
+  "targetVibration": "Vibración de objetivo",
+  "dhikrHistory": "HISTORIAL DE DHIKR",
+  "dhikrHistoryEmpty": "Aún no hay sesiones de dhikr completadas",
+  "dhikrCycles": "ciclos"
 }

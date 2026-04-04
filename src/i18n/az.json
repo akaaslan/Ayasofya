@@ -294,6 +294,7 @@
   "theme_purple": "Bənövşəyi",
   "theme_burgundy": "Tünd Qırmızı",
   "theme_navy": "Tünd Mavi",
+  "theme_midnight": "Gecə",
   "theme_light": "Açıq",
   "verse_0_text": "\"Şübhəsiz ki, Allah ədaləti, yaxşılığı, qohumlara kömək etməyi əmr edir...\"",
   "verse_0_source": "Nəhl, 90",
@@ -335,5 +336,8 @@
   "noFavDua": "Hələ heç bir duanı seçilmişlərə əlavə etməmisiniz",
   "results": "nəticə",
   "targetNotification": "Hədəf Bildirişi",
-  "targetVibration": "Hədəf Vibrasiyası"
+  "targetVibration": "Hədəf Vibrasiyası",
+  "dhikrHistory": "ZİKR TARİXÇƏSİ",
+  "dhikrHistoryEmpty": "Hələ tamamlanmış zikr yoxdur",
+  "dhikrCycles": "dövr"
 }

@@ -294,6 +294,7 @@
   "theme_purple": "جامنی",
   "theme_burgundy": "سرخ",
   "theme_navy": "گہرا نیلا",
+  "theme_midnight": "رات",
   "theme_light": "روشن",
   "verse_0_text": "”بے شک اللہ عدل، احسان اور رشتہ داروں کو دینے کا حکم دیتا ہے...“",
   "verse_0_source": "النحل، 90",
@@ -335,5 +336,8 @@
   "backupRestored": "بحال ہو گیا",
   "featureNotAdded": "یہ فیچر ابھی شامل نہیں کیا گیا۔",
   "commonCancel": "منسوخ",
-  "offlineWarning": "⚡ آف لائن — محفوظ شدہ ڈیٹا استعمال ہو رہا ہے"
+  "offlineWarning": "⚡ آف لائن — محفوظ شدہ ڈیٹا استعمال ہو رہا ہے",
+  "dhikrHistory": "ذکر کی تاریخ",
+  "dhikrHistoryEmpty": "ابھی تک کوئی مکمل ذکر نہیں",
+  "dhikrCycles": "دور"
 }

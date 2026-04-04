@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Modal, PanResponder, Pressable, Text, TextInput, TouchableOpacity, View, Switch } from 'react-native';
+import { Animated, Easing, FlatList, Modal, PanResponder, Pressable, Text, TextInput, TouchableOpacity, View, Switch } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,7 +12,7 @@ import { colors } from '../theme/colors';
 import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { getDhikrStyle, saveDhikrStyle } from '../utils/dhikrStylePref';
-import { getDailyTotal, getGrandTotal } from '../utils/dhikrStorage';
+import { getDailyTotal, getGrandTotal, getDhikrSessions } from '../utils/dhikrStorage';
 import { DHIKRS } from '../constants/dhikrs';
 
 export function DualarScreen() {
@@ -21,10 +21,13 @@ export function DualarScreen() {
   const s = createStyles(fontScale);
   const [style, setStyle] = useState('tasbih');
   const [modalVisible, setModalVisible] = useState(false);
+  const [historyVisible, setHistoryVisible] = useState(false);
+  const [sessions, setSessions] = useState([]);
   const [dailyTotal, setDailyTotal] = useState(0);
   const [grandTotal, setGrandTotal] = useState(0);
   
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [sessionCount, setSessionCount] = useState(0);
   const [targets, setTargets] = useState({});
   const [prayerPopupEnabled, setPrayerPopupEnabled] = useState(true);
   const [targetVibrationEnabled, setTargetVibrationEnabled] = useState(true);
@@ -86,6 +89,12 @@ export function DualarScreen() {
     await saveDhikrStyle(newStyle);
     setModalVisible(false);
   };
+
+  const openHistory = useCallback(async () => {
+    const rows = await getDhikrSessions();
+    setSessions(rows);
+    setHistoryVisible(true);
+  }, []);
 
   const fadeHeader = useRef(new Animated.Value(0)).current;
   const slideHeader = useRef(new Animated.Value(-20)).current;
@@ -169,7 +178,13 @@ export function DualarScreen() {
             {TITLES[style] || 'ZİKİRMATİK'}
           </Animated.Text>
           
-          <View style={{ width: 40 }} />
+          <TouchableOpacity
+            style={s.styleBtn}
+            onPress={openHistory}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="time-outline" size={20} color={colors.accent} />
+          </TouchableOpacity>
         </View>
 
         {/* Daily stats bar */}
@@ -185,8 +200,8 @@ export function DualarScreen() {
           </View>
         </View>
 
-        {style === 'classic' && <ClassicDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} onReset={handleResetRefresh} />}
-        {style === 'tasbih' && <TasbihDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} onReset={handleResetRefresh} />}
+        {style === 'classic' && <ClassicDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} onReset={handleResetRefresh} count={sessionCount} setCount={setSessionCount} />}
+        {style === 'tasbih' && <TasbihDhikr selectedIdx={selectedIdx} onSelectDhikr={setSelectedIdx} currentTarget={effectiveTarget} currentDhikr={currentDhikr} dhikrs={DHIKRS} onTargetReached={onTargetReached} targetVibrationEnabled={targetVibrationEnabled} onTap={handleTapIncrement} onReset={handleResetRefresh} count={sessionCount} setCount={setSessionCount} />}
 
         <Modal
           visible={modalVisible}
@@ -251,6 +266,55 @@ export function DualarScreen() {
                   />
                 </View>
               </View>
+            </View>
+          </Pressable>
+        </Modal>
+
+        {/* Dhikr history modal */}
+        <Modal
+          visible={historyVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setHistoryVisible(false)}
+        >
+          <Pressable style={s.modalOverlay} onPress={() => setHistoryVisible(false)}>
+            <View style={s.historyContent} onStartShouldSetResponder={() => true}>
+              <Text style={s.modalTitle}>{t.dhikrHistory || 'ZİKİR GEÇMİŞİ'}</Text>
+
+              {sessions.length === 0 ? (
+                <View style={s.historyEmpty}>
+                  <Ionicons name="leaf-outline" size={40} color={colors.textMuted} />
+                  <Text style={s.historyEmptyText}>{t.dhikrHistoryEmpty || 'Henüz tamamlanmış zikir yok'}</Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={sessions}
+                  keyExtractor={(_, i) => String(i)}
+                  showsVerticalScrollIndicator={false}
+                  style={{ maxHeight: 400 }}
+                  renderItem={({ item }) => {
+                    const dhikr = DHIKRS.find(d => d.id === item.dhikrId);
+                    const label = t[item.dhikrId] || dhikr?.label || item.dhikrId;
+                    const arabic = dhikr?.arabic || '';
+                    return (
+                      <View style={s.historyRow}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={s.historyLabel}>{label}</Text>
+                          {arabic ? <Text style={s.historyArabic}>{arabic}</Text> : null}
+                        </View>
+                        <View style={s.historyRight}>
+                          <Text style={s.historyCount}>{item.count}</Text>
+                          <Text style={s.historyDate}>{item.date}</Text>
+                        </View>
+                      </View>
+                    );
+                  }}
+                />
+              )}
+
+              <TouchableOpacity style={s.historyCloseBtn} onPress={() => setHistoryVisible(false)}>
+                <Text style={s.historyCloseTxt}>{t.close || 'Kapat'}</Text>
+              </TouchableOpacity>
             </View>
           </Pressable>
         </Modal>
@@ -459,5 +523,72 @@ const createStyles = (fs = 1) => ({
     color: colors.textSecondary,
     fontSize: 12 * fs,
     lineHeight: 18,
+  },
+  historyContent: {
+    width: '100%',
+    backgroundColor: '#0a2622',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(200, 161, 90, 0.3)',
+    maxHeight: '80%',
+  },
+  historyEmpty: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    gap: 12,
+  },
+  historyEmptyText: {
+    color: colors.textMuted,
+    fontSize: 13 * fs,
+    textAlign: 'center',
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(200, 161, 90, 0.1)',
+  },
+  historyLabel: {
+    color: colors.textPrimary,
+    fontSize: 14 * fs,
+    fontWeight: '600',
+  },
+  historyArabic: {
+    color: colors.textMuted,
+    fontSize: 12 * fs,
+    marginTop: 2,
+  },
+  historyRight: {
+    alignItems: 'flex-end',
+    marginLeft: 12,
+  },
+  historyCount: {
+    color: colors.accent,
+    fontSize: 18 * fs,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  historyDate: {
+    color: colors.textMuted,
+    fontSize: 10 * fs,
+    marginTop: 2,
+  },
+  historyCloseBtn: {
+    marginTop: 16,
+    alignSelf: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 32,
+    borderRadius: 20,
+    backgroundColor: 'rgba(200, 161, 90, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(200, 161, 90, 0.25)',
+  },
+  historyCloseTxt: {
+    color: colors.accent,
+    fontSize: 13 * fs,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
 });

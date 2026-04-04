@@ -294,6 +294,7 @@
   "theme_purple": "パープル",
   "theme_burgundy": "バーガンディ",
   "theme_navy": "ネイビー",
+  "theme_midnight": "ミッドナイト",
   "theme_light": "ライト",
   "verse_0_text": "「誠にアッラーは、正義と善行、そして近親者への施しを命じられる…」",
   "verse_0_source": "蜜蜂章 90節",
@@ -335,5 +336,8 @@
   "backupRestored": "復元完了",
   "featureNotAdded": "この機能はまだ追加されていません。",
   "commonCancel": "キャンセル",
-  "offlineWarning": "⚡ オフライン — キャッシュデータを使用中"
+  "offlineWarning": "⚡ オフライン — キャッシュデータを使用中",
+  "dhikrHistory": "ズィクル履歴",
+  "dhikrHistoryEmpty": "完了したズィクルセッションはまだありません",
+  "dhikrCycles": "サイクル"
 }

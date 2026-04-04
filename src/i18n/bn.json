@@ -294,6 +294,7 @@
   "theme_purple": "বেগুনী",
   "theme_burgundy": "বারগান্ডি",
   "theme_navy": "নেভি ব্লু",
+  "theme_midnight": "রাত্রি",
   "theme_light": "উজ্জ্বল",
   "verse_0_text": "\"নিশ্চয়ই আল্লাহ ইনসাফ, কায়েম ও নিকটাত্মীয়দের দান করার আদেশ দেন...\"",
   "verse_0_source": "নাহল, ৯০",
@@ -335,5 +336,8 @@
   "backupRestored": "রিস্টোর সম্পন্ন",
   "featureNotAdded": "এই ফিচারটি এখনো যুক্ত করা হয়নি।",
   "commonCancel": "বাতিল",
-  "offlineWarning": "⚡ অফলাইন — ক্যাশ ডেটা ব্যবহার করা হচ্ছে"
+  "offlineWarning": "⚡ অফলাইন — ক্যাশ ডেটা ব্যবহার করা হচ্ছে",
+  "dhikrHistory": "যকর ইতহস",
+  "dhikrHistoryEmpty": "এখনও কন সমপনন যকর নই",
+  "dhikrCycles": "চকর"
 }

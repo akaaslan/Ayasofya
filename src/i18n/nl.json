@@ -294,6 +294,7 @@
   "theme_purple": "Paars",
   "theme_burgundy": "Bordeaux",
   "theme_navy": "Marine",
+  "theme_midnight": "Nacht",
   "theme_light": "Licht",
   "verse_0_text": "\"Voorwaar, Allah gebiedt rechtvaardigheid, het goede en het geven aan verwanten...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Hersteld",
   "featureNotAdded": "Deze functie is nog niet toegevoegd.",
   "commonCancel": "Annuleren",
-  "offlineWarning": "⚡ Offline — cachegegevens worden gebruikt"
+  "offlineWarning": "⚡ Offline — cachegegevens worden gebruikt",
+  "dhikrHistory": "DHIKR GESCHIEDENIS",
+  "dhikrHistoryEmpty": "Nog geen voltooide dhikr-sessies",
+  "dhikrCycles": "cycli"
 }

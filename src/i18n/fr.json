@@ -294,6 +294,7 @@
   "theme_purple": "Purple",
   "theme_burgundy": "Burgundy",
   "theme_navy": "Navy",
+  "theme_midnight": "Nuit",
   "theme_light": "Light",
   "verse_0_text": "\"Certes, Allah ordonne l'équité, la bienfaisance et l'assistance aux proches...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "noFavDua": "Vous n'avez pas encore ajouté d'invocations à vos favoris",
   "results": "résultats",
   "targetNotification": "Notification d'objectif",
-  "targetVibration": "Vibration d'objectif"
+  "targetVibration": "Vibration d'objectif",
+  "dhikrHistory": "HISTORIQUE DU DHIKR",
+  "dhikrHistoryEmpty": "Aucune session de dhikr terminée pour le moment",
+  "dhikrCycles": "cycles"
 }

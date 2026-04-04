@@ -294,6 +294,7 @@
   "theme_purple": "Purple",
   "theme_burgundy": "Burgundy",
   "theme_navy": "Navy",
+  "theme_midnight": "Nacht",
   "theme_light": "Light",
   "verse_0_text": "\"Wahrlich, Allah gebietet Gerechtigkeit, gütiges Verhalten und Freigebigkeit gegenüber den Verwandten...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "noFavDua": "Sie haben noch keine Favoriten hinzugefügt",
   "results": "Ergebnisse",
   "targetNotification": "Ziel-Benachrichtigung",
-  "targetVibration": "Ziel-Vibration"
+  "targetVibration": "Ziel-Vibration",
+  "dhikrHistory": "DHIKR-VERLAUF",
+  "dhikrHistoryEmpty": "Noch keine abgeschlossenen Dhikr-Sitzungen",
+  "dhikrCycles": "Zyklen"
 }

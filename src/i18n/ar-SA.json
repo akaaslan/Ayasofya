@@ -295,6 +295,7 @@
   "theme_purple": "بنفسجي",
   "theme_burgundy": "عنابي",
   "theme_navy": "كحلي",
+  "theme_midnight": "ليلي",
   "theme_light": "فاتح",
   "verse_0_text": "\"إِنَّ اللَّهَ يَأْمُرُ بِالْعَدْلِ وَالْإِحْسَانِ وَإِيتَاءِ ذِي الْقُرْبَىٰ...\"",
   "verse_0_source": "النحل، ٩٠",
@@ -335,5 +336,8 @@
   "noFavDua": "لم تقم بإضافة أي أدعية إلى المفضلة بعد",
   "results": "نتائج",
   "targetNotification": "إشعار الهدف",
-  "targetVibration": "اهتزاز الهدف"
+  "targetVibration": "اهتزاز الهدف",
+  "dhikrHistory": "سجل الأذكار",
+  "dhikrHistoryEmpty": "لا توجد جلسات ذكر مكتملة بعد",
+  "dhikrCycles": "دورة"
 }

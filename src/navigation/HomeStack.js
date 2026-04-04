@@ -1,4 +1,5 @@
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
+import { View } from 'react-native';
 
 import { useTheme } from '../context/ThemeContext';
 import { DuaCollectionScreen } from '../screens/DuaCollectionScreen';
@@ -28,13 +29,15 @@ export function HomeStack() {
   useTheme();
   const screenOptions = getScreenOptions();
   return (
-    <Stack.Navigator screenOptions={screenOptions}>
-      <Stack.Screen name="HomeMain" component={HomeScreen} />
-      <Stack.Screen name="NamazTakip" component={NamazTakipScreen} />
-      <Stack.Screen name="Quran" component={QuranScreen} />
-      <Stack.Screen name="Esma" component={EsmaScreen} />
-      <Stack.Screen name="DuaCollection" component={DuaCollectionScreen} />
-      <Stack.Screen name="KazaNamaz" component={KazaNamazScreen} />
-    </Stack.Navigator>
+    <View style={{ flex: 1, backgroundColor: colors.backgroundTop }}>
+      <Stack.Navigator screenOptions={screenOptions}>
+        <Stack.Screen name="HomeMain" component={HomeScreen} />
+        <Stack.Screen name="NamazTakip" component={NamazTakipScreen} />
+        <Stack.Screen name="Quran" component={QuranScreen} />
+        <Stack.Screen name="Esma" component={EsmaScreen} />
+        <Stack.Screen name="DuaCollection" component={DuaCollectionScreen} />
+        <Stack.Screen name="KazaNamaz" component={KazaNamazScreen} />
+      </Stack.Navigator>
+    </View>
   );
 }

@@ -294,6 +294,7 @@
   "theme_purple": "Шәмәхә",
   "theme_burgundy": "Бордо",
   "theme_navy": "Куе зәңгәр",
+  "theme_midnight": "Төнге",
   "theme_light": "Ачык",
   "verse_0_text": "\"Шөбһәсез, Аллаһ гаделлекне, игелекне һәм туганнарга ярдәм итүне боера...\"",
   "verse_0_source": "Нәхл, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Кайтарылды",
   "featureNotAdded": "Бу үзенчәлек әлегә өстәлмәгән.",
   "commonCancel": "Баш тарту",
-  "offlineWarning": "⚡ Оффлайн — кэштагы мәгълүматлар кулланыла"
+  "offlineWarning": "⚡ Оффлайн — кэштагы мәгълүматлар кулланыла",
+  "dhikrHistory": "ЗИКЕР ТАРИХЫ",
+  "dhikrHistoryEmpty": "Әлегә тәмамланган зикер юк",
+  "dhikrCycles": "цикл"
 }

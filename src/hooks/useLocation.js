@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useState } from 'react';
+import { saveLocationForBackground } from '../utils/backgroundService';
 
 // Istanbul defaults
 const DEFAULT = { lat: 41.0082, lng: 28.9784, tz: 3, city: 'İstanbul', country: 'Türkiye' };
@@ -110,6 +111,9 @@ export function useLocation() {
       const offsetMinutes = new Date().getTimezoneOffset();
       const timezoneHours = -offsetMinutes / 60;
 
+      // Persist for background task
+      saveLocationForBackground(latitude, longitude, timezoneHours);
+
       setLocation({
         lat: latitude,
         lng: longitude,
@@ -128,6 +132,7 @@ export function useLocation() {
   const setManualCity = useCallback((cityName) => {
     const city = CITIES.find((c) => c.name === cityName);
     if (city) {
+      saveLocationForBackground(city.lat, city.lng, city.tz);
       setLocation({
         lat: city.lat,
         lng: city.lng,

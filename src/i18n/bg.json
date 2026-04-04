@@ -294,6 +294,7 @@
   "theme_purple": "Лилаво",
   "theme_burgundy": "Бордо",
   "theme_navy": "Тъмносиньо",
+  "theme_midnight": "Нощна",
   "theme_light": "Светла",
   "verse_0_text": "„Наистина Аллах повелява справедливост, добротворство и подпомагане на ближните...“",
   "verse_0_source": "Ен-Нахл, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Възстановено",
   "featureNotAdded": "Тази функция все още не е добавена.",
   "commonCancel": "Отказ",
-  "offlineWarning": "⚡ Офлайн — използват се кеширани данни"
+  "offlineWarning": "⚡ Офлайн — използват се кеширани данни",
+  "dhikrHistory": "ИСТОРИЯ НА ЗИКР",
+  "dhikrHistoryEmpty": "Все още няма завършени зикр сесии",
+  "dhikrCycles": "цикъл"
 }

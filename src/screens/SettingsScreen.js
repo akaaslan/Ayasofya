@@ -8,13 +8,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedSwitch } from '../components/AnimatedSwitch';
 import { CustomDialog } from '../components/CustomDialog';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { useI18n, LANGUAGE_LIST } from '../context/I18nContext';
@@ -315,7 +315,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               <Ionicons name="notifications-outline" size={20} color={colors.accent} />
               <Text style={styles.rowLabel}>{t.prayerNotifications}</Text>
             </View>
-            <Switch
+            <AnimatedSwitch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
               trackColor={{ false: '#333', true: colors.accentSoft }}
@@ -329,7 +329,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               {Object.keys(PRAYER_LABELS).map((key) => (
                 <View key={key} style={styles.subRow}>
                   <Text style={styles.subRowLabel}>{t[key] || PRAYER_LABELS[key]}</Text>
-                  <Switch
+                  <AnimatedSwitch
                     value={prayerToggles[key]}
                     onValueChange={() => handleTogglePrayer(key)}
                     trackColor={{ false: '#333', true: colors.accentSoft }}
@@ -345,7 +345,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
                   <Text style={styles.subRowLabel}>{t.preNotification}</Text>
                   <Text style={styles.subRowHint}>{t.preNotificationHint}</Text>
                 </View>
-                <Switch
+                <AnimatedSwitch
                   value={preNotification}
                   onValueChange={setPreNotification}
                   trackColor={{ false: '#333', true: colors.accentSoft }}
@@ -363,7 +363,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               <Ionicons name="volume-high-outline" size={20} color={colors.accent} />
               <Text style={styles.rowLabel}>{t.ezanSound}</Text>
             </View>
-            <Switch
+            <AnimatedSwitch
               value={soundEnabled}
               onValueChange={setSoundEnabled}
               trackColor={{ false: '#333', true: colors.accentSoft }}
@@ -390,7 +390,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               <Ionicons name="star-outline" size={20} color={colors.accent} />
               <Text style={styles.rowLabel}>{t.holidayCountdown}</Text>
             </View>
-            <Switch
+            <AnimatedSwitch
               value={holidayBannerEnabled}
               onValueChange={onToggleHolidayBanner}
               trackColor={{ false: '#333', true: colors.accentSoft }}
@@ -407,7 +407,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               <Ionicons name="phone-portrait-outline" size={20} color={colors.accent} />
               <Text style={styles.rowLabel}>{t.haptic}</Text>
             </View>
-            <Switch
+            <AnimatedSwitch
               value={hapticEnabled}
               onValueChange={(v) => { setHaptic(v); setHapticEnabled(v); }}
               trackColor={{ false: '#333', true: colors.accentSoft }}
@@ -420,7 +420,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               <Ionicons name="musical-note-outline" size={20} color={colors.accent} />
               <Text style={styles.rowLabel}>{t.tapSound}</Text>
             </View>
-            <Switch
+            <AnimatedSwitch
               value={tapSoundEnabled}
               onValueChange={(v) => { setTapSound(v); setTapSoundEnabled(v); }}
               trackColor={{ false: '#333', true: colors.accentSoft }}
@@ -457,7 +457,7 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
                 <Text style={styles.subRowHint}>{t.kazaReminderHint}</Text>
               </View>
             </View>
-            <Switch
+            <AnimatedSwitch
               value={kazaReminder}
               onValueChange={(v) => { setKazaReminder(v); setKazaReminderEnabled(v); }}
               trackColor={{ false: '#333', true: colors.accentSoft }}

@@ -294,6 +294,7 @@
   "theme_purple": "ม่วง",
   "theme_burgundy": "แดงไวน์",
   "theme_navy": "น้ำเงินเข้ม",
+  "theme_midnight": "กลางคืน",
   "theme_light": "สว่าง",
   "verse_0_text": "\"แท้จริงอัลลอฮ์ทรงใช้ให้ดำรงไว้ซึ่งความยุติธรรม การทำดี และการบริจาคแก่ญาติใกล้ชิด...\"",
   "verse_0_source": "อัน-นะห์ลฺ, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "คืนค่าสำเร็จ",
   "featureNotAdded": "ฟีเจอร์นี้ยังไม่เปิดใช้งาน",
   "commonCancel": "ยกเลิก",
-  "offlineWarning": "⚡ ออฟไลน์ — กำลังใช้ข้อมูลแคช"
+  "offlineWarning": "⚡ ออฟไลน์ — กำลังใช้ข้อมูลแคช",
+  "dhikrHistory": "ประวตซกร",
+  "dhikrHistoryEmpty": "ยงไมมการซกรทเสรจสมบรณ",
+  "dhikrCycles": "รอบ"
 }

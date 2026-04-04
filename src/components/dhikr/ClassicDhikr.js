@@ -35,11 +35,10 @@ const TICKS = Array.from({ length: TICK_COUNT }, (_, i) => {
   };
 });
 
-export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, currentDhikr, dhikrs, onTargetReached, targetVibrationEnabled, onTap, onReset }) {
+export function ClassicDhikr({ selectedIdx, onSelectDhikr, currentTarget, currentDhikr, dhikrs, onTargetReached, targetVibrationEnabled, onTap, onReset, count, setCount }) {
   const { fontScale } = useTheme();
   const { t } = useI18n();
   const s = createStyles();
-  const [count, setCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [allTotals, setAllTotals] = useState({});
   const [tapSoundOn, setTapSoundOn] = useState(false);

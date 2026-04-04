@@ -294,6 +294,7 @@
   "theme_purple": "Binafsha",
   "theme_burgundy": "To'q Qizil",
   "theme_navy": "To'q Ko'k",
+  "theme_midnight": "Tungi",
   "theme_light": "Yorqin",
   "verse_0_text": "\"Albatta, Alloh adolatga, ehson qilishga va yaqinlarga yaxshilik qilishga buyurur...\"",
   "verse_0_source": "Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Tiklandi",
   "featureNotAdded": "Ushbu funksiya hali qo'shilmagan.",
   "commonCancel": "Bekor qilish",
-  "offlineWarning": "⚡ Oflayn — keshdagi ma'lumotlar ishlatilmoqda"
+  "offlineWarning": "⚡ Oflayn — keshdagi ma'lumotlar ishlatilmoqda",
+  "dhikrHistory": "ZIKR TARIXI",
+  "dhikrHistoryEmpty": "Hali tugallangan zikr seanslari yoq",
+  "dhikrCycles": "davr"
 }

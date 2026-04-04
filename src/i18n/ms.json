@@ -294,6 +294,7 @@
   "theme_purple": "Ungu",
   "theme_burgundy": "Bungundi",
   "theme_navy": "Biru Kelasi",
+  "theme_midnight": "Malam",
   "theme_light": "Cerah",
   "verse_0_text": "\"Sesungguhnya Allah menyuruh berlaku adil, dan berbuat kebaikan, serta memberi bantuan kepada kaum kerabat...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Dipulihkan",
   "featureNotAdded": "Ciri ini belum ditambah lagi.",
   "commonCancel": "Batal",
-  "offlineWarning": "⚡ Luar talian — menggunakan data cache"
+  "offlineWarning": "⚡ Luar talian — menggunakan data cache",
+  "dhikrHistory": "SEJARAH ZIKIR",
+  "dhikrHistoryEmpty": "Belum ada sesi zikir yang selesai",
+  "dhikrCycles": "kitaran"
 }

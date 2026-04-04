@@ -306,6 +306,7 @@
   "theme_purple": "Mor",
   "theme_burgundy": "Bordo",
   "theme_navy": "Lacivert",
+  "theme_midnight": "Gece",
   "theme_light": "Açık",
   "verse_0_text": "\"Şüphesiz Allah, adaleti, iyiliği, yakınlara yardım etmeyi emreder...\"",
   "verse_0_source": "Nahl, 90",
@@ -347,5 +348,8 @@
   "backupRestored": "Geri Yüklendi",
   "featureNotAdded": "Bu özellik henüz eklenmedi.",
   "commonCancel": "İptal",
-  "offlineWarning": "⚡ Çevrimdışı — Önbellekteki veriler kullanılıyor"
+  "offlineWarning": "⚡ Çevrimdışı — Önbellekteki veriler kullanılıyor",
+  "dhikrHistory": "ZİKİR GEÇMİŞİ",
+  "dhikrHistoryEmpty": "Henüz tamamlanmış zikir yok",
+  "dhikrCycles": "döngü"
 }

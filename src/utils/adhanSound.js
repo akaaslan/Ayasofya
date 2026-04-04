@@ -37,7 +37,7 @@ export async function playEzan(source = null, volume = 1.0) {
     await stopEzan();
     await configureAudio();
 
-    const audioSource = source || 'https://www.islamcan.com/audio/adhan/azan1.mp3';
+    const audioSource = source || 'https://cdn.aladhan.com/audio/adhans/1.mp3';
     player = createAudioPlayer(audioSource);
     player.volume = volume;
     player.play();
@@ -78,7 +78,7 @@ export async function playNotificationSound() {
   try {
     await configureAudio();
     notifPlayer = createAudioPlayer(
-      'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3'
+      'https://cdn.aladhan.com/audio/adhans/1.mp3'
     );
     notifPlayer.volume = 0.8;
     notifPlayer.play();

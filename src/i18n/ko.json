@@ -294,6 +294,7 @@
   "theme_purple": "퍼플",
   "theme_burgundy": "버건디",
   "theme_navy": "네이비",
+  "theme_midnight": "미드나이트",
   "theme_light": "라이트",
   "verse_0_text": "\"실로 알라께서는 정의와 선행, 그리고 친족에 대한 베풂을 명령하시느니라...\"",
   "verse_0_source": "벌 장(An-Nahl), 90절",
@@ -335,5 +336,8 @@
   "backupRestored": "복원 완료",
   "featureNotAdded": "이 기능은 아직 추가되지 않았습니다.",
   "commonCancel": "취소",
-  "offlineWarning": "⚡ 오프라인 — 캐시된 데이터 사용 중"
+  "offlineWarning": "⚡ 오프라인 — 캐시된 데이터 사용 중",
+  "dhikrHistory": "지크르 기록",
+  "dhikrHistoryEmpty": "아직 완료된 지크르 세션이 없습니다",
+  "dhikrCycles": "사이클"
 }

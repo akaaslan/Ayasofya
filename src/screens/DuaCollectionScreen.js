@@ -180,6 +180,7 @@ export function DuaCollectionScreen() {
   const [showFavOnly, setShowFavOnly] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [showDailyDua, setShowDailyDua] = useState(false);
+  const dailyAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     getDuaFavorites().then(setFavorites);
@@ -274,8 +275,14 @@ export function DuaCollectionScreen() {
               <Pressable
                 style={styles.dailyCard}
                 onPress={() => {
-                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  const toValue = showDailyDua ? 0 : 1;
                   setShowDailyDua((v) => !v);
+                  Animated.timing(dailyAnim, {
+                    toValue,
+                    duration: 350,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: false,
+                  }).start();
                 }}
               >
                 <View style={styles.dailyHeader}>
@@ -287,14 +294,20 @@ export function DuaCollectionScreen() {
                     color={colors.textMuted}
                   />
                 </View>
-                {showDailyDua && (
+                <Animated.View
+                  style={{
+                    maxHeight: dailyAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 500] }),
+                    opacity: dailyAnim,
+                    overflow: 'hidden',
+                  }}
+                >
                   <View style={styles.duaContent}>
                     <Text style={styles.duaTitle}>{dailyDua.title}</Text>
                     {dailyDua.arabic && <Text style={styles.duaArabic}>{dailyDua.arabic}</Text>}
                     <Text style={styles.duaMeaning}>{dailyDua.meaning}</Text>
                     <Text style={styles.duaSource}>— {dailyDua.source}</Text>
                   </View>
-                )}
+                </Animated.View>
               </Pressable>
             ) : null
           }

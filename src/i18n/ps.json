@@ -294,6 +294,7 @@
   "theme_purple": "ارغواني",
   "theme_burgundy": "سور ناری",
   "theme_navy": "تېز شین",
+  "theme_midnight": "شپه",
   "theme_light": "روښانه",
   "verse_0_text": "«بې له شکه الله په عدل، احسان او خپلو نږدې کسانو سره په مرستې امر کوي...»",
   "verse_0_source": "النحل، ۹۰",
@@ -335,5 +336,8 @@
   "backupRestored": "بیرته راغی",
   "featureNotAdded": "دا وړتیا تر اوسه نه ده اضافه شوې.",
   "commonCancel": "بندول",
-  "offlineWarning": "⚡ افلاین — له حافظې څخه ډاټا کارول کیږي"
+  "offlineWarning": "⚡ افلاین — له حافظې څخه ډاټا کارول کیږي",
+  "dhikrHistory": "د ذکر تاریخچه",
+  "dhikrHistoryEmpty": "تر اوسه هیڅ بشپړ شوی ذکر نشته",
+  "dhikrCycles": "دوره"
 }

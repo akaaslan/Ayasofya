@@ -294,6 +294,7 @@
   "theme_purple": "Viola",
   "theme_burgundy": "Borgogna",
   "theme_navy": "Blu Notte",
+  "theme_midnight": "Notte",
   "theme_light": "Chiaro",
   "verse_0_text": "\"In verità Allah ordina la giustizia, la benevolenza e l'aiuto ai parenti...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Ripristinato",
   "featureNotAdded": "Questa funzione non è ancora disponibile.",
   "commonCancel": "Annulla",
-  "offlineWarning": "⚡ Offline — utilizzo dati in cache"
+  "offlineWarning": "⚡ Offline — utilizzo dati in cache",
+  "dhikrHistory": "CRONOLOGIA DHIKR",
+  "dhikrHistoryEmpty": "Nessuna sessione di dhikr completata",
+  "dhikrCycles": "cicli"
 }

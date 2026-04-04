@@ -294,6 +294,7 @@
   "theme_purple": "Бунафш",
   "theme_burgundy": "Бордо",
   "theme_navy": "Кабуди тира",
+  "theme_midnight": "Шабона",
   "theme_light": "Рӯшан",
   "verse_0_text": "«Ҳақиқат ин аст, ки Аллоҳ ба адл ва некӣ ва бахшиш ба хешовандон амр мекунад...»",
   "verse_0_source": "Наҳл, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Бозгашт шуд",
   "featureNotAdded": "Ин имконият ҳанӯз илова нашудааст.",
   "commonCancel": "Лағв",
-  "offlineWarning": "⚡ Офлайн — аз додаҳои кэш истифода мешавад"
+  "offlineWarning": "⚡ Офлайн — аз додаҳои кэш истифода мешавад",
+  "dhikrHistory": "ТАЪРИХИ ЗИКР",
+  "dhikrHistoryEmpty": "Ҳанӯз ҷаласаҳои анҷомёфтаи зикр нест",
+  "dhikrCycles": "давра"
 }

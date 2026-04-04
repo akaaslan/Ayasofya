@@ -294,6 +294,7 @@
   "theme_purple": "Ljubičasta",
   "theme_burgundy": "Bordo",
   "theme_navy": "Tamnoplava",
+  "theme_midnight": "Noćna",
   "theme_light": "Svijetla",
   "verse_0_text": "\"Allah zaista naređuje pravdu, dobročinstvo i potpomaganje bližnjih...\"",
   "verse_0_source": "En-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Vraćeno",
   "featureNotAdded": "Ova opcija još nije dostupna.",
   "commonCancel": "Otkaži",
-  "offlineWarning": "⚡ Van mreže — koriste se sačuvani podaci"
+  "offlineWarning": "⚡ Van mreže — koriste se sačuvani podaci",
+  "dhikrHistory": "HISTORIJA ZIKRA",
+  "dhikrHistoryEmpty": "Još nema završenih zikr sesija",
+  "dhikrCycles": "ciklus"
 }

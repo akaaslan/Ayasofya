@@ -294,6 +294,7 @@
   "theme_purple": "Violet",
   "theme_burgundy": "Bordo",
   "theme_navy": "Bleu Marin",
+  "theme_midnight": "Nocturn",
   "theme_light": "Deschis",
   "verse_0_text": "\"Într-adevăr, Allah poruncește dreptatea, bunătatea și ajutorarea rudelor...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Restaurat",
   "featureNotAdded": "Această funcție nu a fost adăugată încă.",
   "commonCancel": "Anulează",
-  "offlineWarning": "⚡ Offline — se folosesc datele din cache"
+  "offlineWarning": "⚡ Offline — se folosesc datele din cache",
+  "dhikrHistory": "ISTORICUL DHIKR",
+  "dhikrHistoryEmpty": "Nicio sesiune de dhikr finalizată încă",
+  "dhikrCycles": "cicluri"
 }

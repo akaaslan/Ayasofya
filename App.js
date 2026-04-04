@@ -13,6 +13,7 @@ import { ThemeProvider } from './src/context/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { OnboardingScreen, isOnboardingDone } from './src/screens/OnboardingScreen';
 import { setupNotificationChannel, requestNotificationPermission, setupNotificationResponseListener } from './src/utils/notifications';
+import { registerBackgroundTask } from './src/utils/backgroundService';
 
 /* Bridge: reads Ramadan context and passes to ThemeProvider (must be child of RamadanProvider) */
 function RamadanThemeBridge({ children }) {
@@ -27,6 +28,7 @@ export default function App() {
     setupNotificationChannel();
     requestNotificationPermission();
     setupNotificationResponseListener();
+    registerBackgroundTask();
     isOnboardingDone().then((done) => setShowOnboarding(!done));
   }, []);
 
@@ -54,7 +56,25 @@ export default function App() {
                     <OnboardingScreen onComplete={handleOnboardingComplete} />
                   ) : (
                     <LocationProvider>
-                      <NavigationContainer>
+                      <NavigationContainer
+                        theme={{
+                          dark: true,
+                          colors: {
+                            primary: '#c8a15a',
+                            background: '#061e1a',
+                            card: '#061e1a',
+                            text: '#f0ead2',
+                            border: 'rgba(133, 158, 116, 0.12)',
+                            notification: '#c8a15a',
+                          },
+                          fonts: {
+                            regular: { fontFamily: 'System', fontWeight: '400' },
+                            medium: { fontFamily: 'System', fontWeight: '500' },
+                            bold: { fontFamily: 'System', fontWeight: '700' },
+                            heavy: { fontFamily: 'System', fontWeight: '900' },
+                          },
+                        }}
+                      >
                         <AppNavigator />
                       </NavigationContainer>
                     </LocationProvider>

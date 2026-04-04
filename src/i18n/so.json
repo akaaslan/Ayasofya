@@ -294,6 +294,7 @@
   "theme_purple": "Purple",
   "theme_burgundy": "Burgundy",
   "theme_navy": "Navy",
+  "theme_midnight": "Habeen",
   "theme_light": "Caddaan",
   "verse_0_text": "\"Runtii, Allaah wuxuu amrayaa cadaaladda, wanaagga iyo caawinta qaraabada...\"",
   "verse_0_source": "Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "Waa la soo celiyay",
   "featureNotAdded": "Habkan weli laguma darin.",
   "commonCancel": "Iska daa",
-  "offlineWarning": "⚡ Khadka ka baxsan — waxaa la isticmaalayaa xogta kaydsan"
+  "offlineWarning": "⚡ Khadka ka baxsan — waxaa la isticmaalayaa xogta kaydsan",
+  "dhikrHistory": "TAARIIKHDA DHIKRIGA",
+  "dhikrHistoryEmpty": "Wali ma jiraan xaflado dhikri oo la dhameeyay",
+  "dhikrCycles": "wareeg"
 }

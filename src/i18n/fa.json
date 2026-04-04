@@ -294,6 +294,7 @@
   "theme_purple": "بنفش",
   "theme_burgundy": "زرشکی",
   "theme_navy": "سرمه‌ای",
+  "theme_midnight": "شب",
   "theme_light": "روشن",
   "verse_0_text": "«همانا خداوند به عدل و احسان و بخشش به نزدیکان فرمان می‌دهد...»",
   "verse_0_source": "نحل، ۹۰",
@@ -335,5 +336,8 @@
   "backupRestored": "بازیابی شد",
   "featureNotAdded": "این قابلیت هنوز اضافه نشده است.",
   "commonCancel": "لغو",
-  "offlineWarning": "⚡ آفلاین — در حال استفاده از داده‌های حافظه"
+  "offlineWarning": "⚡ آفلاین — در حال استفاده از داده‌های حافظه",
+  "dhikrHistory": "تاریخچه ذکر",
+  "dhikrHistoryEmpty": "هنوز ذکر تکمیلشدهای وجود ندارد",
+  "dhikrCycles": "دور"
 }

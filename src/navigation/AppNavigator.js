@@ -32,6 +32,7 @@ export function AppNavigator() {
 
   const handleCloseBanner = useCallback(() => {
     setHolidayBannerDismissed(true);
+    setHolidayBannerEnabled(false);
   }, []);
 
   const handleToggleHolidayBanner = useCallback((val) => {
@@ -40,8 +41,9 @@ export function AppNavigator() {
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.backgroundTop }}>
       <Tab.Navigator
+        sceneContainerStyle={{ backgroundColor: colors.backgroundTop }}
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarStyle: styles.tabBar,

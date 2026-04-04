@@ -294,6 +294,7 @@
   "theme_purple": "Purple",
   "theme_burgundy": "Burgundy",
   "theme_navy": "Navy Blue",
+  "theme_midnight": "Dare",
   "theme_light": "Fari",
   "verse_0_text": "\"Lallai Allah yana umarni da adalci da kyautatawa da sadar da zumunta...\"",
   "verse_0_source": "An-Nahl, 90",
@@ -335,5 +336,8 @@
   "backupRestored": "An dawo da su",
   "featureNotAdded": "Ba a saka wannan sashen ba tukunna.",
   "commonCancel": "Soke",
-  "offlineWarning": "⚡ Ba layi — ana amfani da bayanan da aka ajiye"
+  "offlineWarning": "⚡ Ba layi — ana amfani da bayanan da aka ajiye",
+  "dhikrHistory": "TARIHIN ZIKIRI",
+  "dhikrHistoryEmpty": "Babu zikirin da aka kammala har yanzu",
+  "dhikrCycles": "zagaye"
 }
