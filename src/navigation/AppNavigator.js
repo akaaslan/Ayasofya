@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 
 import { HolidayBanner } from '../components/HolidayBanner';
+import { GlobalMiniPlayer } from '../components/GlobalMiniPlayer';
 import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
@@ -87,6 +88,9 @@ export function AppNavigator() {
 
       {/* Holiday countdown banner — above tab bar */}
       <HolidayBanner visible={showBanner} onClose={handleCloseBanner} />
+
+      {/* Global Mini Player for audio */}
+      <GlobalMiniPlayer />
     </View>
   );
 }

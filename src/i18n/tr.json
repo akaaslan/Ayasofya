@@ -183,6 +183,7 @@
   "tapSound": "Dokunma Sesi",
   "tapSoundHint": "Zikirmatik dokunuşlarında ses",
   "dataBackup": "VERİ YÖNETİMİ",
+  "dataManagement": "VERİ YÖNETİMİ",
   "exportData": "Verileri Dışa Aktar",
   "importData": "Verileri İçe Aktar",
   "exportSuccess": "Veriler başarıyla dışa aktarıldı.",
@@ -351,5 +352,13 @@
   "offlineWarning": "⚡ Çevrimdışı — Önbellekteki veriler kullanılıyor",
   "dhikrHistory": "ZİKİR GEÇMİŞİ",
   "dhikrHistoryEmpty": "Henüz tamamlanmış zikir yok",
-  "dhikrCycles": "döngü"
+  "dhikrCycles": "döngü",
+  "clearCache": "Önbelleği Temizle",
+  "clearCacheDesc": "Kur'an metinleri ve ses listeleri gibi geçici verileri temizler.",
+  "resetAllData": "Tüm Verileri Sıfırla",
+  "resetAllDataDesc": "Tüm ayarlarınızı, namaz ve zikir kayıtlarınızı kalıcı olarak siler.",
+  "clearCacheSuccess": "Önbellek başarıyla temizlendi.",
+  "resetAllDataSuccess": "Tüm veriler sıfırlandı.",
+  "resetAllDataConfirmTitle": "Emin misiniz?",
+  "resetAllDataConfirmMsg": "Bu işlem geri alınamaz. Tüm kayıtlarınız ve ayarlarınız silinecektir."
 }

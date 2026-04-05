@@ -14,6 +14,8 @@ import { AppNavigator } from './src/navigation/AppNavigator';
 import { OnboardingScreen, isOnboardingDone } from './src/screens/OnboardingScreen';
 import { setupNotificationChannel, requestNotificationPermission, setupNotificationResponseListener } from './src/utils/notifications';
 import { registerBackgroundTask } from './src/utils/backgroundService';
+import { setAudioModeAsync } from 'expo-audio';
+import { AudioProvider } from './src/context/AudioContext';
 
 /* Bridge: reads Ramadan context and passes to ThemeProvider (must be child of RamadanProvider) */
 function RamadanThemeBridge({ children }) {
@@ -23,6 +25,12 @@ function RamadanThemeBridge({ children }) {
 
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(null);
+
+  setAudioModeAsync({
+    playsInSilentModeIOS: true,
+    staysActiveInBackground: true,
+    shouldDuckAndroid: true,
+  });
 
   useEffect(() => {
     setupNotificationChannel();
@@ -46,6 +54,7 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <AudioProvider>
       <SafeAreaProvider>
         <ErrorBoundary>
           <RamadanProvider>
@@ -85,6 +94,7 @@ export default function App() {
           </RamadanProvider>
         </ErrorBoundary>
       </SafeAreaProvider>
+      </AudioProvider>
     </GestureHandlerRootView>
   );
 }

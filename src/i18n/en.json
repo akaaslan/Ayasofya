@@ -223,6 +223,7 @@
   "tapSound": "Tap Sound",
   "tapSoundHint": "Sound on dhikr taps",
   "dataBackup": "DATA MANAGEMENT",
+  "dataManagement": "DATA MANAGEMENT",
   "exportData": "Export Data",
   "importData": "Import Data",
   "exportSuccess": "Data exported successfully.",
@@ -339,5 +340,13 @@
   "targetVibration": "Target Vibration",
   "dhikrHistory": "DHIKR HISTORY",
   "dhikrHistoryEmpty": "No completed dhikr sessions yet",
-  "dhikrCycles": "cycles"
+  "dhikrCycles": "cycles",
+  "clearCache": "Clear Cache",
+  "clearCacheDesc": "Clears temporary data like Quran texts and reciter lists.",
+  "resetAllData": "Reset All Data",
+  "resetAllDataDesc": "Permanently deletes all your settings, prayer, and dhikr records.",
+  "clearCacheSuccess": "Cache cleared successfully.",
+  "resetAllDataSuccess": "All data has been reset.",
+  "resetAllDataConfirmTitle": "Are you sure?",
+  "resetAllDataConfirmMsg": "This action cannot be undone. All your records and settings will be deleted."
 }

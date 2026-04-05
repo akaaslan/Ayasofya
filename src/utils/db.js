@@ -95,7 +95,7 @@ export async function getDB() {
           juz_number INTEGER,
           page_number INTEGER,
           text TEXT,
-          FOREIGN KEY (surah_id) REFERENCES surahs(id),
+          transliteration TEXT,
           UNIQUE(surah_id, aya_number)
         );
       `);
@@ -119,10 +119,66 @@ export async function getDB() {
         // Column probably exists
       }
 
+      // Try adding transliteration column for existing databases
+      try {
+        await db.execAsync(`ALTER TABLE ayas ADD COLUMN transliteration TEXT;`);
+      } catch (e) {
+        // Column probably exists
+      }
+
       return db;
     })();
   }
   
   dbInstance = await initPromise;
   return dbInstance;
+}
+
+/**
+ * Clears only cached data (Quran content, prayer times, etc.)
+ */
+export async function clearCache() {
+  const db = await getDB();
+  await db.execAsync('BEGIN TRANSACTION');
+  try {
+    await db.execAsync(`DELETE FROM surahs;`);
+    await db.execAsync(`DELETE FROM ayas;`);
+    await db.execAsync(`DELETE FROM tafsirs;`);
+    await db.execAsync(`DELETE FROM prayer_times;`);
+    await db.execAsync(`DELETE FROM key_value_store WHERE key LIKE 'tafsirs_%' OR key = 'reciters';`);
+    await db.execAsync('COMMIT');
+    await db.execAsync('VACUUM');
+    return true;
+  } catch (e) {
+    await db.execAsync('ROLLBACK');
+    console.error("clearCache error:", e);
+    return false;
+  }
+}
+
+/**
+ * Resets all user data, including prayer tracking, kaza, dhikr and cache.
+ */
+export async function resetAllData() {
+  const db = await getDB();
+  await db.execAsync('BEGIN TRANSACTION');
+  try {
+    await db.execAsync(`DELETE FROM kaza;`);
+    await db.execAsync(`DELETE FROM prayer_tracking;`);
+    await db.execAsync(`DELETE FROM dhikr_totals;`);
+    await db.execAsync(`DELETE FROM dhikr_sessions;`);
+    await db.execAsync(`DELETE FROM dhikr_daily;`);
+    await db.execAsync(`DELETE FROM key_value_store;`);
+    await db.execAsync(`DELETE FROM surahs;`);
+    await db.execAsync(`DELETE FROM ayas;`);
+    await db.execAsync(`DELETE FROM tafsirs;`);
+    await db.execAsync(`DELETE FROM prayer_times;`);
+    await db.execAsync('COMMIT');
+    await db.execAsync('VACUUM');
+    return true;
+  } catch (e) {
+    await db.execAsync('ROLLBACK');
+    console.error("resetAllData error:", e);
+    return false;
+  }
 }

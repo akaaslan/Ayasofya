@@ -38,6 +38,7 @@ import {
   getKazaReminderEnabled, setKazaReminderEnabled,
 } from '../utils/preferences';
 import { exportBackup, importBackup } from '../utils/backup';
+import { clearCache, resetAllData } from '../utils/db';
 
 export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) {
   const { lat, lng, tz, city, district, loading: locLoading, refresh, setManualCity } = useLocationContext();
@@ -167,6 +168,37 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
       showDialog('alert-circle', t.commonError, t.backupImportFail);
     }
   }, [showDialog, t]);
+
+  const handleClearCache = useCallback(async () => {
+    const success = await clearCache();
+    if (success) {
+      showDialog('checkmark-circle', t.clearCache, t.clearCacheSuccess);
+    } else {
+      showDialog('alert-circle', t.commonError, t.error);
+    }
+  }, [showDialog, t]);
+
+  const handleResetData = useCallback(() => {
+    showDialog(
+      'warning', 
+      t.resetAllDataConfirmTitle, 
+      t.resetAllDataConfirmMsg,
+      [
+        { text: t.cancel, style: 'cancel' },
+        { 
+          text: t.resetAllData, 
+          style: 'destructive',
+          onPress: async () => {
+            const success = await resetAllData();
+            if (success) {
+              showDialog('checkmark-circle', t.resetAllData, t.resetAllDataSuccess);
+            }
+          }
+        }
+      ]
+    );
+  }, [showDialog, t]);
+
 
 
   const PRAYER_LABELS = {
@@ -488,6 +520,38 @@ export function SettingsScreen({ holidayBannerEnabled, onToggleHolidayBanner }) 
               <Text style={styles.rowLabel}>{t.backupImport}</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </Pressable>
+
+          {/* Data Management */}
+          <Text style={styles.sectionTitle}>{t.dataManagement || 'VERİ YÖNETİMİ'}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            onPress={handleClearCache}
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="trash-outline" size={20} color={colors.accent} />
+              <View>
+                <Text style={styles.rowLabel}>{t.clearCache}</Text>
+                <Text style={[styles.subRowHint, { maxWidth: '85%' }]}>{t.clearCacheDesc}</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            onPress={handleResetData}
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="refresh-circle-outline" size={20} color="#e05555" />
+              <View>
+                <Text style={[styles.rowLabel, { color: '#e05555' }]}>{t.resetAllData}</Text>
+                <Text style={[styles.subRowHint, { maxWidth: '85%' }]}>{t.resetAllDataDesc}</Text>
+              </View>
+            </View>
+            <Ionicons name="alert-circle-outline" size={16} color="#e05555" />
           </Pressable>
 
           {/* About */}
