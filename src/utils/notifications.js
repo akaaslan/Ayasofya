@@ -1,16 +1,33 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getPrayerTimes } from '../utils/prayerApi';
-import { setDayPrayer } from '../utils/prayerTracking';
+import { setDayPrayer, getDayTracking } from '../utils/prayerTracking';
+import { incrementKaza } from '../utils/kazaTracking';
+import { playNotificationSound } from '../utils/adhanSound';
+import { getNotificationPrefs } from '../utils/notificationPrefs';
+import { getKazaReminderEnabled } from '../utils/preferences';
 
-/* ── Configure notification handler ── */
+/* ── Configure notification handler — play adhan when prayer notification fires ── */
 try {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    }),
+    handleNotification: async (notification) => {
+      const data = notification?.request?.content?.data;
+      const isPrayer = !data?.type || data?.type === 'prayer_time';
+      // Play adhan sound for prayer notifications if sound is enabled
+      if (isPrayer) {
+        try {
+          const prefs = await getNotificationPrefs();
+          if (prefs.soundEnabled) {
+            playNotificationSound();
+          }
+        } catch {}
+      }
+      return {
+        shouldShowAlert: true,
+        shouldPlaySound: false, // we handle sound ourselves via expo-audio
+        shouldSetBadge: false,
+      };
+    },
   });
 } catch {
   // Expo Go may not support this
@@ -29,6 +46,15 @@ try {
 /* ── Handle notification action responses ── */
 let _responseListener = null;
 
+/** Map notification prayerKey (imsak) to kaza prayerKey (sabah) */
+const NOTIF_TO_KAZA_KEY = {
+  imsak: 'sabah',
+  ogle: 'ogle',
+  ikindi: 'ikindi',
+  aksam: 'aksam',
+  yatsi: 'yatsi',
+};
+
 export function setupNotificationResponseListener() {
   if (_responseListener) return;
   _responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
@@ -41,8 +67,14 @@ export function setupNotificationResponseListener() {
 
     if (actionIdentifier === 'PRAYED_YES') {
       setDayPrayer(prayerKey, true, new Date()).catch(() => {});
+    } else if (actionIdentifier === 'PRAYED_NO') {
+      // Mark as not prayed and increment kaza count
+      setDayPrayer(prayerKey, false, new Date()).catch(() => {});
+      const kazaKey = NOTIF_TO_KAZA_KEY[prayerKey];
+      if (kazaKey) {
+        incrementKaza(kazaKey, 1).catch(() => {});
+      }
     }
-    // PRAYED_NO = do nothing (leave unchecked)
   });
 }
 
@@ -174,6 +206,22 @@ export async function schedulePrayerNotifications(lat, lng, tz, enabledPrayers =
     }
   }
 
+  // Also schedule kaza reminders if enabled
+  try {
+    const kazaEnabled = await getKazaReminderEnabled();
+    if (kazaEnabled) {
+      await _scheduleKazaRemindersInternal(lat, lng, tz);
+    }
+  } catch {}
+
+  // Schedule end-of-day summary
+  try {
+    const kazaEnabled = await getKazaReminderEnabled();
+    if (kazaEnabled) {
+      await _scheduleEndOfDaySummary();
+    }
+  } catch {}
+
   return true;
   } catch {
     // Expo Go limitation – notifications not fully supported
@@ -226,6 +274,63 @@ const KAZA_PRAYER_MAP = {
 };
 
 /**
+ * Internal: schedule kaza reminders without cancelling existing notifications.
+ * Called from schedulePrayerNotifications after prayer notifs are scheduled.
+ */
+async function _scheduleKazaRemindersInternal(lat, lng, tz) {
+  const now = new Date();
+  const scheduled = [];
+
+  for (let dayOffset = 0; dayOffset <= 1; dayOffset++) {
+    const targetDate = new Date(now);
+    targetDate.setDate(targetDate.getDate() + dayOffset);
+
+    let prayers;
+    try {
+      const result = await getPrayerTimes(targetDate, lat, lng, tz);
+      prayers = result.prayers;
+    } catch {
+      continue;
+    }
+
+    for (const prayer of prayers) {
+      if (!KAZA_PRAYER_MAP[prayer.key]) continue;
+
+      const reminderTime = new Date(prayer.date.getTime() + 60 * 60 * 1000); // +1 hour
+      if (reminderTime.getTime() <= now.getTime()) continue;
+
+      const secondsUntil = Math.floor((reminderTime.getTime() - now.getTime()) / 1000);
+      if (secondsUntil <= 0) continue;
+
+      try {
+        const id = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `🤲 ${KAZA_PRAYER_MAP[prayer.key]} namazını kıldınız mı?`,
+            body: 'Evet veya Hayır ile cevaplayın.',
+            sound: true,
+            categoryIdentifier: 'prayer_tracking',
+            data: { type: 'kaza_reminder', prayerKey: prayer.key },
+            priority: Notifications.AndroidNotificationPriority.DEFAULT,
+            ...(Platform.OS === 'android' && {
+              channelId: 'kaza-reminder',
+            }),
+          },
+          trigger: {
+            type: 'timeInterval',
+            seconds: secondsUntil,
+            repeats: false,
+          },
+        });
+        scheduled.push(id);
+      } catch {
+        // continue
+      }
+    }
+  }
+  return scheduled.length > 0;
+}
+
+/**
  * Schedule "Did you pray?" Kaza reminder notifications
  * 1 hour after each trackable prayer time.
  */
@@ -233,58 +338,117 @@ export async function scheduleKazaReminders(lat, lng, tz) {
   try {
     const hasPermission = await requestNotificationPermission();
     if (!hasPermission) return false;
-
-    const now = new Date();
-    const scheduled = [];
-
-    for (let dayOffset = 0; dayOffset <= 1; dayOffset++) {
-      const targetDate = new Date(now);
-      targetDate.setDate(targetDate.getDate() + dayOffset);
-
-      let prayers;
-      try {
-        const result = await getPrayerTimes(targetDate, lat, lng, tz);
-        prayers = result.prayers;
-      } catch {
-        continue;
-      }
-
-      for (const prayer of prayers) {
-        if (!KAZA_PRAYER_MAP[prayer.key]) continue;
-
-        const reminderTime = new Date(prayer.date.getTime() + 60 * 60 * 1000); // +1 hour
-        if (reminderTime.getTime() <= now.getTime()) continue;
-
-        const secondsUntil = Math.floor((reminderTime.getTime() - now.getTime()) / 1000);
-        if (secondsUntil <= 0) continue;
-
-        try {
-          const id = await Notifications.scheduleNotificationAsync({
-            content: {
-              title: `🤲 ${KAZA_PRAYER_MAP[prayer.key]} namazını kıldınız mı?`,
-              body: 'Evet veya Hayır ile cevaplayın.',
-              sound: true,
-              categoryIdentifier: 'prayer_tracking',
-              data: { type: 'kaza_reminder', prayerKey: prayer.key },
-              priority: Notifications.AndroidNotificationPriority.DEFAULT,
-              ...(Platform.OS === 'android' && {
-                channelId: 'kaza-reminder',
-              }),
-            },
-            trigger: {
-              type: 'timeInterval',
-              seconds: secondsUntil,
-              repeats: false,
-            },
-          });
-          scheduled.push(id);
-        } catch {
-          // continue
-        }
-      }
-    }
-    return scheduled.length > 0;
+    return _scheduleKazaRemindersInternal(lat, lng, tz);
   } catch {
     return false;
   }
+}
+
+/**
+ * Internal: schedule end-of-day summary notification at 23:00.
+ * Shows which prayers were missed today.
+ */
+async function _scheduleEndOfDaySummary() {
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(23, 0, 0, 0);
+
+  // If 23:00 already passed today, skip (tomorrow's will be scheduled on next run)
+  if (target.getTime() <= now.getTime()) return;
+
+  const secondsUntil = Math.floor((target.getTime() - now.getTime()) / 1000);
+  if (secondsUntil <= 0) return;
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '📋 Günlük Namaz Özeti',
+        body: 'Bugün kılmadığınız namazları kontrol edin.',
+        sound: true,
+        data: { type: 'daily_summary' },
+        priority: Notifications.AndroidNotificationPriority.DEFAULT,
+        ...(Platform.OS === 'android' && {
+          channelId: 'kaza-reminder',
+        }),
+      },
+      trigger: {
+        type: 'timeInterval',
+        seconds: secondsUntil,
+        repeats: false,
+      },
+    });
+  } catch {}
+}
+
+/**
+ * Schedule end-of-day summary (public, for use from SettingsScreen/background).
+ */
+export async function scheduleEndOfDaySummary() {
+  try {
+    const hasPermission = await requestNotificationPermission();
+    if (!hasPermission) return false;
+    await _scheduleEndOfDaySummary();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fire test kaza reminder notifications + end-of-day summary.
+ */
+export async function sendTestNotifications() {
+  const hasPermission = await requestNotificationPermission();
+  if (!hasPermission) return false;
+
+  const prayers = Object.keys(KAZA_PRAYER_MAP);
+
+  for (let i = 0; i < prayers.length; i++) {
+    const key = prayers[i];
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: `🤲 ${KAZA_PRAYER_MAP[key]} namazını kıldınız mı? (Test)`,
+        body: 'Evet veya Hayır ile cevaplayın.',
+        sound: true,
+        categoryIdentifier: 'prayer_tracking',
+        data: { type: 'kaza_reminder', prayerKey: key },
+        priority: Notifications.AndroidNotificationPriority.DEFAULT,
+        ...(Platform.OS === 'android' && {
+          channelId: 'kaza-reminder',
+        }),
+      },
+      trigger: {
+        type: 'timeInterval',
+        seconds: 2 + i * 3,
+        repeats: false,
+      },
+    });
+  }
+
+  // End-of-day summary test — comes after kaza reminders
+  const tracking = await getDayTracking();
+  const missed = Object.keys(KAZA_PRAYER_MAP).filter(k => !tracking[k]);
+  const missedNames = missed.map(k => KAZA_PRAYER_MAP[k]).join(', ');
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '📋 Günlük Namaz Özeti (Test)',
+      body: missed.length > 0
+        ? `Bugün kılınmayan namazlar: ${missedNames}`
+        : 'Tebrikler! Bugün tüm namazlarınızı kıldınız. ✅',
+      sound: true,
+      data: { type: 'daily_summary' },
+      priority: Notifications.AndroidNotificationPriority.DEFAULT,
+      ...(Platform.OS === 'android' && {
+        channelId: 'kaza-reminder',
+      }),
+    },
+    trigger: {
+      type: 'timeInterval',
+      seconds: 2 + prayers.length * 3,
+      repeats: false,
+    },
+  });
+
+  return true;
 }
