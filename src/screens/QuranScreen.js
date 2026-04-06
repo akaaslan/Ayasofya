@@ -128,7 +128,7 @@ export function QuranScreen({ route }) {
     setLoadError(null);
     try {
       const authorCode  = selectedTafsir?.author_code ?? '';
-      const fullContent = await getSurahContent(item.id, toApiLang(lang), authorCode, 1);
+      const fullContent = await getSurahContent(item.id, getLanguage(lang), authorCode, 1);
       setBookmark(item.id, item.name);
       setBookmarkId(item.id);
       setCurrentPage(1);
@@ -148,7 +148,7 @@ export function QuranScreen({ route }) {
       const nextPage = currentPage + 1;
       const content  = await getSurahContent(
         selectedSurah.id,
-        toApiLang(lang),
+        getLanguage(lang),
         selectedTafsir?.author_code ?? '',
         nextPage,
       );

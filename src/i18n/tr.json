@@ -360,5 +360,6 @@
   "clearCacheSuccess": "Önbellek başarıyla temizlendi.",
   "resetAllDataSuccess": "Tüm veriler sıfırlandı.",
   "resetAllDataConfirmTitle": "Emin misiniz?",
-  "resetAllDataConfirmMsg": "Bu işlem geri alınamaz. Tüm kayıtlarınız ve ayarlarınız silinecektir."
+  "resetAllDataConfirmMsg": "Bu işlem geri alınamaz. Tüm kayıtlarınız ve ayarlarınız silinecektir.",
+  "findMoske": "Cami Bul"
 }
