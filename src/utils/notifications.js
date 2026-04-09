@@ -36,8 +36,8 @@ try {
 /* ── Notification action category for prayer tracking ── */
 try {
   Notifications.setNotificationCategoryAsync('prayer_tracking', [
-    { identifier: 'PRAYED_YES', buttonTitle: '✅ Evet', options: { opensAppToForeground: false } },
-    { identifier: 'PRAYED_NO', buttonTitle: '❌ Hayır', options: { opensAppToForeground: false } },
+    { identifier: 'PRAYED_YES', buttonTitle: '✅ Evet', options: { opensAppToForeground: true } },
+    { identifier: 'PRAYED_NO', buttonTitle: '❌ Hayır', options: { opensAppToForeground: true } },
   ]);
 } catch {
   // Expo Go may not support this
@@ -57,23 +57,33 @@ const NOTIF_TO_KAZA_KEY = {
 
 export function setupNotificationResponseListener() {
   if (_responseListener) return;
-  _responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
+  _responseListener = Notifications.addNotificationResponseReceivedListener(async (response) => {
     const { actionIdentifier, notification } = response;
     const data = notification?.request?.content?.data;
+    const notificationId = notification?.request?.identifier;
+
     if (!data || data.type !== 'kaza_reminder') return;
 
     const prayerKey = data.prayerKey;
     if (!prayerKey) return;
 
-    if (actionIdentifier === 'PRAYED_YES') {
-      setDayPrayer(prayerKey, true, new Date()).catch(() => {});
-    } else if (actionIdentifier === 'PRAYED_NO') {
-      // Mark as not prayed and increment kaza count
-      setDayPrayer(prayerKey, false, new Date()).catch(() => {});
-      const kazaKey = NOTIF_TO_KAZA_KEY[prayerKey];
-      if (kazaKey) {
-        incrementKaza(kazaKey, 1).catch(() => {});
+    try {
+      if (actionIdentifier === 'PRAYED_YES') {
+        await setDayPrayer(prayerKey, true, new Date());
+      } else if (actionIdentifier === 'PRAYED_NO') {
+        await setDayPrayer(prayerKey, false, new Date());
+        const kazaKey = NOTIF_TO_KAZA_KEY[prayerKey];
+        if (kazaKey) {
+          await incrementKaza(kazaKey, 1);
+        }
       }
+    } catch {}
+
+    // Dismiss the notification after handling
+    if (notificationId) {
+      try {
+        await Notifications.dismissNotificationAsync(notificationId);
+      } catch {}
     }
   });
 }
